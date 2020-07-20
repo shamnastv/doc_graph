@@ -55,6 +55,7 @@ for id in ids:
     shuffle_doc_name_list.append(doc_name_list[int(id)])
     shuffle_doc_words_list.append(doc_content_list[int(id)])
 
+# Creating labels
 label_set = set()
 for doc_meta in shuffle_doc_name_list:
     temp = doc_meta.split('\t')
@@ -76,6 +77,7 @@ word_freq_list = []
 ls_adj = []
 window_size = 20
 
+index = 0
 for doc_words in shuffle_doc_words_list:
     windows = []
     words = doc_words.split()
@@ -176,11 +178,26 @@ for doc_words in shuffle_doc_words_list:
             continue
         row.append(i)
         col.append(j)
-        weight.append(pmi)
+        weight.append(count)
 
     node_size = vocab_size
     adj = sp.csr_matrix(
         (weight, (row, col)), shape=(node_size, node_size))
 
     ls_adj.append(adj)
-    print(adj.shape)
+    # print(adj.shape)
+    if index in [0, 3]:
+        print('Index : ', index)
+        print(shuffle_doc_name_list[index])
+        print(doc_words)
+        print(word_id_map)
+        print(feat)
+        print(adj)
+    index += 1
+
+print('Shape of feature index 10 ', word_freq[10].shape)
+print('Shape of adj index 10 ', ls_adj[10].shape)
+
+print('Size of features ', len(word_freq))
+print('Size of adjacency ', len(ls_adj))
+print('Total Size ', total_size)
