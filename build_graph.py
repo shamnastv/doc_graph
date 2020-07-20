@@ -195,9 +195,9 @@ for doc_words in shuffle_doc_words_list:
         print(adj)
     index += 1
 
-print('Shape of feature index 10 ', word_freq[10].shape)
+print('Shape of feature index 10 ', word_freq_list[10].shape)
 print('Shape of adj index 10 ', ls_adj[10].shape)
 
-print('Size of features ', len(word_freq))
+print('Size of features ', len(word_freq_list))
 print('Size of adjacency ', len(ls_adj))
 print('Total Size ', total_size)
