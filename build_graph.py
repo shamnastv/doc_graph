@@ -3,13 +3,14 @@ import numpy as np
 import scipy.sparse as sp
 from math import log
 
-dataset = '20ng'
+from util import read_param
 
+param = read_param('param.yaml')
+dataset = param['dataset']
 
 doc_name_list = []
 doc_train_list = []
 doc_test_list = []
-
 # Read meta data
 f = open('data/' + dataset + '.txt', 'r')
 lines = f.readlines()
@@ -75,7 +76,7 @@ y = np.array(y)
 
 word_freq_list = []
 ls_adj = []
-window_size = 20
+window_size = param['window_size']
 
 index = 0
 for doc_words in shuffle_doc_words_list:
@@ -185,6 +186,8 @@ for doc_words in shuffle_doc_words_list:
         (weight, (row, col)), shape=(node_size, node_size))
 
     ls_adj.append(adj)
+
+    # Test
     # print(adj.shape)
     if index in [0, 3]:
         print('Index : ', index)
@@ -195,6 +198,7 @@ for doc_words in shuffle_doc_words_list:
         print(adj)
     index += 1
 
+# Test
 print('Shape of feature index 10 ', word_freq_list[10].shape)
 print('Shape of adj index 10 ', ls_adj[10].shape)
 
