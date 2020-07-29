@@ -9,8 +9,6 @@ from util import read_param
 
 
 def build_graph():
-    bert_embedding = BertEmbedding(model='bert_24_1024_16', dataset_name='book_corpus_wiki_en_cased')
-    bert_embedding.embedding()
     param = read_param('param.yaml')
     dataset = param['dataset']
     doc_name_list = []
@@ -40,6 +38,7 @@ def build_graph():
         train_id = doc_name_list.index(train_name)
         train_ids.append(train_id)
     random.shuffle(train_ids)
+
     # Find test ids
     test_ids = []
     for test_name in doc_test_list:
@@ -49,12 +48,14 @@ def build_graph():
     ids = train_ids + test_ids
     train_size = len(train_ids)
     total_size = len(ids)
+
     # Organize train and test data
     shuffle_doc_name_list = []
     shuffle_doc_words_list = []
     for id in ids:
         shuffle_doc_name_list.append(doc_name_list[int(id)])
         shuffle_doc_words_list.append(doc_content_list[int(id)])
+
     # Creating labels
     label_set = set()
     for doc_meta in shuffle_doc_name_list:
@@ -77,6 +78,7 @@ def build_graph():
     y = np.array(y)
     print(label_list)
 
+    feature_list = []
     word_freq_list = []
     ls_adj = []
     window_size = param['window_size']
@@ -97,6 +99,17 @@ def build_graph():
 
         vocab = list(word_set)
         vocab_size = len(vocab)
+
+        features = []
+        bert_embedding = BertEmbedding()
+        result = bert_embedding(vocab)
+        if len(result) != vocab_size:
+            print('Vocab size : ',vocab_size,'\nresult size : ', len(result))
+        for i in range(vocab_size):
+            features.append(result[i][1][0])
+
+        features = np.array(features)
+        feature_list.append(features)
 
         # Create map of word to id
         word_id_map = {}
@@ -199,16 +212,18 @@ def build_graph():
             print(feat)
             print(adj)
         index += 1
-    return ls_adj, word_freq_list, y, y_hot, train_size
+    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size
 
 
 def main():
-    ls_adj, word_freq_list, y, y_hot, train_size = build_graph()
+    ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph()
     # Test
-    print('Shape of feature index 10 ', word_freq_list[10].shape)
-    print('Shape of adj index 10 ', ls_adj[10].shape)
-    print('Size of features ', len(word_freq_list))
-    print('Size of adjacency ', len(ls_adj))
+    print('Shape of word frequency list index 10 : ', word_freq_list[10].shape)
+    print('Shape of adj index 10 : ', ls_adj[10].shape)
+    print('Size of features : ', len(word_freq_list))
+    print('Size of adjacency : ', len(ls_adj))
+    print('Size of feature list : ', len(feature_list))
+    print('Shape of features index 10 : ', feature_list[10].shape)
 
 
 main()
