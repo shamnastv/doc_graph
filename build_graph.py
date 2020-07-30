@@ -1,3 +1,4 @@
+import pickle
 import random
 import numpy as np
 import scipy.sparse as sp
@@ -8,9 +9,42 @@ from bert_embedding import BertEmbedding
 from util import read_param
 
 
+def dump_data(dataset, data_name, data):
+    with open(dataset + data_name, 'wb') as f:
+        pickle.dump(data, f)
+
+
+def save_graph(dataset, ls_adj, feature_list, word_freq_list, y, y_hot, train_size):
+    dump_data(dataset, 'ls_adj', ls_adj)
+    dump_data(dataset, 'feature_list', feature_list)
+    dump_data(dataset, 'word_freq_list', word_freq_list)
+    dump_data(dataset, 'y', y)
+    dump_data(dataset, 'y_hot', y_hot)
+    dump_data(dataset, 'train_size', train_size)
+
+
+def read_data(dataset, dataname):
+    f = open(dataset + dataname, 'rb')
+    return pickle.load(f)
+
+
+def retrieve_graph(dataset):
+    ls_adj = read_data(dataset, 'ls_adj')
+    feature_list = read_data(dataset, 'feature_list')
+    word_freq_list = read_data(dataset, 'word_freq_list')
+    y = read_data(dataset, 'y')
+    y_hot = read_data(dataset, 'y_hot')
+    train_size = read_data(dataset, 'train_size')
+    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size
+
+
 def build_graph():
     param = read_param('param.yaml')
     dataset = param['dataset']
+    
+    if param['retrieve_graph']:
+        return retrieve_graph(dataset)
+    
     doc_name_list = []
     doc_train_list = []
     doc_test_list = []
@@ -212,6 +246,9 @@ def build_graph():
             print(feat)
             print(adj)
         index += 1
+    if param['save_graph']:
+        save_graph(dataset, ls_adj, feature_list, word_freq_list, y, y_hot, train_size)
+        
     return ls_adj, feature_list, word_freq_list, y, y_hot, train_size
 
 

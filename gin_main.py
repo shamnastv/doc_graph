@@ -29,20 +29,19 @@ class S2VGraph(object):
         self.g = g
         self.node_tags = node_tags
         self.neighbors = []
-        self.node_features = 0
+        self.node_features = torch.FloatTensor(node_features)
         self.edge_mat = 0
 
         self.max_neighbor = 0
 
 
 def create_gaph(degree_as_tag):
-    ls_adj, word_freq_list, y, y_hot, train_size = build_graph.build_graph()
+    ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph()
     g_list = []
     for i, adj in enumerate(ls_adj):
         g = nx.from_scipy_sparse_matrix(adj)
         lb = y[i]
-        node_tags = i
-        g_list.append(S2VGraph(g, lb, node_tags))
+        g_list.append(S2VGraph(g, lb, node_features=feature_list[i]))
 
     for g in g_list:
         g.neighbors = [[] for i in range(len(g.g))]
@@ -55,22 +54,23 @@ def create_gaph(degree_as_tag):
             degree_list.append(len(g.neighbors[i]))
         g.max_neighbor = max(degree_list)
         edges = [list(pair) for pair in g.g.edges()]
-        deg_list = list(dict(g.g.degree(range(len(g.g)))).values())
+        edges.extend([[i, j] for j, i in edges])
+
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
 
-    if degree_as_tag:
-        for g in g_list:
-            g.node_tags = list(dict(g.g.degree).values())
-    tagset = set([])
-    for g in g_list:
-        tagset = tagset.union(set(g.node_tags))
+    # if degree_as_tag:
+    #     for g in g_list:
+    #         g.node_tags = list(dict(g.g.degree).values())
+    # tagset = set([])
+    # for g in g_list:
+    #     tagset = tagset.union(set(g.node_tags))
 
-    tagset = list(tagset)
-    tag2index = {tagset[i]: i for i in range(len(tagset))}
+    # tagset = list(tagset)
+    # tag2index = {tagset[i]: i for i in range(len(tagset))}
 
-    for g in g_list:
-        g.node_features = torch.zeros(len(g.node_tags), len(tagset))
-        g.node_features[range(len(g.node_tags)), [tag2index[tag] for tag in g.node_tags]] = 1
+    # for i, g in enumerate(g_list):
+    #     g.node_features = torch.zeros(len(g.node_tags), len(tagset))
+    #     g.node_features[range(len(g.node_tags)), [tag2index[tag] for tag in g.node_tags]] = 1
 
     return g_list, len(set(y)), train_size
 
