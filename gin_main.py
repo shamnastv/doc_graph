@@ -103,7 +103,7 @@ def train(args, model, device, train_graphs, optimizer, epoch):
         loss_accum += loss
 
         # report
-        pbar.set_description('epoch: %d' % (epoch))
+        # pbar.set_description('epoch: %d' % (epoch))
 
     average_loss = loss_accum / total_iters
     print("loss training: %f" % (average_loss))
