@@ -79,7 +79,7 @@ def train(args, model, device, train_graphs, optimizer, epoch):
     model.train()
 
     total_iters = args.iters_per_epoch
-    pbar = tqdm(range(total_iters), unit='batch')
+    pbar = tqdm(range(total_iters), unit='batch', disable=True)
 
     loss_accum = 0
     for pos in pbar:
@@ -103,7 +103,7 @@ def train(args, model, device, train_graphs, optimizer, epoch):
         loss_accum += loss
 
         # report
-        # pbar.set_description('epoch: %d' % (epoch))
+        pbar.set_description('epoch: %d' % (epoch))
 
     average_loss = loss_accum / total_iters
     print("loss training: %f" % (average_loss))
@@ -139,6 +139,7 @@ def test(args, model, device, train_graphs, test_graphs, epoch):
     correct = pred.eq(labels.view_as(pred)).sum().cpu().item()
     acc_test = correct / float(len(test_graphs))
 
+    print('epoch : ', epoch )
     print("accuracy train: %f test: %f" % (acc_train, acc_test))
 
     return acc_train, acc_test
