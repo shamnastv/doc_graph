@@ -177,11 +177,13 @@ def main():
     parser.add_argument('--learn_eps', action="store_true",
                         help='Whether to learn the epsilon weighting for the center nodes. Does not affect training '
                              'accuracy though.')
-    parser.add_argument('--degree_as_tag', action="store_true",
-                        help='let the input node features be the degree of nodes (heuristics for unlabeled graph)')
+    # parser.add_argument('--degree_as_tag', action="store_true",
+    #                     help='let the input node features be the degree of nodes (heuristics for unlabeled graph)')
     parser.add_argument('--filename', type=str, default="",
                         help='output file')
     args = parser.parse_args()
+
+    print(args)
 
     # set up seeds and gpu device
     torch.manual_seed(0)

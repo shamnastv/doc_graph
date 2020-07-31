@@ -1,0 +1,8 @@
+#!/bin/sh
+#SBATCH --job-name=GNN # Job name
+#SBATCH --ntasks=1 # Run on a single CPU
+#SBATCH --time=11:50:00 # Time limit hrs:min:sec
+#SBATCH --output=test_job%j.out # Standard output and error log
+#SBATCH --gres=gpu:1
+#SBATCH --partition=q2h_12h-32C
+python3 gin_main.py --iters_per_epoch 50 --epochs 1000 --lr .01 --num_layers 6 --num_mlp_layers 3 --hidden_dim 512 --graph_pooling_type sum --neighbor_pooling_type sum
