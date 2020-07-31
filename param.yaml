@@ -1,4 +1,4 @@
-dataset: 20ng
+dataset: R8
 window_size: 20
 save_graph: True
 retrieve_graph: False

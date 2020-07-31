@@ -174,7 +174,8 @@ def main():
     parser.add_argument('--neighbor_pooling_type', type=str, default="sum", choices=["sum", "average", "max"],
                         help='Pooling for over neighboring nodes: sum, average or max')
     parser.add_argument('--learn_eps', action="store_true",
-                        help='Whether to learn the epsilon weighting for the center nodes. Does not affect training accuracy though.')
+                        help='Whether to learn the epsilon weighting for the center nodes. Does not affect training '
+                             'accuracy though.')
     parser.add_argument('--degree_as_tag', action="store_true",
                         help='let the input node features be the degree of nodes (heuristics for unlabeled graph)')
     parser.add_argument('--filename', type=str, default="",
