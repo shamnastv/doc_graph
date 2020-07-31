@@ -35,7 +35,7 @@ class S2VGraph(object):
         self.max_neighbor = 0
 
 
-def create_gaph(degree_as_tag):
+def create_gaph():
     ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph()
     g_list = []
     for i, adj in enumerate(ls_adj):
@@ -192,7 +192,7 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(0)
 
-    graphs, num_classes, train_size = create_gaph(args.degree_as_tag)
+    graphs, num_classes, train_size = create_gaph()
 
     train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
     model = GraphCNN(args.num_layers, args.num_mlp_layers, train_graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
