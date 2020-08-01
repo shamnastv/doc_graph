@@ -152,6 +152,10 @@ def test(args, model, device, train_graphs, test_graphs, epoch):
         max_test_accuracy = acc_test
         max_acc_epoch = epoch
 
+    if epoch == 800:
+        for i in range(len(test_graphs)):
+            print('label : ', labels[i], ' pred : ', pred[i])
+
     return acc_train, acc_test
 
 
