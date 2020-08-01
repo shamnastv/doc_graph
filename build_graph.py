@@ -256,13 +256,13 @@ def build_graph():
 
         # Test
         # print(adj.shape)
-        if index in [0, 3]:
-            print('Index : ', index)
-            print(shuffle_doc_name_list[index])
-            print(doc_words)
-            print(word_id_map)
-            print(feat)
-            print(adj)
+        # if index in [0, 3]:
+        #     print('Index : ', index)
+        #     print(shuffle_doc_name_list[index])
+        #     print(doc_words)
+        #     print(word_id_map)
+        #     print(feat)
+        #     print(adj)
         index += 1
     if param['save_graph']:
         save_graph(dataset, ls_adj, feature_list, word_freq_list, y, y_hot, train_size)

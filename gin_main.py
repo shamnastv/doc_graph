@@ -13,6 +13,7 @@ import build_graph
 from graphcnn import GraphCNN
 
 criterion = nn.CrossEntropyLoss()
+frequency_as_feature = True
 
 
 class S2VGraph(object):
@@ -41,7 +42,10 @@ def create_gaph():
     for i, adj in enumerate(ls_adj):
         g = nx.from_scipy_sparse_matrix(adj)
         lb = y[i]
-        g_list.append(S2VGraph(g, lb, node_features=feature_list[i]))
+        feat = feature_list[i]
+        if frequency_as_feature:
+            feat = np.concatenate((feat, word_freq_list[i].toarray()), axis=1)
+        g_list.append(S2VGraph(g, lb, node_features=feat))
 
     for g in g_list:
         g.neighbors = [[] for i in range(len(g.g))]
@@ -139,7 +143,7 @@ def test(args, model, device, train_graphs, test_graphs, epoch):
     correct = pred.eq(labels.view_as(pred)).sum().cpu().item()
     acc_test = correct / float(len(test_graphs))
 
-    print('epoch : ', epoch )
+    print('epoch : ', epoch)
     print("accuracy train: %f test: %f" % (acc_train, acc_test))
 
     return acc_train, acc_test
