@@ -14,6 +14,8 @@ from graphcnn import GraphCNN
 
 criterion = nn.CrossEntropyLoss()
 frequency_as_feature = True
+max_test_accuracy = 0
+max_acc_epoch = 0
 
 
 class S2VGraph(object):
@@ -145,6 +147,10 @@ def test(args, model, device, train_graphs, test_graphs, epoch):
 
     print('epoch : ', epoch)
     print("accuracy train: %f test: %f" % (acc_train, acc_test))
+    global max_acc_epoch, max_test_accuracy
+    if acc_test > max_test_accuracy:
+        max_test_accuracy = acc_test
+        max_acc_epoch = epoch
 
     return acc_train, acc_test
 
