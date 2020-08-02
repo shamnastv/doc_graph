@@ -227,6 +227,11 @@ def main():
         print("")
 
         print(model.eps)
+    print('total size : ', len(graphs))
+    print('size of train graph : ', len(train_graphs))
+    print('size of test graph : ', len(test_graphs))
+    print('max test accuracy : ', max_test_accuracy)
+    print('max acc epoch : ', max_acc_epoch)
 
 
 if __name__ == '__main__':
