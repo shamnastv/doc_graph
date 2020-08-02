@@ -1,4 +1,4 @@
 dataset: R52
 window_size: 20
 save_graph: True
-retrieve_graph: False
+retrieve_graph: True
