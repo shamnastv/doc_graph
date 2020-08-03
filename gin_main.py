@@ -13,7 +13,7 @@ import build_graph
 from graphcnn import GraphCNN
 
 criterion = nn.CrossEntropyLoss()
-frequency_as_feature = True
+frequency_as_feature = False
 max_test_accuracy = 0
 max_acc_epoch = 0
 
@@ -47,7 +47,7 @@ def create_gaph():
         feat = feature_list[i]
         if frequency_as_feature:
             # feat = np.concatenate((feat, word_freq_list[i].toarray()), axis=1)
-            feat = feat *  word_freq_list[i].toarray()
+            feat = feat * word_freq_list[i].toarray()
         g_list.append(S2VGraph(g, lb, node_features=feat))
 
     for g in g_list:
@@ -65,19 +65,6 @@ def create_gaph():
 
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
 
-    # if degree_as_tag:
-    #     for g in g_list:
-    #         g.node_tags = list(dict(g.g.degree).values())
-    # tagset = set([])
-    # for g in g_list:
-    #     tagset = tagset.union(set(g.node_tags))
-
-    # tagset = list(tagset)
-    # tag2index = {tagset[i]: i for i in range(len(tagset))}
-
-    # for i, g in enumerate(g_list):
-    #     g.node_features = torch.zeros(len(g.node_tags), len(tagset))
-    #     g.node_features[range(len(g.node_tags)), [tag2index[tag] for tag in g.node_tags]] = 1
     print(g_list[0].node_features.shape)
     return g_list, len(set(y)), train_size
 
