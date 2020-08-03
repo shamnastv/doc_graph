@@ -46,7 +46,8 @@ def create_gaph():
         lb = y[i]
         feat = feature_list[i]
         if frequency_as_feature:
-            feat = np.concatenate((feat, word_freq_list[i].toarray()), axis=1)
+            # feat = np.concatenate((feat, word_freq_list[i].toarray()), axis=1)
+            feat = feat *  word_freq_list[i].toarray()
         g_list.append(S2VGraph(g, lb, node_features=feat))
 
     for g in g_list:
@@ -77,7 +78,7 @@ def create_gaph():
     # for i, g in enumerate(g_list):
     #     g.node_features = torch.zeros(len(g.node_tags), len(tagset))
     #     g.node_features[range(len(g.node_tags)), [tag2index[tag] for tag in g.node_tags]] = 1
-
+    print(g_list[0].node_features.shape)
     return g_list, len(set(y)), train_size
 
 
