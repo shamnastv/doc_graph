@@ -1,4 +1,4 @@
-dataset: 20ng
+dataset: ohmsmed
 window_size: 20
 save_graph: False
 retrieve_graph: False
