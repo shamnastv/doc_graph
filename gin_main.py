@@ -38,8 +38,8 @@ class S2VGraph(object):
         self.max_neighbor = 0
 
 
-def create_gaph():
-    ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph()
+def create_gaph(args):
+    ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph(config_file=args.configfile)
     g_list = []
     for i, adj in enumerate(ls_adj):
         g = nx.from_scipy_sparse_matrix(adj)
@@ -181,6 +181,8 @@ def main():
                              'accuracy though.')
     # parser.add_argument('--degree_as_tag', action="store_true",
     #                     help='let the input node features be the degree of nodes (heuristics for unlabeled graph)')
+    parser.add_argument('--configfile', type=str, default="param.yaml",
+                        help='configuration file')
     parser.add_argument('--filename', type=str, default="",
                         help='output file')
     args = parser.parse_args()
@@ -194,7 +196,7 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(0)
 
-    graphs, num_classes, train_size = create_gaph()
+    graphs, num_classes, train_size = create_gaph(args)
 
     train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
     model = GraphCNN(args.num_layers, args.num_mlp_layers, train_graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)

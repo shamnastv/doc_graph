@@ -38,8 +38,8 @@ def retrieve_graph(dataset):
     return ls_adj, feature_list, word_freq_list, y, y_hot, train_size
 
 
-def build_graph():
-    param = read_param('param.yaml')
+def build_graph(config_file='param.yaml'):
+    param = read_param(config_file)
     dataset = param['dataset']
     
     if param['retrieve_graph']:
