@@ -1,6 +1,5 @@
-import numpy as np
+import torch
 
-arr = np.array([[1, 2], [3, 4]])
-mul = np.array([[1], [2], [4]])
-
-print(arr * mul)
+x = torch.randn(2, 3)
+print(x)
+print(torch.transpose(x, 1, 0))
