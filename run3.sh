@@ -5,4 +5,4 @@
 #SBATCH --output=test_job%j.out # Standard output and error log
 #SBATCH --gres=gpu:1
 #SBATCH --partition=q2h_12h-32C
-python3 gin_main.py --batch_size 64 --iters_per_epoch 50 --epochs 700 --lr .001 --num_layers 5 --num_mlp_layers 2 --hidden_dim 768 --final_dropout .7 --graph_pooling_type average --neighbor_pooling_type average
+python3 gin_main.py --batch_size 64 --iters_per_epoch 50 --epochs 1500 --lr .00005 --num_layers 6 --num_mlp_layers 3 --hidden_dim 768 --final_dropout .5 --graph_pooling_type average --neighbor_pooling_type average --learn_eps --configfile param.yaml
