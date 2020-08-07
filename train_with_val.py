@@ -1,3 +1,5 @@
+import copy
+
 import networkx as nx
 import numpy as np
 import random
@@ -132,7 +134,7 @@ def validate(args, model, device, train_graphs, test_graphs, epoch):
     acc_test = correct / float(len(test_graphs))
 
     print('epoch : ', epoch)
-    print("accuracy train: %f test: %f" % (acc_train, acc_test))
+    print("accuracy train: %f validate: %f" % (acc_train, acc_test))
 
     if epoch == 800:
         for i in range(len(test_graphs)):
@@ -228,7 +230,7 @@ def main():
         if acc_test > max_test_accuracy:
             max_test_accuracy = acc_test
             max_acc_epoch = epoch
-            saved_model = model
+            saved_model = copy.deepcopy(model)
 
         if not args.filename == "":
             with open(args.filename, 'w') as f:
