@@ -211,7 +211,7 @@ def main():
 
     graphs, num_classes, train_size = create_gaph(args)
 
-    val_size = train_size * 0.2
+    val_size = int(train_size * 0.2)
     train_size = train_size - val_size
 
     train_graphs, val_graphs = graphs[:train_size], graphs[train_size:train_size + val_size]
