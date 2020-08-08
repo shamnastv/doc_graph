@@ -216,7 +216,7 @@ def main():
                 f.write("\n")
         print("")
 
-        print(model.eps)
+        # print(model.eps)
     print('total size : ', len(graphs))
     print('size of train graph : ', len(train_graphs))
     print('size of test graph : ', len(test_graphs))

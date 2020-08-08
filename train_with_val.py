@@ -238,7 +238,7 @@ def main():
                 f.write("\n")
         print("")
 
-        print(model.eps)
+        # print(model.eps)
     acc_test = test(args, saved_model, device, test_graphs)
     print("Accuracy test: %f" % acc_test)
 
@@ -246,7 +246,7 @@ def main():
     print('size of train graph : ', len(train_graphs))
     print('size of validation graph : ', len(val_graphs))
     print('size of test graph : ', len(test_graphs))
-    print('max test accuracy : ', max_test_accuracy)
+    print('max val accuracy : ', max_test_accuracy)
     print('max acc epoch : ', max_acc_epoch)
 
 
