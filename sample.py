@@ -1,5 +1,9 @@
-import torch
+import numpy as np
 
-x = torch.randn(2, 3)
-print(x)
-print(torch.transpose(x, 1, 0))
+np.random.seed(0)
+print(np.random.permutation(11))
+print(np.random.permutation(10))
+print(np.random.permutation(10))
+
+
+

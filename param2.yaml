@@ -1,0 +1,4 @@
+dataset: R52
+window_size: 40
+save_graph: False
+retrieve_graph: True
