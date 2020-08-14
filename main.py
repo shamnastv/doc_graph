@@ -119,7 +119,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, 
         loss = loss.detach().cpu().numpy()
         loss_accum += loss
 
-        ge[selected_idx] = pooled_h
+        ge[selected_idx] = pooled_h.detach()
+        h = h.detach()
         start_idx = 0
         for j in selected_idx:
             length = len(graphs[j].g)
