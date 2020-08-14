@@ -73,9 +73,7 @@ def create_gaph(args):
 def my_loss(alpha, centroids, embeddings, cl, device):
     dm = len(cl[0])
     loss = 0
-    print('cntr ', centroids.shape)
-    print('embds ', embeddings.shape)
-    print('embd ', embeddings[0].shape)
+    centroids = centroids.detach()
     for i, emb in enumerate(embeddings):
         tmp = torch.sub(centroids, emb)
         loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
