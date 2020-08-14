@@ -275,13 +275,13 @@ def main():
         scheduler.step()
 
         avg_loss, ge = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
-        acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
-
-        if not args.filename == "":
-            with open(args.filename, 'w') as f:
-                f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
-                f.write("\n")
-        print("")
+        # acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
+        #
+        # if not args.filename == "":
+        #     with open(args.filename, 'w') as f:
+        #         f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
+        #         f.write("\n")
+        # print("")
 
         # print(model.eps)
     print('total size : ', len(graphs))
