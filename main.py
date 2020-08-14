@@ -85,10 +85,10 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_c.train()
 
     cl = model_c(ge)
-    loss = my_loss(args.alpha, model_c.centroids, ge, cl, device)
+    loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
     if optimizer_c is not None:
         optimizer_c.zero_grad()
-        loss.backward()
+        loss_c.backward()
         optimizer_c.step()
     cl = cl.detach()
 
