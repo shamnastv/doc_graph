@@ -78,7 +78,7 @@ def my_loss(alpha, centroids, embeddings, cl):
     print('embd ', embeddings[0].shape)
     for i, emb in enumerate(embeddings):
         tmp = torch.sub(centroids, emb)
-        loss += torch.mm(cl[i], torch.norm(tmp, dim=0))
+        loss += torch.mm(cl[i], torch.norm(tmp, dim=1, keepdim=True))
     tmp = torch.mm(cl.transpose(0, 1), cl)
     loss += alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm) / dm ** .5)
     return loss
