@@ -70,13 +70,13 @@ def create_gaph(args):
     return g_list, len(set(y)), train_size
 
 
-def my_loss(alfa, centroids, embeddings, cl):
+def my_loss(alpha, centroids, embeddings, cl):
     dm = len(cl[0])
     loss = 0
     for i, emb in enumerate(embeddings):
         loss += torch.mm(cl[i], torch.norm(torch.sub(centroids, emb), dim=0))
     tmp = torch.mm(cl.transpose(0, 1), cl)
-    loss += alfa * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm) / dm ** .5)
+    loss += alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm) / dm ** .5)
     return loss
 
 
@@ -85,7 +85,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, 
     model_c.train()
 
     cl = model_c(ge)
-    loss = my_loss(args.alfa, model_c.centroids, ge, cl)
+    loss = my_loss(args.alpha, model_c.centroids, ge, cl)
     if optimizer is not None:
         optimizer.zero_grad()
         loss.backward()
