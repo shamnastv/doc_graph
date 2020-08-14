@@ -1,9 +1,6 @@
 import numpy as np
 
-np.random.seed(0)
-print(np.random.permutation(11))
-print(np.random.permutation(10))
-print(np.random.permutation(10))
-
-
-
+idx = np.arange(100)
+for i in range(0, 100, 60):
+    sampled_idx = idx[i:i + 60]
+    print(sampled_idx)
