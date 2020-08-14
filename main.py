@@ -80,16 +80,16 @@ def my_loss(alpha, centroids, embeddings, cl, device):
     return loss
 
 
-def train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, ge):
+def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge):
     model_e.train()
     model_c.train()
 
     cl = model_c(ge)
     loss = my_loss(args.alpha, model_c.centroids, ge, cl, device)
-    if optimizer is not None:
-        optimizer.zero_grad()
+    if optimizer_c is not None:
+        optimizer_c.zero_grad()
         loss.backward()
-        optimizer.step()
+        optimizer_c.step()
     cl = cl.detach()
 
     loss_accum = 0
@@ -268,12 +268,13 @@ def main():
                 args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
 
     optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+    optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
 
-        avg_loss, ge = train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, ge)
+        avg_loss, ge = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
         acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
         if not args.filename == "":
