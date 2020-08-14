@@ -104,13 +104,6 @@ def train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, 
             continue
         output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
 
-        ge[selected_idx] = pooled_h
-        start_idx = 0
-        for j in selected_idx:
-            length = len(graphs[j].g)
-            graphs[j].node_features = h[start_idx:start_idx + length]
-            start_idx += length
-
         labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
         # compute loss
         loss = criterion(output, labels)
@@ -123,6 +116,13 @@ def train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, 
 
         loss = loss.detach().cpu().numpy()
         loss_accum += loss
+
+        ge[selected_idx] = pooled_h
+        start_idx = 0
+        for j in selected_idx:
+            length = len(graphs[j].g)
+            graphs[j].node_features = h[start_idx:start_idx + length]
+            start_idx += length
 
     total_size = len(graphs)
     test_size = total_size - train_size

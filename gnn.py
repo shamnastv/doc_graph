@@ -30,7 +30,6 @@ class GNN(nn.Module):
         self.learn_eps = learn_eps
         self.eps = nn.Parameter(torch.zeros(1))
 
-        self.ep = nn.Parameter(torch.zeros(1))
         self.ws = nn.Parameter(torch.zeros(2))
         self.mlp_e = MLP(num_mlp_layers, input_dim, hidden_dim, input_dim)
         self.batch_norms_e = nn.BatchNorm1d(input_dim)
@@ -208,7 +207,6 @@ class GNN(nn.Module):
             Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
 
         # list of hidden representation at each layer (including input)
-        hidden_rep = [X_concat]
         h = X_concat
 
         # for layer in range(self.num_layers - 1):
