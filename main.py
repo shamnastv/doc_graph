@@ -66,7 +66,6 @@ def create_gaph(args):
 
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
 
-    print(g_list[0].node_features.shape)
     return g_list, len(set(y)), train_size
 
 
@@ -96,7 +95,6 @@ def train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, 
     loss_accum = 0
     idx = np.random.permutation(train_size)
     for i in range(0, train_size, args.batch_size):
-        print('i : ', i)
         selected_idx = idx[i:i + args.batch_size]
         batch_graph = [graphs[idx] for idx in selected_idx]
         if len(selected_idx) == 0:
@@ -266,17 +264,17 @@ def main():
     train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
 
     model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers).to(device)
-    model = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout,
+    model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout,
                 args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
 
-        avg_loss, ge = train(args, model, model_c, device, graphs, optimizer, epoch, train_size, ge)
-        acc_train, acc_test = test(args, model, model, device, train_graphs, test_graphs, epoch)
+        avg_loss, ge = train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, ge)
+        acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
         if not args.filename == "":
             with open(args.filename, 'w') as f:
