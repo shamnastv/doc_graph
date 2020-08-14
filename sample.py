@@ -1,6 +1,10 @@
 import numpy as np
+import torch
 
-idx = np.arange(100)
-for i in range(0, 100, 60):
-    sampled_idx = idx[i:i + 60]
-    print(sampled_idx)
+x = torch.ones(4, 3)
+y = torch.ones(3)
+z = torch.sub(x, y)
+
+print(x)
+print(y)
+print(z)
