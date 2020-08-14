@@ -73,7 +73,6 @@ def create_gaph(args):
 def my_loss(alpha, centroids, embeddings, cl, device):
     dm = len(cl[0])
     loss = 0
-    centroids = centroids.detach()
     for i, emb in enumerate(embeddings):
         tmp = torch.sub(centroids, emb)
         loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
@@ -92,6 +91,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+    loss = loss.deach()
 
     loss_accum = 0
     idx = np.random.permutation(train_size)
