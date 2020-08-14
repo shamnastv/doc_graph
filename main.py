@@ -91,7 +91,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-    loss = loss.deach()
+    cl = cl.detach()
 
     loss_accum = 0
     idx = np.random.permutation(train_size)
