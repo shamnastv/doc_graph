@@ -133,7 +133,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             continue
         output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
 
-        ge[selected_idx] = pooled_h
+        ge[selected_idx] = pooled_h.detach()
+        h = h.detach()
         start_idx = 0
         for j in selected_idx:
             length = len(graphs[j].g)
