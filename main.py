@@ -198,7 +198,8 @@ def initialize_clusters(m, n):
 def initialize_graph_embedding(graphs, device):
     embeddings = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
     for i, g in enumerate(graphs):
-        for feat in g.node_features:
+        features = torch.cat(g.node_features).to(device)
+        for feat in features:
             embeddings[i] += feat
 
     return embeddings
