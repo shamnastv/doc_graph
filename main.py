@@ -7,8 +7,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from tqdm import tqdm
-
 import build_graph
 from cluster import ClusterNN
 from gnn import GNN
@@ -144,7 +142,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     print('Epoch : ', epoch, 'loss training: ', loss_accum)
 
-    return loss_accum, ge
+    return loss_accum, ge, graphs
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
@@ -193,11 +191,6 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
             print('label : ', labels_test[i], ' pred : ', pred_test[i])
 
     return acc_train, acc_test
-
-
-def initialize_clusters(m, n):
-    clusters = torch.zeros(m, n)
-    return clusters
 
 
 def initialize_graph_embedding(graphs, device):
@@ -263,8 +256,6 @@ def main():
     graphs, num_classes, train_size = create_gaph(args)
     ge = initialize_graph_embedding(graphs, device)
 
-    train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
-
     model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers).to(device)
     model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout,
                 args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
@@ -276,7 +267,7 @@ def main():
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
 
-        avg_loss, ge = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
+        avg_loss, ge, graphs = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
         acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
         if not args.filename == "":
@@ -287,8 +278,6 @@ def main():
 
         # print(model.eps)
     print('total size : ', len(graphs))
-    print('size of train graph : ', len(train_graphs))
-    print('size of test graph : ', len(test_graphs))
     print('max test accuracy : ', max_test_accuracy)
     print('max acc epoch : ', max_acc_epoch)
 

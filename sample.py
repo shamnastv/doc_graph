@@ -1,10 +1,16 @@
 import numpy as np
 import torch
 
-x = torch.ones(4, 3)
-y = torch.ones(3)
-z = torch.sub(x, y)
 
-print(torch.norm(x, dim=1, keepdim=True))
-print(x)
-print(z)
+def change(a):
+    a[3] = 100
+
+
+def main():
+    a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    print(a)
+    change(a[:5])
+    print(a)
+
+
+main()
