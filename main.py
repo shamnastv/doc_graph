@@ -195,8 +195,8 @@ def initialize_clusters(m, n):
     return clusters
 
 
-def initialize_graph_embedding(graphs):
-    embeddings = torch.zeros(len(graphs), graphs[0].node_features.shape[1])
+def initialize_graph_embedding(graphs, device):
+    embeddings = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
     for i, g in enumerate(graphs):
         for feat in g.node_features:
             embeddings[i] += feat
@@ -255,8 +255,7 @@ def main():
         torch.cuda.manual_seed_all(0)
 
     graphs, num_classes, train_size = create_gaph(args)
-    clusters = initialize_clusters(len(graphs), num_classes)
-    ge = initialize_graph_embedding(graphs)
+    ge = initialize_graph_embedding(graphs, device)
 
     train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
 
