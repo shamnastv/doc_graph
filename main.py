@@ -264,7 +264,7 @@ def main():
 
     train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
 
-    model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.num_mlp_layers).to(device)
+    model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers).to(device)
     model = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout,
                 args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
 

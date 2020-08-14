@@ -10,7 +10,7 @@ class ClusterNN(nn.Module):
         super(ClusterNN, self).__init__()
         self.centroids = nn.Parameter(torch.zeros(num_class, dim))
         self.mlp_c = MLP(num_mlp_layers, dim, dim, num_class)
-        self.batch_norm_c = nn.BatchNorm1d(dim)
+        self.batch_norm_c = nn.BatchNorm1d(num_class)
 
     def forward(self, ge):
         cg = self.mlp_c(ge)
