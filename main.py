@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import time
 
 import build_graph
 from cluster import ClusterNN
@@ -15,6 +16,7 @@ criterion = nn.CrossEntropyLoss()
 frequency_as_feature = False
 max_test_accuracy = 0
 max_acc_epoch = 0
+start_time = time.time()
 
 
 class S2VGraph(object):
@@ -140,7 +142,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             graphs[j].node_features = h[start_idx:start_idx + length]
             start_idx += length
 
-    print('Epoch : ', epoch, 'loss training: ', loss_accum)
+    print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
     return loss_accum, ge, graphs
 
@@ -179,7 +181,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
     correct = pred_test.eq(labels_test.view_as(pred_test)).sum().cpu().item()
     acc_test = correct / float(len(test_graphs))
 
-    print('epoch : ', epoch)
+    print(time.time() - start_time, 's epoch : ', epoch)
     print("accuracy train: %f test: %f" % (acc_train, acc_test))
     global max_acc_epoch, max_test_accuracy
     if acc_test > max_test_accuracy:
@@ -264,6 +266,7 @@ def main():
     optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
+    print(time.time() - start_time, 's Training starts')
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
 
@@ -277,6 +280,7 @@ def main():
         print("")
 
         # print(model.eps)
+    print(time.time() - start_time, 's Completed')
     print('total size : ', len(graphs))
     print('max test accuracy : ', max_test_accuracy)
     print('max acc epoch : ', max_acc_epoch)
