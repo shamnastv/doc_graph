@@ -98,6 +98,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, 
     loss_accum = 0
     idx = np.random.permutation(train_size)
     for i in range(0, train_size, args.batch_size):
+        print('i : ', i)
         selected_idx = idx[i:i + args.batch_size]
         batch_graph = [graphs[idx] for idx in selected_idx]
         if len(selected_idx) == 0:
@@ -105,6 +106,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, epoch, train_size, 
         output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
 
         labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
+
         # compute loss
         loss = criterion(output, labels)
 
