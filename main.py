@@ -123,7 +123,6 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             length = len(graphs[j].g)
             graphs[j].node_features = h[start_idx:start_idx + length]
             start_idx += length
-        print(start_idx - len(h))
 
     model_e.eval()
     total_size = len(graphs)
