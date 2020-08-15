@@ -84,6 +84,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_e.train()
     model_c.train()
 
+    ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
     cl = model_c(ge)
     loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
     if optimizer_c is not None:
@@ -93,9 +94,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     cl = cl.detach()
 
     loss_accum = 0
-    idx = np.random.permutation(train_size)
+    idx_train = np.random.permutation(train_size)
     for i in range(0, train_size, args.batch_size):
-        selected_idx = idx[i:i + args.batch_size]
+        selected_idx = idx_train[i:i + args.batch_size]
         batch_graph = [graphs[idx] for idx in selected_idx]
         if len(selected_idx) == 0:
             continue
@@ -115,27 +116,28 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         loss = loss.detach().cpu().numpy()
         loss_accum += loss
 
-        ge[selected_idx] = pooled_h.detach()
+        ge_new[selected_idx] = pooled_h.detach()
         h = h.detach()
         start_idx = 0
         for j in selected_idx:
             length = len(graphs[j].g)
             graphs[j].node_features = h[start_idx:start_idx + length]
             start_idx += length
+        print(start_idx - len(h))
 
     model_e.eval()
     total_size = len(graphs)
     test_size = total_size - train_size
-    idx = np.arange(train_size, total_size)
+    idx_test = np.arange(train_size, total_size)
     for i in range(0, test_size, args.batch_size):
-        selected_idx = idx[i:i + args.batch_size]
+        selected_idx = idx_test[i:i + args.batch_size]
         batch_graph = [graphs[idx] for idx in selected_idx]
         if len(selected_idx) == 0:
             continue
         output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
 
         output = output.detach()
-        ge[selected_idx] = pooled_h.detach()
+        ge_new[selected_idx] = pooled_h.detach()
         h = h.detach()
         start_idx = 0
         for j in selected_idx:
@@ -145,15 +147,15 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
-    return loss_accum, ge, graphs
+    return loss_accum, ge_new, graphs
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
 def pass_data_iteratively(model_e, graphs, cl, ge, minibatch_size=64):
     outputs = []
-    idx = np.arange(len(graphs))
+    full_idx = np.arange(len(graphs))
     for i in range(0, len(graphs), minibatch_size):
-        sampled_idx = idx[i:i + minibatch_size]
+        sampled_idx = full_idx[i:i + minibatch_size]
         if len(sampled_idx) == 0:
             continue
         output, pooled_h, h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
