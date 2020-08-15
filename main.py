@@ -213,18 +213,12 @@ def main():
                         help='which gpu to use if any (default: 0)')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='input batch size for training (default: 32)')
-    parser.add_argument('--iters_per_epoch', type=int, default=50,
-                        help='number of iterations per each epoch (default: 50)')
     parser.add_argument('--epochs', type=int, default=350,
                         help='number of epochs to train (default: 350)')
     parser.add_argument('--lr', type=float, default=0.01,
                         help='learning rate (default: 0.01)')
     parser.add_argument('--seed', type=int, default=0,
                         help='random seed for splitting the dataset into 10 (default: 0)')
-    parser.add_argument('--fold_idx', type=int, default=0,
-                        help='the index of fold in 10-fold validation. Should be less then 10.')
-    parser.add_argument('--num_layers', type=int, default=5,
-                        help='number of layers INCLUDING the input one (default: 5)')
     parser.add_argument('--num_mlp_layers', type=int, default=2,
                         help='number of layers for MLP EXCLUDING the input one (default: 2). 1 means linear model.')
     parser.add_argument('--hidden_dim', type=int, default=64,
