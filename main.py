@@ -123,6 +123,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             graphs[j].node_features = h[start_idx:start_idx + length]
             start_idx += length
 
+    model_e.eval()
     total_size = len(graphs)
     test_size = total_size - train_size
     idx = np.arange(train_size, total_size)
@@ -133,9 +134,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             continue
         output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
 
-        output = output.detach();
-        ge[selected_idx] = pooled_h.detach()
-        h = h.detach()
+        # output = output.detach()
+        ge[selected_idx] = pooled_h
+        # h = h.detach()
         start_idx = 0
         for j in selected_idx:
             length = len(graphs[j].g)
@@ -198,9 +199,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
 def initialize_graph_embedding(graphs, device):
     embeddings = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
     for i, g in enumerate(graphs):
-        features = torch.tensor(g.node_features).to(device)
-        for feat in features:
-            embeddings[i] += feat
+        embeddings[i] = g.node_features.mean(dim=0).to(device)
 
     return embeddings
 
