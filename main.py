@@ -64,7 +64,8 @@ def create_gaph(args):
         edges = [list(pair) for pair in g.g.edges()]
         edges.extend([[i, j] for j, i in edges])
         if len(edges) == 0:
-            print(len(g))
+            print('empty edges')
+            print(len(g.g))
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
 
     return g_list, len(set(y)), train_size
