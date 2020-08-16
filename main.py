@@ -63,9 +63,6 @@ def create_gaph(args):
         g.max_neighbor = max(degree_list)
         edges = [list(pair) for pair in g.g.edges()]
         edges.extend([[i, j] for j, i in edges])
-        if len(edges) == 0:
-            print('empty edges')
-            print(len(g.g))
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
 
     return g_list, len(set(y)), train_size
@@ -88,12 +85,13 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
     cl = model_c(ge)
-    loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
-    if optimizer_c is not None:
-        optimizer_c.zero_grad()
-        loss_c.backward()
-        optimizer_c.step()
-    cl = cl.detach()
+    for rep in range(50):
+        loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
+        if optimizer_c is not None:
+            optimizer_c.zero_grad()
+            loss_c.backward()
+            optimizer_c.step()
+        cl = cl.detach()
 
     loss_accum = 0
     idx_train = np.random.permutation(train_size)
