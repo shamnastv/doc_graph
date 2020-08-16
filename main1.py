@@ -122,7 +122,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         start_idx = 0
         for j in selected_idx:
             length = len(graphs[j].g)
-            graphs[j].node_features[:, input_dim/2:] = h[start_idx:start_idx + length]
+            graphs[j].node_features[:, int(input_dim/2):] = h[start_idx:start_idx + length]
             start_idx += length
 
     model_e.eval()
@@ -142,7 +142,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         start_idx = 0
         for j in selected_idx:
             length = len(graphs[j].g)
-            graphs[j].node_features[:, input_dim/2:] = h[start_idx:start_idx + length]
+            graphs[j].node_features[:, int(input_dim/2):] = h[start_idx:start_idx + length]
             start_idx += length
 
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
@@ -202,7 +202,7 @@ def initialize_graph_embedding(graphs, device):
     input_dim = graphs[0].node_features.shape[1]
     embeddings = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
     for i, g in enumerate(graphs):
-        embeddings[i] = g.node_features[:, :input_dim/2].mean(dim=0).to(device)
+        embeddings[i] = g.node_features[:, :int(input_dim/2)].mean(dim=0).to(device)
 
     return embeddings
 

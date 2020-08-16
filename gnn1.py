@@ -30,8 +30,8 @@ class GNN(nn.Module):
         self.eps = nn.Parameter(torch.zeros(1))
 
         self.ws = nn.Parameter(torch.zeros(2))
-        self.mlp_e = MLP(num_mlp_layers, input_dim, hidden_dim, input_dim/2)
-        self.batch_norms_e = nn.BatchNorm1d(input_dim/2)
+        self.mlp_e = MLP(num_mlp_layers, input_dim, hidden_dim, int(input_dim/2))
+        self.batch_norms_e = nn.BatchNorm1d(int(input_dim/2))
 
         self.linear_prediction = nn.Linear(input_dim/2, output_dim)
 
