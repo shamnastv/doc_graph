@@ -84,7 +84,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_c.train()
     input_dim = graphs[0].node_features.shape[1]
 
-    ge_new = torch.zeros(len(graphs), input_dim/2).to(device)
+    ge_new = torch.zeros(len(graphs), int(input_dim/2)).to(device)
     cl = model_c(ge)
     for rep in range(50):
         loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
