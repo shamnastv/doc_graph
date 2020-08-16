@@ -33,7 +33,7 @@ class GNN(nn.Module):
         self.mlp_e = MLP(num_mlp_layers, input_dim, hidden_dim, int(input_dim/2))
         self.batch_norms_e = nn.BatchNorm1d(int(input_dim/2))
 
-        self.linear_prediction = nn.Linear(input_dim/2, output_dim)
+        self.linear_prediction = nn.Linear(int(input_dim/2), output_dim)
 
     def __preprocess_neighbors_maxpool(self, batch_graph):
         # create padded_neighbor_list in concatenated graph
