@@ -49,7 +49,7 @@ def create_gaph(args):
         if frequency_as_feature:
             # feat = np.concatenate((feat, word_freq_list[i].toarray()), axis=1)
             feat = feat * word_freq_list[i].toarray()
-        g_list.append(S2VGraph(g, lb, node_features=np.concatenate(feat, feat, axis=1)))
+        g_list.append(S2VGraph(g, lb, node_features=np.concatenate((feat, feat), axis=1)))
 
     for g in g_list:
         g.neighbors = [[] for i in range(len(g.g))]
