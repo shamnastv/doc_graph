@@ -200,7 +200,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
 
 def initialize_graph_embedding(graphs, device):
     input_dim = graphs[0].node_features.shape[1]
-    embeddings = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
+    embeddings = torch.zeros(len(graphs), int(input_dim/2)).to(device)
     for i, g in enumerate(graphs):
         embeddings[i] = g.node_features[:, :int(input_dim/2)].mean(dim=0).to(device)
 
