@@ -117,7 +117,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         loss = loss.detach().cpu().numpy()
         loss_accum += loss
 
-        ge_new[selected_idx] = pooled_h.detach()
+        ge_new[selected_idx, int(input_dim/2)] = pooled_h.detach()
         h = h.detach()
         start_idx = 0
         for j in selected_idx:
@@ -137,7 +137,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
 
         output = output.detach()
-        ge_new[selected_idx] = pooled_h.detach()
+        ge_new[selected_idx, int(input_dim/2):] = pooled_h.detach()
         h = h.detach()
         start_idx = 0
         for j in selected_idx:
@@ -200,9 +200,9 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
 
 def initialize_graph_embedding(graphs, device):
     input_dim = graphs[0].node_features.shape[1]
-    embeddings = torch.zeros(len(graphs), int(input_dim/2)).to(device)
+    embeddings = torch.zeros(len(graphs), input_dim).to(device)
     for i, g in enumerate(graphs):
-        embeddings[i] = g.node_features[:, :int(input_dim/2)].mean(dim=0).to(device)
+        embeddings[i] = g.node_features.mean(dim=0).to(device)
 
     return embeddings
 
