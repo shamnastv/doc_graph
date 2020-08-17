@@ -117,7 +117,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         loss = loss.detach().cpu().numpy()
         loss_accum += loss
 
-        ge_new[selected_idx, int(input_dim/2)] = pooled_h.detach()
+        ge_new[selected_idx, int(input_dim/2):] = pooled_h.detach()
         h = h.detach()
         start_idx = 0
         for j in selected_idx:
