@@ -86,7 +86,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     ge_new = torch.zeros(len(graphs), input_dim).to(device)
     cl = model_c(ge)
-    for rep in range(50):
+    for rep in range(10):
         loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
         if optimizer_c is not None:
             optimizer_c.zero_grad()
@@ -96,34 +96,35 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     loss_accum = 0
     idx_train = np.random.permutation(train_size)
-    for i in range(0, train_size, args.batch_size):
-        selected_idx = idx_train[i:i + args.batch_size]
-        batch_graph = [graphs[idx] for idx in selected_idx]
-        if len(selected_idx) == 0:
-            continue
-        output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
+    for rep in range(10):
+        for i in range(0, train_size, args.batch_size):
+            selected_idx = idx_train[i:i + args.batch_size]
+            batch_graph = [graphs[idx] for idx in selected_idx]
+            if len(selected_idx) == 0:
+                continue
+            output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
 
-        labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
+            labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
 
-        # compute loss
-        loss = criterion(output, labels)
+            # compute loss
+            loss = criterion(output, labels)
 
-        # backprop
-        if optimizer is not None:
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+            # backprop
+            if optimizer is not None:
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
-        loss = loss.detach().cpu().numpy()
-        loss_accum += loss
+            loss = loss.detach().cpu().numpy()
+            loss_accum += loss
 
-        ge_new[selected_idx, int(input_dim/2):] = pooled_h.detach()
-        h = h.detach()
-        start_idx = 0
-        for j in selected_idx:
-            length = len(graphs[j].g)
-            graphs[j].node_features[:, int(input_dim/2):] = h[start_idx:start_idx + length]
-            start_idx += length
+            ge_new[selected_idx, int(input_dim/2):] = pooled_h.detach()
+            h = h.detach()
+            start_idx = 0
+            for j in selected_idx:
+                length = len(graphs[j].g)
+                graphs[j].node_features[:, int(input_dim/2):] = h[start_idx:start_idx + length]
+                start_idx += length
 
     model_e.eval()
     total_size = len(graphs)
