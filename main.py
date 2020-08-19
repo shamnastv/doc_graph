@@ -121,31 +121,32 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             ge_new[selected_idx] = pooled_h.detach()
             h = h.detach()
             start_idx = 0
-            for j in selected_idx:
-                length = len(graphs[j].g)
-                graphs[j].node_features = h[start_idx:start_idx + length]
-                start_idx += length
+            if rep == 49:
+                for j in selected_idx:
+                    length = len(graphs[j].g)
+                    graphs[j].node_features = h[start_idx:start_idx + length]
+                    start_idx += length
 
         print('epoch : ', epoch, 'rep : ', rep, 'classification loss : ', loss_accum)
-        model_e.eval()
-        total_size = len(graphs)
-        test_size = total_size - train_size
-        idx_test = np.arange(train_size, total_size)
-        for i in range(0, test_size, args.batch_size):
-            selected_idx = idx_test[i:i + args.batch_size]
-            batch_graph = [graphs[idx] for idx in selected_idx]
-            if len(selected_idx) == 0:
-                continue
-            output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
+    model_e.eval()
+    total_size = len(graphs)
+    test_size = total_size - train_size
+    idx_test = np.arange(train_size, total_size)
+    for i in range(0, test_size, args.batch_size):
+        selected_idx = idx_test[i:i + args.batch_size]
+        batch_graph = [graphs[idx] for idx in selected_idx]
+        if len(selected_idx) == 0:
+            continue
+        output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
 
-            output = output.detach()
-            ge_new[selected_idx] = pooled_h.detach()
-            h = h.detach()
-            start_idx = 0
-            for j in selected_idx:
-                length = len(graphs[j].g)
-                graphs[j].node_features = h[start_idx:start_idx + length]
-                start_idx += length
+        output = output.detach()
+        ge_new[selected_idx] = pooled_h.detach()
+        h = h.detach()
+        start_idx = 0
+        for j in selected_idx:
+            length = len(graphs[j].g)
+            graphs[j].node_features = h[start_idx:start_idx + length]
+            start_idx += length
 
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
