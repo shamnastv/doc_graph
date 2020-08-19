@@ -120,11 +120,12 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
             ge_new[selected_idx, int(input_dim/2):] = pooled_h.detach()
             h = h.detach()
-            start_idx = 0
-            for j in selected_idx:
-                length = len(graphs[j].g)
-                graphs[j].node_features[:, int(input_dim/2):] = h[start_idx:start_idx + length]
-                start_idx += length
+            if epoch == 9:
+                start_idx = 0
+                for j in selected_idx:
+                    length = len(graphs[j].g)
+                    graphs[j].node_features[:, int(input_dim/2):] = h[start_idx:start_idx + length]
+                    start_idx += length
 
     model_e.eval()
     total_size = len(graphs)
@@ -219,10 +220,14 @@ def main():
                         help='number of epochs to train (default: 350)')
     parser.add_argument('--lr', type=float, default=0.01,
                         help='learning rate (default: 0.01)')
+    parser.add_argument('--lr_c', type=float, default=0.01,
+                        help='learning rate for clustering (default: 0.01)')
     parser.add_argument('--seed', type=int, default=0,
                         help='random seed for splitting the dataset into 10 (default: 0)')
     parser.add_argument('--num_mlp_layers', type=int, default=2,
                         help='number of layers for MLP EXCLUDING the input one (default: 2). 1 means linear model.')
+    parser.add_argument('--num_mlp_layers_c', type=int, default=2,
+                        help='number of layers for MLP clustering EXCLUDING the input one (default: 2). 1 means linear model.')
     parser.add_argument('--hidden_dim', type=int, default=64,
                         help='number of hidden units (default: 64)')
     parser.add_argument('--final_dropout', type=float, default=0.5,
@@ -255,11 +260,11 @@ def main():
     graphs, num_classes, train_size = create_gaph(args)
     ge = initialize_graph_embedding(graphs, device)
 
-    model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers).to(device)
+    model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers_c).to(device)
     model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout,
                 args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
 
-    optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+    optimizer = optim.Adam(model_e.parameters(), lr=args.lr_c)
     optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
