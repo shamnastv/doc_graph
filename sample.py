@@ -3,6 +3,7 @@ import torch
 import time
 
 
+torch.zeros(10, 10)
 def test_mr_dataset():
     f = open('data/corpus/' + 'mr' + '.clean.txt', 'r')
     lines = f.readlines()

@@ -220,6 +220,8 @@ def main():
                         help='number of epochs to train (default: 350)')
     parser.add_argument('--lr', type=float, default=0.01,
                         help='learning rate (default: 0.01)')
+    parser.add_argument('--lr_cl', type=float, default=0.01,
+                        help='learning rate for clustering (default: 0.01)')
     parser.add_argument('--seed', type=int, default=0,
                         help='random seed for splitting the dataset into 10 (default: 0)')
     parser.add_argument('--num_mlp_layers', type=int, default=2,
@@ -256,12 +258,12 @@ def main():
     graphs, num_classes, train_size = create_gaph(args)
     ge = initialize_graph_embedding(graphs, device)
 
-    model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers).to(device)
+    model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers_c).to(device)
     model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout,
                 args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
 
     optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-    optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr)
+    optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
     print(time.time() - start_time, 's Training starts')
