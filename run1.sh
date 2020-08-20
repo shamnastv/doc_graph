@@ -1,6 +1,6 @@
 #!/bin/sh
 #SBATCH --job-name=GNN # Job name
-#SBATCH --ntasks=1 # Run on a single CPU
+#SBATCH --ntasks=32 # Run on a single CPU
 #SBATCH --time=11:50:00 # Time limit hrs:min:sec
 #SBATCH --output=test_job%j.out # Standard output and error log
 #SBATCH --gres=gpu:1
