@@ -85,18 +85,13 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     input_dim = graphs[0].node_features.shape[1]
 
     ge_new = torch.zeros(len(graphs), input_dim).to(device)
-    cl = model_c(ge)
-    for rep in range(10):
-        loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
-        if optimizer_c is not None:
-            optimizer_c.zero_grad()
-            loss_c.backward()
-            optimizer_c.step()
-        cl = cl.detach()
 
-    loss_accum = 0
+    for rep in range(10):
+        cl = train_cluster(args, device, ge, model_c, optimizer_c)
+
     idx_train = np.random.permutation(train_size)
     for rep in range(10):
+        loss_accum = 0
         for i in range(0, train_size, args.batch_size):
             selected_idx = idx_train[i:i + args.batch_size]
             batch_graph = [graphs[idx] for idx in selected_idx]
@@ -150,6 +145,17 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
     return loss_accum, ge_new, graphs
+
+
+def train_cluster(args, device, ge, model_c, optimizer_c):
+    cl = model_c(ge)
+    loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
+    if optimizer_c is not None:
+        optimizer_c.zero_grad()
+        loss_c.backward()
+        optimizer_c.step()
+    cl = cl.detach()
+    return cl
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)

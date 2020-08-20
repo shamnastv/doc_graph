@@ -84,8 +84,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_c.train()
 
     ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
-    cl = model_c(ge)
+
     for rep in range(50):
+        cl = model_c(ge)
         loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
         if optimizer_c is not None:
             optimizer_c.zero_grad()
