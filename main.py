@@ -93,7 +93,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             loss_c.backward()
             optimizer_c.step()
         cl = cl.detach()
-        print('epoch : ', epoch, 'rep : ', rep, 'cluster loss : ', loss_c.numpy())
+        print('epoch : ', epoch, 'rep : ', rep, 'cluster loss : ', loss_c.detach().numpy())
 
     idx_train = np.random.permutation(train_size)
     for rep in range(50):
