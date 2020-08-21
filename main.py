@@ -123,6 +123,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             h = h.detach()
             start_idx = 0
             if rep == 49:
+                acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
                 for j in selected_idx:
                     length = len(graphs[j].g)
                     graphs[j].node_features = h[start_idx:start_idx + length]
@@ -228,7 +229,8 @@ def main():
     parser.add_argument('--num_mlp_layers', type=int, default=2,
                         help='number of layers for MLP EXCLUDING the input one (default: 2). 1 means linear model.')
     parser.add_argument('--num_mlp_layers_c', type=int, default=2,
-                        help='number of layers for MLP clustering EXCLUDING the input one (default: 2). 1 means linear model.')
+                        help='number of layers for MLP clustering EXCLUDING the input one (default: 2). 1 means '
+                             'linear model.')
     parser.add_argument('--hidden_dim', type=int, default=64,
                         help='number of hidden units (default: 64)')
     parser.add_argument('--final_dropout', type=float, default=0.5,
@@ -274,13 +276,13 @@ def main():
         scheduler.step()
 
         avg_loss, ge, graphs = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
-        acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
+        # acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
-        if not args.filename == "":
-            with open(args.filename, 'w') as f:
-                f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
-                f.write("\n")
-        print("")
+        # if not args.filename == "":
+        #     with open(args.filename, 'w') as f:
+        #         f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
+        #         f.write("\n")
+        # print("")
 
         # print(model.eps)
     print(time.time() - start_time, 's Completed')
