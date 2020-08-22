@@ -278,7 +278,8 @@ def main():
         avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
         acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
-        update_graph = epoch & 1
+        update_graph = True
+        # update_graph = epoch & 1
         if update_graph:
             for j in range(len(graphs)):
                 graphs[j].node_features = node_features[j]
