@@ -1,8 +1,8 @@
 import numpy as np
 import time
 
-i = 11
-f = i & 1
+i = 10
+f = (i % 10 == 0)
 if f:
     print('hi')
 

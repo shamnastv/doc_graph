@@ -83,10 +83,11 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_e.train()
     model_c.train()
 
+    total_iter = args.iters_per_epoch
     node_features = [0 for i in range(len(graphs))]
     ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
 
-    for rep in range(50):
+    for itr in range(total_iter):
         cl = model_c(ge)
         loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
         if optimizer_c is not None:
@@ -94,10 +95,10 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             loss_c.backward()
             optimizer_c.step()
         cl = cl.detach()
-        print('epoch : ', epoch, 'rep : ', rep, 'cluster loss : ', loss_c.detach().cpu().numpy())
+        print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c.detach().cpu().numpy())
 
     idx_train = np.random.permutation(train_size)
-    for rep in range(50):
+    for itr in range(total_iter):
         loss_accum = 0
         for i in range(0, train_size, args.batch_size):
             selected_idx = idx_train[i:i + args.batch_size]
@@ -123,13 +124,13 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             ge_new[selected_idx] = pooled_h.detach()
             h = h.detach()
             start_idx = 0
-            if rep == 49:
+            if itr == total_iter - 1:
                 for j in selected_idx:
                     length = len(graphs[j].g)
                     node_features[j] = h[start_idx:start_idx + length]
                     start_idx += length
 
-        print('epoch : ', epoch, 'rep : ', rep, 'classification loss : ', loss_accum, 'W : ', model_e.ws)
+        print('epoch : ', epoch, 'rep : ', itr, 'classification loss : ', loss_accum, 'W : ', model_e.ws)
     model_e.eval()
     total_size = len(graphs)
     test_size = total_size - train_size
@@ -218,6 +219,8 @@ def main():
                         help='which gpu to use if any (default: 0)')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='input batch size for training (default: 32)')
+    parser.add_argument('--iters_per_epoch', type=int, default=50,
+                        help='number of iterations per each epoch (default: 50)')
     parser.add_argument('--epochs', type=int, default=350,
                         help='number of epochs to train (default: 350)')
     parser.add_argument('--lr', type=float, default=0.01,
@@ -278,8 +281,8 @@ def main():
         avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
         acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
-        update_graph = True
-        # update_graph = epoch & 1
+        # update_graph = True
+        update_graph = (epoch % 10 == 0)
         if update_graph:
             for j in range(len(graphs)):
                 graphs[j].node_features = node_features[j]
