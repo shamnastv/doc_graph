@@ -150,15 +150,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             node_features[j] = h[start_idx:start_idx + length]
             start_idx += length
 
-    update_graph = epoch & 1
-    if update_graph:
-        for j in range(len(graphs)):
-            graphs[j].node_features = node_features[j]
-        ge = ge_new
-
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
-    return loss_accum, ge, graphs
+    return loss_accum, ge_new, node_features
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
@@ -281,8 +275,14 @@ def main():
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
 
-        avg_loss, ge, graphs = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
+        avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
         acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
+
+        update_graph = epoch & 1
+        if update_graph:
+            for j in range(len(graphs)):
+                graphs[j].node_features = node_features[j]
+            ge = ge_new
 
         if not args.filename == "":
             with open(args.filename, 'w') as f:
