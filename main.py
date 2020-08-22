@@ -83,6 +83,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_e.train()
     model_c.train()
 
+    node_features = [0 for i in range(len(graphs))]
     ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
 
     for rep in range(50):
@@ -123,10 +124,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             h = h.detach()
             start_idx = 0
             if rep == 49:
-                acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
                 for j in selected_idx:
                     length = len(graphs[j].g)
-                    graphs[j].node_features = h[start_idx:start_idx + length]
+                    node_features[j] = h[start_idx:start_idx + length]
                     start_idx += length
 
         print('epoch : ', epoch, 'rep : ', rep, 'classification loss : ', loss_accum, 'W : ', model_e.ws)
@@ -147,12 +147,18 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         start_idx = 0
         for j in selected_idx:
             length = len(graphs[j].g)
-            graphs[j].node_features = h[start_idx:start_idx + length]
+            node_features[j] = h[start_idx:start_idx + length]
             start_idx += length
+
+    update_graph = epoch & 1
+    if update_graph:
+        for j in range(len(graphs)):
+            graphs[j].node_features = node_features[j]
+        ge = ge_new
 
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
-    return loss_accum, ge_new, graphs
+    return loss_accum, ge, graphs
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
@@ -276,13 +282,13 @@ def main():
         scheduler.step()
 
         avg_loss, ge, graphs = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
-        # acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
+        acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
-        # if not args.filename == "":
-        #     with open(args.filename, 'w') as f:
-        #         f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
-        #         f.write("\n")
-        # print("")
+        if not args.filename == "":
+            with open(args.filename, 'w') as f:
+                f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
+                f.write("\n")
+        print("")
 
         # print(model.eps)
     print(time.time() - start_time, 's Completed')

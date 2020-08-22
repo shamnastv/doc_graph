@@ -1,9 +1,12 @@
 import numpy as np
-import torch
 import time
 
+i = 11
+f = i & 1
+if f:
+    print('hi')
 
-torch.zeros(10, 10)
+
 def test_mr_dataset():
     f = open('data/corpus/' + 'mr' + '.clean.txt', 'r')
     lines = f.readlines()
@@ -13,4 +16,4 @@ def test_mr_dataset():
     f.close()
 
 
-test_mr_dataset()
+# test_mr_dataset()
