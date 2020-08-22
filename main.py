@@ -132,7 +132,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     node_features[j] = h[start_idx:start_idx + length]
                     start_idx += length
 
-        print('epoch : ', epoch, 'rep : ', itr, 'classification loss : ', loss_accum, 'W : ', model_e.ws)
+        print('epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum, 'W : ', model_e.ws)
     model_e.eval()
     total_size = len(graphs)
     test_size = total_size - train_size
