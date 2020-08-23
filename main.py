@@ -83,7 +83,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_e.train()
     model_c.train()
 
-    total_iter = args.iters_per_epoch * epoch
+    total_iter = args.iters_per_epoch * epoch + 5
     if epoch >= 20:
         total_iter = 2
     node_features = [0 for i in range(len(graphs))]
