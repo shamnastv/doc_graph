@@ -84,7 +84,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_c.train()
 
     total_iter = args.iters_per_epoch * epoch
-    if epoch >= 50:
+    if epoch >= 20:
         total_iter = 2
     node_features = [0 for i in range(len(graphs))]
     ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
@@ -284,11 +284,12 @@ def main():
         acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
         # update_graph = True
-        update_graph = ((epoch % 10 == 0) and epoch <= 50) or 50 < epoch < 53
+        update_graph = ((epoch % 3 == 0) and epoch <= 20) or 20 < epoch < 23
         if update_graph:
             for j in range(len(graphs)):
                 graphs[j].node_features = node_features[j]
             ge = ge_new
+            print('graph updated in epoch : ', epoch)
 
         if not args.filename == "":
             with open(args.filename, 'w') as f:
