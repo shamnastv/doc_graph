@@ -284,7 +284,7 @@ def main():
         acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
         # update_graph = True
-        update_graph = (epoch % 10 == 0) or 50 < epoch < 53
+        update_graph = ((epoch % 10 == 0) and epoch <= 50) or 50 < epoch < 53
         if update_graph:
             for j in range(len(graphs)):
                 graphs[j].node_features = node_features[j]
