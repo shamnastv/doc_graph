@@ -83,12 +83,12 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_e.train()
     model_c.train()
 
-    total_iter = args.iters_per_epoch * epoch + 5
+    total_iter = args.iters_per_epoch * epoch + 20
 
-    if epoch >= 20:
+    if epoch >= 22:
         total_iter = 2
     total_iter_c = total_iter
-    if epoch >= 30:
+    if epoch >= 22:
         total_iter_c = 1
         optimizer_c = None
 
@@ -290,7 +290,7 @@ def main():
         acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
         # update_graph = True
-        update_graph = ((epoch % 3 == 0) and epoch <= 20) or 20 < epoch < 23
+        update_graph = ((epoch % 10 == 0) and epoch <= 20)
         if update_graph:
             for j in range(len(graphs)):
                 graphs[j].node_features = node_features[j]
