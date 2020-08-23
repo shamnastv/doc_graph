@@ -13,7 +13,7 @@ from cluster import ClusterNN
 from gnn import GNN
 
 criterion = nn.CrossEntropyLoss()
-frequency_as_feature = False
+frequency_as_feature = True
 max_test_accuracy = 0
 max_acc_epoch = 0
 start_time = time.time()
