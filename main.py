@@ -306,7 +306,7 @@ def main():
         scheduler.step()
         update_graph = epoch % (3 * args.iters_per_epoch) == 1
 
-        avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, update_graph)
+        avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, False)
         acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_graph)
 
         if update_graph:
