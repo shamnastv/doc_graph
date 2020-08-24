@@ -83,12 +83,13 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_e.train()
     model_c.train()
 
-    total_iter = args.iters_per_epoch * epoch + 20
-
-    if epoch >= 22:
-        total_iter = 2
+    total_iter = args.iters_per_epoch + 2 * epoch
     total_iter_c = total_iter
-    if epoch >= 22:
+
+    if epoch >= 21:
+        total_iter = 2
+
+    if epoch >= 22 and (not epoch % 30 == 0):
         total_iter_c = 1
         optimizer_c = None
 
