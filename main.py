@@ -89,10 +89,10 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     cl = model_c(ge)
     cl = cl.detach()
 
-    if epoch % args.iters_per_epoch == 2:
+    if epoch % args.iters_per_epoch == 1:
         total_iter_c = args.iters_per_epoch
 
-    if epoch == 1:
+    if epoch < 6:
         total_iter = args.iters_per_epoch
         total_iter_c = total_iter
 
@@ -304,7 +304,7 @@ def main():
     print(time.time() - start_time, 's Training starts')
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
-        update_graph = epoch % (3 * args.iters_per_epoch) == 1
+        update_graph = epoch % (3 * args.iters_per_epoch) == 0
 
         avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, False)
         acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_graph)
