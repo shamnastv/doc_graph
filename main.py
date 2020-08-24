@@ -290,7 +290,7 @@ def main():
     print(time.time() - start_time, 's Training starts')
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
-        update_graph = epoch % (5 * args.iters_per_epoch) == 1
+        update_graph = epoch % (3 * args.iters_per_epoch) == 1
 
         avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, update_graph)
         acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
