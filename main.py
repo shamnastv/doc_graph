@@ -84,11 +84,13 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_c.train()
 
     total_iter = 1
-    total_iter_c = args.iters_per_epoch
+    total_iter_c = 0
 
-    if not epoch % args.iters_per_epoch == 2:
-        total_iter_c = 1
-        optimizer_c = None
+    cl = model_c(ge)
+    cl = cl.detach()
+
+    if epoch % args.iters_per_epoch == 2:
+        total_iter_c = args.iters_per_epoch
 
     if epoch == 1:
         total_iter = args.iters_per_epoch
