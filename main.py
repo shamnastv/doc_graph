@@ -172,8 +172,11 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
-def pass_data_iteratively(model_e, graphs, cl, ge, minibatch_size=64):
+def pass_data_iteratively(model_e, graphs, cl, ge, minibatch_size, update_graph, device):
     outputs = []
+    node_features = [0 for i in range(len(graphs))]
+    ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
+
     full_idx = np.arange(len(graphs))
     for i in range(0, len(graphs), minibatch_size):
         sampled_idx = full_idx[i:i + minibatch_size]
@@ -181,16 +184,25 @@ def pass_data_iteratively(model_e, graphs, cl, ge, minibatch_size=64):
             continue
         output, pooled_h, h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
         outputs.append(output.detach())
-    return torch.cat(outputs, 0)
+        if update_graph:
+            ge_new[sampled_idx] = pooled_h.detach()
+            h = h.detach()
+            start_idx = 0
+            for j in sampled_idx:
+                length = len(graphs[j].g)
+                node_features[j] = h[start_idx:start_idx + length]
+                start_idx += length
+
+    return torch.cat(outputs, 0), ge_new, node_features
 
 
-def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
+def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_graph):
     model_c.eval()
     model_e.eval()
 
     cl = model_c(ge)
 
-    output = pass_data_iteratively(model_e, graphs, cl, ge)
+    output, ge_new, node_features = pass_data_iteratively(model_e, graphs, cl, ge, 64, update_graph, device)
 
     output_train, output_test = output[:train_size], output[train_size:]
     train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
@@ -295,7 +307,7 @@ def main():
         update_graph = epoch % (3 * args.iters_per_epoch) == 1
 
         avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, update_graph)
-        acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
+        acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_graph)
 
         if update_graph:
             for j in range(len(graphs)):
