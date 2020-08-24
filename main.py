@@ -228,7 +228,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_g
         for i in range(len(test_graphs)):
             print('label : ', labels_test[i], ' pred : ', pred_test[i])
 
-    return acc_train, acc_test
+    return acc_train, acc_test, ge_new, node_features
 
 
 def initialize_graph_embedding(graphs, device):
