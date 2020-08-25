@@ -72,6 +72,8 @@ def my_loss(alpha, centroids, embeddings, cl, device):
     dm = len(cl[0])
     loss = 0
     for i, emb in enumerate(embeddings):
+        print(centroids)
+        print(emb)
         tmp = torch.sub(centroids, emb)
         loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
     tmp = torch.mm(cl.transpose(0, 1), cl)
