@@ -21,7 +21,7 @@ class ClusterNN(nn.Module):
             if layer == 0:
                 self.mlp_cs.append(MLP(num_mlp_layers, input_dim, hidden_dim, num_class))
             else:
-                self.mlp_cs.append(MLP(num_mlp_layers, dim, dim, num_class))
+                self.mlp_cs.append(MLP(num_mlp_layers, hidden_dim, hidden_dim, num_class))
 
         # self.linears_prediction = torch.nn.ModuleList()
         # for layer in range(num_layers - 1):
