@@ -269,7 +269,7 @@ def main():
 
     for epoch in range(10):
         avg_loss, ge = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
-                                 train_size, ge, initial=Ture)
+                                 train_size, ge, initial=True)
     acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
     ge = ge_new
