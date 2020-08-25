@@ -281,6 +281,8 @@ def main():
         avg_loss, ge_new = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
         acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
+        ge = ge_new
+
         if not args.filename == "":
             with open(args.filename, 'w') as f:
                 f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
