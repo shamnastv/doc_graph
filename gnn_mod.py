@@ -30,8 +30,8 @@ class GNN(nn.Module):
         self.neighbor_pooling_type = neighbor_pooling_type
         self.learn_eps = learn_eps
         self.eps = nn.Parameter(torch.zeros(self.num_layers - 1))
-        self.ep = nn.Parameter(torch.zeros(1))
-        self.ws = nn.Parameter(torch.zeros(2))
+        self.w1 = nn.Parameter(torch.zeros(self.num_layers - 1))
+        self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
 
         # for layer in self.layers:
         #     if layer == 0:
@@ -163,14 +163,11 @@ class GNN(nn.Module):
                 pooled = pooled / degree
 
         # Re-weights the center node representation when aggregating it with its neighbors
-        print(layer)
-        print(pooled.shape)
-        print(h.shape)
-        pooled = (1 + self.ws[0]) * pooled + (1 + self.eps) * h
+        pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
         if Cl is not None:
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, H)
-            pooled = pooled + (1 + self.ws[1]) * torch.spmm(graph_pool.transpose(0, 1), tmp)
+            pooled = pooled + (1 + self.w2[layer]) * torch.spmm(graph_pool.transpose(0, 1), tmp)
         pooled_rep = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](pooled_rep)
 
@@ -193,11 +190,11 @@ class GNN(nn.Module):
                 pooled = pooled / degree
 
         # representation of neighboring and center nodes
-        pooled = (1 + self.ws[0]) * pooled + (1 + self.eps) * h
+        pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
         if Cl is not None:
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, H)
-            pooled = pooled + (1 + self.ws[1]) * (torch.spmm(graph_pool.transpose(0, 1), tmp))
+            pooled = pooled + (1 + self.w2[layer]) * (torch.spmm(graph_pool.transpose(0, 1), tmp))
         pooled_rep = self.mlp_es[layer](pooled)
         h = self.batch_norms(pooled_rep)
 
