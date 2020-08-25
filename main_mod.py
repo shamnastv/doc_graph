@@ -88,7 +88,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     if not initial:
         cl = model_c(ge)
         loss_c = 0
-        for layer in range(args.num_layer):
+        for layer in range(args.num_layers):
             loss_c += my_loss(args.alpha, model_c.centroids[layer], ge[layer], cl, device)
         if optimizer_c is not None:
             optimizer_c.zero_grad()
