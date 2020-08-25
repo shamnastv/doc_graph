@@ -87,16 +87,17 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     if not initial:
         cl = model_c(ge)
-        loss_c = 0
+        loss_c_accum = 0
         for layer in range(args.num_layers):
-            loss_c += my_loss(args.alpha, model_c.centroids[layer], ge[layer], cl, device)
-        if optimizer_c is not None:
-            optimizer_c.zero_grad()
-            loss_c.backward()
-            optimizer_c.step()
+            loss_c = my_loss(args.alpha, model_c.centroids[layer], ge[layer], cl, device)
+            if optimizer_c is not None:
+                optimizer_c.zero_grad()
+                loss_c.backward()
+                optimizer_c.step()
+            loss_c_accum += loss_c.detach().cpu().numpy()
         cl = cl.detach()
 
-        print('epoch : ', epoch, 'cluster loss : ', loss_c)
+        print('epoch : ', epoch, 'cluster loss : ', loss_c_accum)
 
     else:
         cl = None
