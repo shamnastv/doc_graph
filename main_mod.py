@@ -127,7 +127,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         for layer in range(args.num_layers):
             ge_new[layer][selected_idx] = pooled_h[layer].detach()
 
-    print('epoch : ', epoch, 'classification loss : ', loss_accum, 'W : ', model_e.ws)
+    print('epoch : ', epoch, 'classification loss : ', loss_accum)
 
     # model_e.eval()
     total_size = len(graphs)
