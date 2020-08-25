@@ -80,24 +80,30 @@ def my_loss(alpha, centroids, embeddings, cl, device):
 
 
 def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, initial=False):
+    total_size = len(graphs)
+    test_size = total_size - train_size
+
     model_e.train()
     model_c.train()
+
+    total_itr_c = 20
 
     ge_new = [torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device) for layer in range(args.num_layers)]
 
     if not initial:
-        cl = model_c(ge)
-        loss_c_accum = 0
-        for layer in range(args.num_layers):
-            loss_c = my_loss(args.alpha, model_c.centroids[layer], ge[layer], cl, device)
+        for itr in range(total_itr_c):
+            cl = model_c(ge)
+            loss_c = 0
+            for layer in range(args.num_layers):
+                loss_c += my_loss(args.alpha, model_c.centroids[layer], ge[layer], cl, device)
             if optimizer_c is not None:
                 optimizer_c.zero_grad()
                 loss_c.backward()
                 optimizer_c.step()
-            loss_c_accum += loss_c.detach().cpu().numpy()
-        cl = cl.detach()
+            loss_c = loss_c.detach().cpu().numpy()
+            cl = cl.detach()
 
-        print('epoch : ', epoch, 'cluster loss : ', loss_c_accum)
+            print('epoch : ', epoch, 'iter', iter, 'cluster loss : ', loss_c)
 
     else:
         cl = None
@@ -131,8 +137,6 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     print('epoch : ', epoch, 'classification loss : ', loss_accum)
 
     # model_e.eval()
-    total_size = len(graphs)
-    test_size = total_size - train_size
     idx_test = np.arange(train_size, total_size)
     for i in range(0, test_size, args.batch_size):
         selected_idx = idx_test[i:i + args.batch_size]
