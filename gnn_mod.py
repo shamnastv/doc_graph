@@ -163,6 +163,7 @@ class GNN(nn.Module):
                 pooled = pooled / degree
 
         # Re-weights the center node representation when aggregating it with its neighbors
+        print(layer)
         print(pooled.shape)
         print(h.shape)
         pooled = (1 + self.ws[0]) * pooled + (1 + self.eps) * h
