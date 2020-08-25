@@ -96,7 +96,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             optimizer_c.step()
         cl = cl.detach()
 
-        print('epoch : ', epoch, 'cluster loss : ', loss_c.detach().cpu().numpy())
+        print('epoch : ', epoch, 'cluster loss : ', loss_c)
 
     else:
         cl = None
