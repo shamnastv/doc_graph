@@ -278,8 +278,8 @@ def main():
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
 
-        avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
-        acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
+        avg_loss, ge_new = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
+        acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
         if not args.filename == "":
             with open(args.filename, 'w') as f:
