@@ -168,7 +168,7 @@ class GNN(nn.Module):
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, H)
             pooled = pooled + (1 + self.ws[1]) * torch.spmm(graph_pool.transpose(0, 1), tmp)
-        pooled_rep = self.mlp_e[layer](pooled)
+        pooled_rep = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](pooled_rep)
 
         # non-linearity
