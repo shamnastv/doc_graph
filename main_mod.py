@@ -124,7 +124,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
         loss = loss.detach().cpu().numpy()
         loss_accum += loss
-        for layer in range(args.num_layer):
+        for layer in range(args.num_layers):
             ge_new[layer][selected_idx] = pooled_h[layer].detach()
 
     print('epoch : ', epoch, 'classification loss : ', loss_accum, 'W : ', model_e.ws)
@@ -141,7 +141,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
 
         output = output.detach()
-        for layer in range(args.num_layer):
+        for layer in range(args.num_layers):
             ge_new[layer][selected_idx] = pooled_h[layer].detach()
 
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
@@ -161,7 +161,7 @@ def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device)
             continue
         output, pooled_h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
         outputs.append(output.detach())
-        for layer in range(args.num_layer):
+        for layer in range(args.num_layers):
             ge_new[layer][sampled_idx] = pooled_h[layer].detach()
 
     return torch.cat(outputs, 0), ge_new
