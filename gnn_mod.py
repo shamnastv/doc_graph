@@ -30,15 +30,9 @@ class GNN(nn.Module):
         self.neighbor_pooling_type = neighbor_pooling_type
         self.learn_eps = learn_eps
         self.eps = nn.Parameter(torch.zeros(self.num_layers - 1))
-        self.layers = range(num_layers)
-        self.centroids = nn.Parameter(torch.zeros(output_dim, hidden_dim))
         self.ep = nn.Parameter(torch.zeros(1))
         self.ws = nn.Parameter(torch.zeros(2))
-        self.mlp_e = MLP(num_mlp_layers, hidden_dim, hidden_dim, input_dim)
 
-        # self.mlps_c = torch.nn.ModuleList()
-        # self.batch_norms_c = torch.nn.ModuleList()
-        #
         # for layer in self.layers:
         #     if layer == 0:
         #         self.mlps_c.append(MLP(num_mlp_layers, input_dim, hidden_dim, hidden_dim))
@@ -46,20 +40,17 @@ class GNN(nn.Module):
         #         self.mlps_c.append(MLP(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim))
         #     self.batch_norms.append(nn.BatchNorm1d(hidden_dim))
 
-        self.mlp_c = MLP(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim)
-        self.batch_norm_c = nn.BatchNorm1d(hidden_dim)
-
         ###List of MLPs
-        self.mlps = torch.nn.ModuleList()
+        self.mlp_es = torch.nn.ModuleList()
 
         ###List of batchnorms applied to the output of MLP (input of the final prediction linear layer)
         self.batch_norms = torch.nn.ModuleList()
 
         for layer in range(self.num_layers - 1):
             if layer == 0:
-                self.mlps.append(MLP(num_mlp_layers, input_dim, hidden_dim, hidden_dim))
+                self.mlp_es.append(MLP(num_mlp_layers, input_dim, hidden_dim, hidden_dim))
             else:
-                self.mlps.append(MLP(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim))
+                self.mlp_es.append(MLP(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim))
 
             self.batch_norms.append(nn.BatchNorm1d(hidden_dim))
 
@@ -157,7 +148,7 @@ class GNN(nn.Module):
         pooled_rep = torch.max(h_with_dummy[padded_neighbor_list], dim=1)[0]
         return pooled_rep
 
-    def next_layer_eps(self, h, layer, padded_neighbor_list=None, Adj_block=None):
+    def next_layer_eps(self, h, layer, idx, Cl=None, H=None, graph_pool=None, padded_neighbor_list=None, Adj_block=None):
         # pooling neighboring nodes and center nodes separately by epsilon reweighting.
 
         if self.neighbor_pooling_type == "max":
@@ -172,15 +163,19 @@ class GNN(nn.Module):
                 pooled = pooled / degree
 
         # Re-weights the center node representation when aggregating it with its neighbors
-        pooled = pooled + (1 + self.eps[layer]) * h 
-        pooled_rep = self.mlps[layer](pooled)
+        if Cl is not None:
+            pooled = (1 + self.ws[0]) * pooled + (1 + self.eps) * h
+            tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
+            tmp = torch.spmm(tmp, H)
+            pooled = pooled + (1 + self.ws[1]) * torch.spmm(graph_pool.transpose(0, 1), tmp)
+        pooled_rep = self.mlp_e[layer](pooled)
         h = self.batch_norms[layer](pooled_rep)
 
         # non-linearity
         h = F.relu(h)
         return h
 
-    def next_layer(self, h, layer, padded_neighbor_list=None, Adj_block=None):
+    def next_layer(self, h, layer, idx, Cl=None, H=None, graph_pool=None, padded_neighbor_list=None, Adj_block=None):
         # pooling neighboring nodes and center nodes  altogether
 
         if self.neighbor_pooling_type == "max":
@@ -195,19 +190,19 @@ class GNN(nn.Module):
                 pooled = pooled / degree
 
         # representation of neighboring and center nodes
-        pooled_rep = self.mlps[layer](pooled)
-
-        h = self.batch_norms[layer](pooled_rep)
+        pooled = (1 + self.ws[0]) * pooled + (1 + self.eps) * h
+        if Cl is not None:
+            tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
+            tmp = torch.spmm(tmp, H)
+            pooled = pooled + (1 + self.ws[1]) * (torch.spmm(graph_pool.transpose(0, 1), tmp))
+        pooled_rep = self.mlp_es[layer](pooled)
+        h = self.batch_norms(pooled_rep)
 
         # non-linearity
         h = F.relu(h)
         return h
 
-    def new_embeddings(self, h):
-        x = self.mlp_e((1 + self.ep) * h)
-        return x
-
-    def forward(self, batch_graph):
+    def forward(self, batch_graph, Cl, H, idx):
         X_concat = torch.cat([graph.node_features for graph in batch_graph], 0).to(self.device)
         graph_pool = self.__preprocess_graphpool(batch_graph)
 
@@ -222,29 +217,24 @@ class GNN(nn.Module):
 
         for layer in range(self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
-                h = self.next_layer_eps(h, layer, padded_neighbor_list=padded_neighbor_list)
+                h = self.next_layer_eps(h, layer, idx, Cl, H[layer], graph_pool, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and self.learn_eps:
-                h = self.next_layer_eps(h, layer, Adj_block=Adj_block)
+                h = self.next_layer_eps(h, layer, idx, Cl, H[layer], graph_pool, Adj_block=Adj_block)
             elif self.neighbor_pooling_type == "max" and not self.learn_eps:
-                h = self.next_layer(h, layer, padded_neighbor_list=padded_neighbor_list)
+                h = self.next_layer(h, layer, idx, Cl, H[layer], graph_pool, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and not self.learn_eps:
-                h = self.next_layer(h, layer, Adj_block=Adj_block)
+                h = self.next_layer(h, layer, Cl, idx, H[layer], graph_pool, Adj_block=Adj_block)
 
             hidden_rep.append(h)
 
         score_over_layer = 0
-        pooled_h = None
+        pooled_h_ls = []
 
         # perform pooling over all nodes in each graph in every layer
         for layer, h in enumerate(hidden_rep):
             pooled_h = torch.spmm(graph_pool, h)
             score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), self.final_dropout,
                                           training=self.training)
+            pooled_h_ls.append(pooled_h)
 
-        cg = self.mlp_c(pooled_h)
-        cg = self.batch_norm_c(cg)
-        cg = F.softmax(cg, dim=0)
- 
-        x = self.new_embeddings(h)
-
-        return score_over_layer, cg, h, x
+        return score_over_layer, pooled_h_ls
