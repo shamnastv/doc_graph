@@ -9,7 +9,7 @@ class ClusterNN(nn.Module):
     def __init__(self, num_class, input_dim, hidden_dim, num_layers, num_mlp_layers):
         super(ClusterNN, self).__init__()
         self.num_layers = num_layers
-        self.centroids = []
+        self.centroids = nn.ParameterList()
         for layer in range(num_layers):
             if layer == 0:
                 self.centroids.append(nn.Parameter(torch.zeros(num_class, input_dim)))
