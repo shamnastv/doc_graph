@@ -9,7 +9,8 @@ G = nx.from_numpy_matrix(A)
 # G.add_edge(2, 3, weight=5)
 # G.add_edge(3, 2, weight=3)
 # print(G.edges_iter(data='weight', default=1))
-print(G.edges(data=True))
+x = [w['weight'] for i, j, w in G.edges(data=True)]
+print(x)
 
 def test_mr_dataset():
     f = open('data/corpus/' + 'mr' + '.clean.txt', 'r')
