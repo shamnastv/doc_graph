@@ -103,6 +103,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             for itr in range(total_itr_c):
                 loss_c_accum = 0
                 full_idx = np.random.permutation(total_size)
+                num_itr = 0
                 for i in range(0, total_size, cl_batch_size):
                     selected_idx = full_idx[i:i + cl_batch_size]
                     ge_tmp = [ge_t[selected_idx] for ge_t in ge]
@@ -118,8 +119,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     loss_c_accum += loss_c
                     cl_new = cl_new.detach()
                     cl[selected_idx] = cl_new
+                    num_itr += 1
 
-                print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum)
+                print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum/num_itr)
 
     else:
         cl = None

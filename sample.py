@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import networkx as nx
+from tqdm import tqdm
 
 
 G = nx.DiGraph()
