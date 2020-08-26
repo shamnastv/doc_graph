@@ -67,7 +67,7 @@ def create_gaph(args):
         edges = [list(pair) for pair in g.g.edges()]
         edges_w = [w['weight'] for i, j, w in g.g.edges(data=True)]
         edges.extend([[i, j] for j, i in edges])
-        edges_w = [w for w in edges_w]
+        edges_w.extend([w for w in edges_w])
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
         g.edges_weights = torch.FloatTensor(edges_w)
     print(g_list[0].edge_mat.shape)
