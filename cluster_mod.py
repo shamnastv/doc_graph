@@ -17,11 +17,14 @@ class ClusterNN(nn.Module):
                 self.centroids.append(nn.Parameter(torch.zeros(num_class, hidden_dim)))
 
         self.mlp_cs = torch.nn.ModuleList()
+        self.batch_norms_c = torch.nn.ModuleList()
+
         for layer in range(num_layers):
             if layer == 0:
                 self.mlp_cs.append(MLP(num_mlp_layers, input_dim, hidden_dim, num_class))
             else:
                 self.mlp_cs.append(MLP(num_mlp_layers, hidden_dim, hidden_dim, num_class))
+            self.batch_norms_c.append(nn.BatchNorm1d(num_class))
 
         # self.linears_prediction = torch.nn.ModuleList()
         # for layer in range(num_layers - 1):
@@ -32,7 +35,7 @@ class ClusterNN(nn.Module):
     def forward(self, ge):
         cg = 0
         for layer in range(self.num_layers):
-            cg += self.mlp_cs[layer](ge[layer])
+            cg += self.batch_norms_c[layer](self.mlp_cs[layer](ge[layer]))
         # cg = self.batch_norm_c(cg)
         cg = F.softmax(cg, dim=0)
         return cg
