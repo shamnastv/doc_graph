@@ -70,8 +70,7 @@ def create_gaph(args):
         edges_w.extend([w for w in edges_w])
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
         g.edges_weights = torch.FloatTensor(edges_w)
-    print(g_list[0].edge_mat.shape)
-    print(g_list[0].edges_weights.shape)
+    print(g_list[0].edges_weights)
     return g_list, len(set(y)), train_size
 
 
@@ -98,23 +97,28 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     ge_new = [torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device) for layer in range(args.num_layers)]
 
     if not initial:
+        cl = model_c(ge)
+        cl = cl.detach()
         if epoch % (2 * total_itr_c) == 1:
             for itr in range(total_itr_c):
-                cl = model_c(ge)
-                loss_c = 0
-                for layer in range(args.num_layers):
-                    loss_c += my_loss(args.alpha, model_c.centroids[layer], ge[layer], cl, device)
-                if optimizer_c is not None:
-                    optimizer_c.zero_grad()
-                    loss_c.backward()
-                    optimizer_c.step()
-                loss_c = loss_c.detach().cpu().numpy()
-                cl = cl.detach()
+                loss_c_accum = 0
+                full_idx = np.random.permutation(total_size)
+                for i in range(0, total_size, args.batch_size):
+                    selected_idx = full_idx[i:i + args.batch_size]
+                    cl_new = model_c(ge[:][selected_idx])
+                    loss_c = 0
+                    for layer in range(args.num_layers):
+                        loss_c += my_loss(args.alpha, model_c.centroids[layer], ge[layer][selected_idx], cl_new, device)
+                    if optimizer_c is not None:
+                        optimizer_c.zero_grad()
+                        loss_c.backward()
+                        optimizer_c.step()
+                    loss_c = loss_c.detach().cpu().numpy()
+                    loss_c_accum += loss_c
+                    cl_new = cl_new.detach()
+                    cl[selected_idx] = cl_new
 
-                print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c)
-        else:
-            cl = model_c(ge)
-            cl = cl.detach()
+                print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum)
 
     else:
         cl = None
@@ -212,7 +216,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
 
     if epoch == 800:
         for i in range(len(test_graphs)):
-            print('label : ', labels_test[i], ' pred : ', pred_test[i])
+            print('label : ', labels_test[i].cpu().item(), ' pred : ', pred_test[i].cpu().item())
 
     return acc_train, acc_test, ge_new
 
