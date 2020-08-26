@@ -92,12 +92,12 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_c.train()
 
     total_itr_c = 60
-    cl_batch_size = args.batch_size * 50
+    cl_batch_size = args.batch_size_cl
 
     ge_new = [torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device) for layer in range(args.num_layers)]
 
     if not initial:
-        with torch.no_grad:
+        with torch.no_grad():
             cl = model_c(ge)
         if epoch % (2 * total_itr_c) == 1:
             for itr in range(total_itr_c):
@@ -151,18 +151,19 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     print('epoch : ', epoch, 'classification loss : ', loss_accum)
 
-    # model_e.eval()
-    idx_test = np.arange(train_size, total_size)
-    for i in range(0, test_size, args.batch_size):
-        selected_idx = idx_test[i:i + args.batch_size]
-        batch_graph = [graphs[idx] for idx in selected_idx]
-        if len(selected_idx) == 0:
-            continue
-        output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
+    with torch.no_grad():
+        # model_e.eval()
+        idx_test = np.arange(train_size, total_size)
+        for i in range(0, test_size, args.batch_size):
+            selected_idx = idx_test[i:i + args.batch_size]
+            batch_graph = [graphs[idx] for idx in selected_idx]
+            if len(selected_idx) == 0:
+                continue
+            output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
 
-        output = output.detach()
-        for layer in range(args.num_layers):
-            ge_new[layer][selected_idx] = pooled_h[layer].detach()
+            output = output.detach()
+            for layer in range(args.num_layers):
+                ge_new[layer][selected_idx] = pooled_h[layer].detach()
 
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
