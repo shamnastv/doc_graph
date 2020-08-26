@@ -36,7 +36,7 @@ class MLP(nn.Module):
             self.linears.append(nn.Linear(hidden_dim, output_dim))
 
             for layer in range(num_layers - 1):
-                self.batch_norms.append(nn.BatchNorm1d((hidden_dim)))
+                self.batch_norms.append(nn.BatchNorm1d(hidden_dim))
 
     def forward(self, x):
         if self.linear_or_not:

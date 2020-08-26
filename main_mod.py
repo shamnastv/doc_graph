@@ -91,7 +91,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_e.train()
     model_c.train()
 
-    total_itr_c = 60
+    total_itr_c = args.iters_per_epoch
     cl_batch_size = args.batch_size_cl
 
     ge_new = [torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device) for layer in range(args.num_layers)]
@@ -99,7 +99,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     if not initial:
         with torch.no_grad():
             cl = model_c(ge)
-        if epoch % (2 * total_itr_c) == 1:
+        if epoch % total_itr_c == 1:
             for itr in range(total_itr_c):
                 loss_c_accum = 0
                 full_idx = np.random.permutation(total_size)
