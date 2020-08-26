@@ -91,7 +91,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     ge_new = [torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device) for layer in range(args.num_layers)]
 
     if not initial:
-        if epoch % 2 * total_itr_c == 1:
+        if epoch % (2 * total_itr_c) == 1:
             for itr in range(total_itr_c):
                 cl = model_c(ge)
                 loss_c = 0
