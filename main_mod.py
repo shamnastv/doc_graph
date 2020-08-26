@@ -65,7 +65,7 @@ def create_gaph(args):
         #     degree_list.append(len(g.neighbors[i]))
         # g.max_neighbor = max(degree_list)
         # edges = [list(pair) for pair in g.g.edges()]
-        edges_w = [[i, j, w] for i, j, w in g.edges_iter(data='weight', default=1)]
+        edges_w = [[i, j, w] for i, j, w in g.g.edges_iter(data='weight', default=1)]
         # edges.extend([[i, j] for j, i in edges])
         edges_w = [[i, j, w] for j, i, w in edges_w]
         # g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
