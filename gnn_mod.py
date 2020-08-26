@@ -93,12 +93,15 @@ class GNN(nn.Module):
         # create block diagonal sparse matrix
 
         edge_mat_list = []
+        edge_weight_list = []
         start_idx = [0]
         for i, graph in enumerate(batch_graph):
             start_idx.append(start_idx[i] + len(graph.g))
             edge_mat_list.append(graph.edge_mat + start_idx[i])
+            edge_weight_list.append(graph.edges_weights)
         Adj_block_idx = torch.cat(edge_mat_list, 1)
-        Adj_block_elem = torch.ones(Adj_block_idx.shape[1])
+        Adj_block_elem = torch.cat(edge_weight_list)
+        # Adj_block_elem = torch.ones(Adj_block_idx.shape[1])
 
         # Add self-loops in the adjacency matrix if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
 

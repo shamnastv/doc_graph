@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import time
+from sklearn.preprocessing import normalize
 
 import build_graph
 from cluster_mod import ClusterNN
@@ -32,17 +33,19 @@ class S2VGraph(object):
         self.label = label
         self.g = g
         self.node_tags = node_tags
-        self.neighbors = []
+        # self.neighbors = []
         self.node_features = torch.FloatTensor(node_features)
         self.edge_mat = 0
+        self.edges_weights = []
 
-        self.max_neighbor = 0
+        # self.max_neighbor = 0
 
 
 def create_gaph(args):
     ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph(config_file=args.configfile)
     g_list = []
     for i, adj in enumerate(ls_adj):
+        adj = normalize(adj, norm='l1', axis=1, copy=False)
         g = nx.from_scipy_sparse_matrix(adj)
         lb = y[i]
         feat = feature_list[i]
@@ -52,18 +55,23 @@ def create_gaph(args):
         g_list.append(S2VGraph(g, lb, node_features=feat))
 
     for g in g_list:
-        g.neighbors = [[] for i in range(len(g.g))]
-        for i, j in g.g.edges():
-            g.neighbors[i].append(j)
-            g.neighbors[j].append(i)
-        degree_list = []
-        for i in range(len(g.g)):
-            g.neighbors[i] = g.neighbors[i]
-            degree_list.append(len(g.neighbors[i]))
-        g.max_neighbor = max(degree_list)
-        edges = [list(pair) for pair in g.g.edges()]
-        edges.extend([[i, j] for j, i in edges])
-        g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
+        # g.neighbors = [[] for i in range(len(g.g))]
+        # for i, j in g.g.edges():
+        #     g.neighbors[i].append(j)
+        #     g.neighbors[j].append(i)
+        # degree_list = []
+        # for i in range(len(g.g)):
+        #     g.neighbors[i] = g.neighbors[i]
+        #     degree_list.append(len(g.neighbors[i]))
+        # g.max_neighbor = max(degree_list)
+        # edges = [list(pair) for pair in g.g.edges()]
+        edges_w = [[i, j, w] for i, j, w in g.edges_iter(data='weight', default=1)]
+        # edges.extend([[i, j] for j, i in edges])
+        edges_w = [[i, j, w] for j, i, w in edges_w]
+        # g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
+        edges_w = torch.FloatTensor(edges_w).transpose(0, 1)
+        g.edge_mat = torch.LongTensor(edges_w[0, 1])
+        g.edges_weights = torch.FloatTensor(edges_w[2])
 
     return g_list, len(set(y)), train_size
 
