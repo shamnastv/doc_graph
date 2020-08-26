@@ -86,30 +86,33 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_e.train()
     model_c.train()
 
-    total_itr_c = 20
+    total_itr_c = 60
 
     ge_new = [torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device) for layer in range(args.num_layers)]
 
     if not initial:
-        for itr in range(total_itr_c):
-            cl = model_c(ge)
-            loss_c = 0
-            for layer in range(args.num_layers):
-                loss_c += my_loss(args.alpha, model_c.centroids[layer], ge[layer], cl, device)
-            if optimizer_c is not None:
-                optimizer_c.zero_grad()
-                loss_c.backward()
-                optimizer_c.step()
-            loss_c = loss_c.detach().cpu().numpy()
-            cl = cl.detach()
+        if epoch % 2 * total_itr_c == 1:
+            for itr in range(total_itr_c):
+                cl = model_c(ge)
+                loss_c = 0
+                for layer in range(args.num_layers):
+                    loss_c += my_loss(args.alpha, model_c.centroids[layer], ge[layer], cl, device)
+                if optimizer_c is not None:
+                    optimizer_c.zero_grad()
+                    loss_c.backward()
+                    optimizer_c.step()
+                loss_c = loss_c.detach().cpu().numpy()
+                cl = cl.detach()
 
-            print('epoch : ', epoch, 'iter', iter, 'cluster loss : ', loss_c)
+                print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c)
+        else:
+            cl = model_c(ge)
+            cl = cl.detach()
 
     else:
         cl = None
 
     idx_train = np.random.permutation(train_size)
-
     loss_accum = 0
     for i in range(0, train_size, args.batch_size):
         selected_idx = idx_train[i:i + args.batch_size]
