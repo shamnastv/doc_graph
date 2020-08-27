@@ -193,7 +193,7 @@ class GNN(nn.Module):
                 pooled = pooled / degree
 
         # representation of neighboring and center nodes
-        pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
+        pooled = pooled + (1 + self.eps[layer]) * h
         if Cl is not None:
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, H)
