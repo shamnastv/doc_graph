@@ -225,7 +225,7 @@ class GNN(nn.Module):
             elif self.neighbor_pooling_type == "max" and not self.learn_eps:
                 h = self.next_layer(h, layer, idx, Cl, H[layer], graph_pool, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and not self.learn_eps:
-                h = self.next_layer(h, layer, Cl, idx, H[layer], graph_pool, Adj_block=Adj_block)
+                h = self.next_layer(h, layer, idx, Cl, H[layer], graph_pool, Adj_block=Adj_block)
 
             hidden_rep.append(h)
 
