@@ -84,6 +84,14 @@ def my_loss(alpha, centroids, embeddings, cl, device):
     return loss
 
 
+def print_cluster(cl):
+    freq = [0 for i in range(cl.shape[1])]
+    indices = cl.max(1)[1]
+    for i in indices:
+        freq[i] += 1
+    print(freq)
+
+
 def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, initial=False):
     total_size = len(graphs)
     test_size = total_size - train_size
@@ -122,6 +130,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     num_itr += 1
 
                 print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum/num_itr)
+
+            print_cluster(cl)
 
     else:
         cl = None
