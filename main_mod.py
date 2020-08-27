@@ -77,10 +77,12 @@ def my_loss(alpha, centroids, embeddings, cl, device):
     dm = len(cl[0])
     loss = 0
     for i, emb in enumerate(embeddings):
-        tmp = torch.sub(centroids, emb)
-        loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
+        tmp = torch.sum(torch.sub(centroids, emb) ** 2, dim=1, keepdim=True)
+        # tmp = torch.sub(centroids, emb)
+        # loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
+        loss += torch.mm(cl[i].reshape(1, -1), tmp)
     tmp = torch.mm(cl.transpose(0, 1), cl)
-    loss += alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / dm ** .5)
+    loss += alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
     return loss
 
 
