@@ -293,9 +293,9 @@ def main():
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
     for epoch in range(10):
-        avg_loss, ge = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
+        avg_loss, ge_new = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                                  train_size, ge, initial=True)
-    acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
+    # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
     ge = ge_new
 
