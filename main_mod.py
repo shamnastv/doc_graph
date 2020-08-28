@@ -110,7 +110,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         with torch.no_grad():
             cl = model_c(ge)
         if epoch % total_itr_c == 1:
-            for itr in range(total_itr_c):
+            for itr in range(2 * total_itr_c):
                 loss_c_accum = 0
                 full_idx = np.random.permutation(total_size)
                 num_itr = 0
