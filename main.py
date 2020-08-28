@@ -100,9 +100,6 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     total_iter_c = 0
     cl_batch_size = 10 * args.batch_size
 
-    with torch.no_grad():
-        cl = model_c(ge)
-
     if epoch % args.iters_per_epoch == 1:
         total_iter_c = args.iters_per_epoch
 
@@ -128,10 +125,11 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             loss_c = loss_c.detach().cpu().numpy()
             loss_c_accum += loss_c
             cl_new = cl_new.detach()
-            cl[selected_idx] = cl_new
             num_itr += 1
         print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c_accum/num_itr)
 
+    with torch.no_grad():
+        cl = model_c(ge)
     print_cluster(cl)
 
     idx_train = np.random.permutation(train_size)
