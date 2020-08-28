@@ -229,10 +229,11 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
     if acc_test > max_test_accuracy:
         max_test_accuracy = acc_test
         max_acc_epoch = epoch
+    print('max test accuracy : ', max_test_accuracy, 'max acc epoch : ', max_acc_epoch)
 
-    if epoch == 800:
-        for i in range(len(test_graphs)):
-            print('label : ', labels_test[i].cpu().item(), ' pred : ', pred_test[i].cpu().item())
+    # if epoch == 800:
+    #     for i in range(len(test_graphs)):
+    #         print('label : ', labels_test[i].cpu().item(), ' pred : ', pred_test[i].cpu().item())
 
     return acc_train, acc_test, ge_new
 

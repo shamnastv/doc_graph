@@ -166,11 +166,12 @@ class GNN(nn.Module):
                 pooled = pooled / degree
 
         # Re-weights the center node representation when aggregating it with its neighbors
-        pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
+        # pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
+        pooled = pooled + (1 + self.eps[layer]) * h
         if Cl is not None:
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, H)
-            pooled = pooled + 100 * torch.spmm(graph_pool.transpose(0, 1), tmp)
+            pooled = pooled + torch.spmm(graph_pool.transpose(0, 1), tmp)
         pooled_rep = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](pooled_rep)
 
