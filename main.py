@@ -72,22 +72,36 @@ def my_loss(alpha, centroids, embeddings, cl, device):
     dm = len(cl[0])
     loss = 0
     for i, emb in enumerate(embeddings):
-        tmp = torch.sub(centroids, emb)
-        loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
+        tmp = torch.sum(torch.sub(centroids, emb) ** 2, dim=1, keepdim=True)
+        # tmp = torch.sub(centroids, emb)
+        # loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
+        loss += torch.mm(cl[i].reshape(1, -1), tmp)
     tmp = torch.mm(cl.transpose(0, 1), cl)
-    loss += alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / dm ** .5)
+    loss += alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
     return loss
+
+
+def print_cluster(cl):
+    freq = [0 for i in range(cl.shape[1])]
+    indices = cl.max(1)[1]
+    for i in indices:
+        freq[i] += 1
+    print(freq)
 
 
 def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, update_graph):
     model_e.train()
     model_c.train()
 
+    total_size = len(graphs)
+    test_size = total_size - train_size
+
     total_iter = 1
     total_iter_c = 0
+    cl_batch_size = 10 * args.batch_size
 
-    cl = model_c(ge)
-    cl = cl.detach()
+    with torch.no_grad():
+        cl = model_c(ge)
 
     if epoch % args.iters_per_epoch == 1:
         total_iter_c = args.iters_per_epoch
@@ -100,14 +114,25 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
 
     for itr in range(total_iter_c):
-        cl = model_c(ge)
-        loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
-        if optimizer_c is not None:
-            optimizer_c.zero_grad()
-            loss_c.backward()
-            optimizer_c.step()
-        cl = cl.detach()
-        print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c.detach().cpu().numpy())
+        loss_c_accum = 0
+        full_idx = np.random.permutation(total_size)
+        num_itr = 0
+        for i in range(0, total_size, cl_batch_size):
+            selected_idx = full_idx[i:i + cl_batch_size]
+            cl_new = model_c(ge[selected_idx])
+            loss_c = my_loss(args.alpha, model_c.centroids, ge[selected_idx], cl_new, device)
+            if optimizer_c is not None:
+                optimizer_c.zero_grad()
+                loss_c.backward()
+                optimizer_c.step()
+            loss_c = loss_c.detach().cpu().numpy()
+            loss_c_accum += loss_c
+            cl_new = cl_new.detach()
+            cl[selected_idx] = cl_new
+            num_itr += 1
+        print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c_accum/num_itr)
+
+    print_cluster(cl)
 
     idx_train = np.random.permutation(train_size)
     for itr in range(total_iter):
@@ -147,8 +172,6 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     if update_graph:
         # model_e.eval()
-        total_size = len(graphs)
-        test_size = total_size - train_size
         idx_test = np.arange(train_size, total_size)
         for i in range(0, test_size, args.batch_size):
             selected_idx = idx_test[i:i + args.batch_size]
