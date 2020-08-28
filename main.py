@@ -130,7 +130,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     with torch.no_grad():
         cl = model_c(ge)
-    print_cluster(cl)
+
+    if total_iter_c != 0:
+        print_cluster(cl)
 
     idx_train = np.random.permutation(train_size)
     for itr in range(total_iter):
@@ -166,7 +168,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     node_features[j] = h[start_idx:start_idx + length]
                     start_idx += length
 
-        print('epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum, 'W : ', model_e.ws)
+        print('epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum, 'W : ', model_e.ws.cpu().item())
 
     if update_graph:
         # model_e.eval()
