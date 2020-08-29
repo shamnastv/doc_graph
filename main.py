@@ -168,7 +168,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     node_features[j] = h[start_idx:start_idx + length]
                     start_idx += length
 
-        print('epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum, 'W : ', model_e.ws.cpu().numpy())
+        print('epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum)
 
     if update_graph:
         # model_e.eval()
