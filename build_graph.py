@@ -4,8 +4,6 @@ import numpy as np
 import scipy.sparse as sp
 from math import log
 
-from bert_embedding import BertEmbedding
-
 from util import read_param
 
 
@@ -44,6 +42,8 @@ def build_graph(config_file='param.yaml'):
     
     if param['retrieve_graph']:
         return retrieve_graph(dataset)
+
+    from bert_embedding import BertEmbedding
 
     doc_name_list = []
     doc_train_list = []

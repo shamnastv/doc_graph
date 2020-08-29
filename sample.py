@@ -4,6 +4,12 @@ import networkx as nx
 from tqdm import tqdm
 
 
+def test():
+    import time
+    print(time.time())
+
+test()
+
 G = nx.DiGraph()
 A = np.array([[1, 2], [3, 4]])
 G = nx.from_numpy_matrix(A)
