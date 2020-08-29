@@ -1,4 +1,4 @@
 dataset: ohsumed
-window_size: 5
+window_size: 20
 save_graph: False
 retrieve_graph: False
