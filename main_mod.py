@@ -107,8 +107,6 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     ge_new = [torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device) for layer in range(args.num_layers)]
 
     if not initial:
-        with torch.no_grad():
-            cl = model_c(ge)
         if epoch % total_itr_c == 1:
             for itr in range(total_itr_c):
                 loss_c_accum = 0
@@ -128,12 +126,14 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     loss_c = loss_c.detach().cpu().numpy()
                     loss_c_accum += loss_c
                     cl_new = cl_new.detach()
-                    cl[selected_idx] = cl_new
                     num_itr += 1
-
                 print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum/num_itr)
-
+            with torch.no_grad():
+                cl = model_c(ge)
             print_cluster(cl)
+        else:
+            with torch.no_grad():
+                cl = model_c(ge)
 
     else:
         cl = None
@@ -229,7 +229,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
     if acc_test > max_test_accuracy:
         max_test_accuracy = acc_test
         max_acc_epoch = epoch
-    print('max test accuracy : ', max_test_accuracy, 'max acc epoch : ', max_acc_epoch)
+    print('max test accuracy : ', max_test_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
 
     # if epoch == 800:
     #     for i in range(len(test_graphs)):
@@ -286,7 +286,7 @@ def main():
 
     args = parser.parse_args()
 
-    print(args)
+    print(args, flush=True)
 
     # set up seeds and gpu device
     torch.manual_seed(0)
