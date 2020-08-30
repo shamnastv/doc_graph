@@ -307,14 +307,15 @@ def main():
     optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
+    print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(10):
         avg_loss, ge_new = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                                  train_size, ge, initial=True)
+    print('Embedding Initialized', flush=True)
     # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
     ge = ge_new
 
-    print(time.time() - start_time, 's Training starts')
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
 
@@ -322,6 +323,17 @@ def main():
         acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
         ge = ge_new
+
+        if epoch % args.iters_per_epoch == 0:
+            model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
+                                args.num_mlp_layers_c).to(device)
+            model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
+                          num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type,
+                          args.neighbor_pooling_type, device).to(device)
+
+            optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+            optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
+            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
         if not args.filename == "":
             with open(args.filename, 'w') as f:
