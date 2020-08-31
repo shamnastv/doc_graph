@@ -320,9 +320,10 @@ def main():
     print('Embedding Initialized', flush=True)
     # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
-    for i in range(len(ge)):
-        norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
-        ge[i] = ge_new[i].div(norm)
+    # for i in range(len(ge)):
+    #     norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
+    #     ge[i] = ge_new[i].div(norm)
+    ge = ge_new
 
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
@@ -331,9 +332,10 @@ def main():
         acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
         if epoch % args.iters_per_epoch == 0:
-            for i in range(len(ge)):
-                norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
-                ge[i] = ge_new[i].div(norm)
+            # for i in range(len(ge)):
+            #     norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
+            #     ge[i] = ge_new[i].div(norm)
+            ge = ge_new
 
             model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
                                 args.num_mlp_layers_c).to(device)
@@ -344,6 +346,7 @@ def main():
             optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
             optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
             scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
+            print(time.time() - start_time, 'embeddings updated.', flush=True)
 
         if not args.filename == "":
             with open(args.filename, 'w') as f:
