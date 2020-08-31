@@ -286,7 +286,7 @@ def main():
 
     args = parser.parse_args()
 
-    print(args, flush=True)
+    print(args)
 
     # set up seeds and gpu device
     torch.manual_seed(0)
@@ -294,6 +294,7 @@ def main():
     device = torch.device("cuda:" + str(args.device)) if torch.cuda.is_available() else torch.device("cpu")
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(0)
+    print('device : ', device, flush= True)
 
     graphs, num_classes, train_size = create_gaph(args)
     ge = [None for i in range(args.num_layers)]
