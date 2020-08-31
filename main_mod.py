@@ -176,9 +176,10 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                 continue
             output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
 
-            output = output.detach()
+            # output = output.detach()
             for layer in range(args.num_layers):
-                ge_new[layer][selected_idx] = pooled_h[layer].detach()
+                ge_new[layer][selected_idx] = pooled_h[layer]
+                # ge_new[layer][selected_idx] = pooled_h[layer].detach()
 
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
@@ -306,9 +307,11 @@ def main():
                   args.final_dropout,
                   args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
 
-    optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-    optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
+    # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+    # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
+    optimizer = optim.SGD(model_e.parameters(), lr=args.lr, momentum=0.9)
+    optimizer_c = optim.SGD(model_c.parameters(), lr=args.lr_c, momentum=0.9)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
 
     print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(10):
