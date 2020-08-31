@@ -131,6 +131,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             with torch.no_grad():
                 cl = model_c(ge)
             print_cluster(cl)
+            print('', flush=True)
         else:
             with torch.no_grad():
                 cl = model_c(ge)
@@ -230,6 +231,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
         max_test_accuracy = acc_test
         max_acc_epoch = epoch
     print('max test accuracy : ', max_test_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
+    print('epsilon : ', model_e.eps)
 
     # if epoch == 800:
     #     for i in range(len(test_graphs)):

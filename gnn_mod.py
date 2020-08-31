@@ -154,6 +154,7 @@ class GNN(nn.Module):
     def next_layer_eps(self, h, layer, idx, Cl=None, H=None, graph_pool=None, padded_neighbor_list=None, Adj_block=None):
         # pooling neighboring nodes and center nodes separately by epsilon reweighting.
 
+        mul_fact = 10 / H.shape[0]
         if self.neighbor_pooling_type == "max":
             # If max pooling
             pooled = self.maxpool(h, padded_neighbor_list)
@@ -170,7 +171,7 @@ class GNN(nn.Module):
         pooled = pooled + (1 + self.eps[layer]) * h
         if Cl is not None:
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-            tmp = torch.spmm(tmp, H)
+            tmp = mul_fact * torch.spmm(tmp, H)
             pooled = pooled + torch.spmm(graph_pool.transpose(0, 1), tmp)
         pooled_rep = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](pooled_rep)
