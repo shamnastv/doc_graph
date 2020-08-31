@@ -320,7 +320,9 @@ def main():
     print('Embedding Initialized', flush=True)
     # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
-    ge = ge_new
+    for i in range(len(ge)):
+        norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
+        ge[i] = ge_new[i].div(norm)
 
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
@@ -328,9 +330,11 @@ def main():
         avg_loss, ge_new = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
         acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
 
-        ge = ge_new
-
         if epoch % args.iters_per_epoch == 0:
+            for i in range(len(ge)):
+                norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
+                ge[i] = ge_new[i].div(norm)
+
             model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
                                 args.num_mlp_layers_c).to(device)
             model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
