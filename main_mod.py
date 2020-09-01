@@ -196,10 +196,11 @@ def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device)
         sampled_idx = full_idx[i:i + minibatch_size]
         if len(sampled_idx) == 0:
             continue
-        output, pooled_h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
-        outputs.append(output.detach())
+        with torch.no_grad():
+            output, pooled_h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
+        outputs.append(output)
         for layer in range(args.num_layers):
-            ge_new[layer][sampled_idx] = pooled_h[layer].detach()
+            ge_new[layer][sampled_idx] = pooled_h[layer]
 
     return torch.cat(outputs, 0), ge_new
 
@@ -210,7 +211,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
 
     cl = model_c(ge)
 
-    output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 64, device)
+    output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 500, device)
 
     output_train, output_test = output[:train_size], output[train_size:]
     train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
@@ -246,9 +247,9 @@ def main():
         description='PyTorch graph convolutional neural net for whole-graph classification')
     parser.add_argument('--device', type=int, default=0,
                         help='which gpu to use if any (default: 0)')
-    parser.add_argument('--batch_size', type=int, default=32,
+    parser.add_argument('--batch_size', type=int, default=64,
                         help='input batch size for training (default: 32)')
-    parser.add_argument('--batch_size_cl', type=int, default=32,
+    parser.add_argument('--batch_size_cl', type=int, default=128,
                         help='input batch size for clustering (default: 32)')
     parser.add_argument('--iters_per_epoch', type=int, default=50,
                         help='number of iterations per each epoch (default: 50)')
