@@ -7,7 +7,7 @@ from mlp import MLP
 
 class GNN(nn.Module):
     def __init__(self, num_layers, num_mlp_layers, input_dim, hidden_dim, output_dim, final_dropout, learn_eps,
-                 graph_pooling_type, neighbor_pooling_type, device):
+                 graph_pooling_type, neighbor_pooling_type, device, beta):
         '''
             num_layers: number of layers in the neural networks (INCLUDING the input layer)
             num_mlp_layers: number of layers in mlps (EXCLUDING the input layer)
@@ -32,6 +32,7 @@ class GNN(nn.Module):
         self.eps = nn.Parameter(torch.zeros(self.num_layers - 1))
         self.w1 = nn.Parameter(torch.zeros(self.num_layers - 1))
         self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
+        self.beta = beta
 
         # for layer in self.layers:
         #     if layer == 0:
@@ -169,11 +170,11 @@ class GNN(nn.Module):
         # pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
         pooled = pooled + (1 + self.eps[layer]) * h
         if Cl is not None:
-            # mul_fact = 10 / H.shape[0]
+            mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-            tmp = torch.spmm(tmp, H)
-            norm = tmp.norm(p=2, dim=1, keepdim=True)
-            tmp = tmp.div(norm)
+            tmp = mul_fact * torch.spmm(tmp, H)
+            # norm = tmp.norm(p=2, dim=1, keepdim=True)
+            # tmp = tmp.div(norm)
             pooled = pooled + torch.spmm(graph_pool.transpose(0, 1), tmp)
         pooled_rep = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](pooled_rep)
