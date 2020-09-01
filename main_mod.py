@@ -326,10 +326,9 @@ def main():
     ge = ge_new
 
     for epoch in range(1, args.epochs + 1):
-        scheduler.step()
-
         avg_loss, ge_new = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
         acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
+        scheduler.step()
 
         if epoch % args.iters_per_epoch == 0:
             # for i in range(len(ge)):
