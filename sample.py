@@ -1,12 +1,12 @@
 import numpy as np
 import time
 import networkx as nx
-from tqdm import tqdm
 
 
 def test():
     import time
     print(time.time())
+
 
 test()
 
@@ -18,6 +18,7 @@ G = nx.from_numpy_matrix(A)
 # print(G.edges_iter(data='weight', default=1))
 x = [w['weight'] for i, j, w in G.edges(data=True)]
 print(x)
+
 
 def test_mr_dataset():
     f = open('data/corpus/' + 'mr' + '.clean.txt', 'r')
