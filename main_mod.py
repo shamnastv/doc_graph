@@ -104,7 +104,12 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     total_itr_c = args.iters_per_epoch
     cl_batch_size = args.batch_size_cl
 
-    ge_new = [torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device) for layer in range(args.num_layers)]
+    ge_new = []
+    for layer in range(args.num_layers):
+        if layer == 0:
+            ge_new.append(torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device))
+        else:
+            ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
 
     if not initial:
         if epoch % total_itr_c == 1:
@@ -189,7 +194,12 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
 def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device):
     outputs = []
-    ge_new = [torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device) for layer in range(args.num_layers)]
+    ge_new = []
+    for layer in range(args.num_layers):
+        if layer == 0:
+            ge_new.append(torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device))
+        else:
+            ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
 
     full_idx = np.arange(len(graphs))
     for i in range(0, len(graphs), minibatch_size):
