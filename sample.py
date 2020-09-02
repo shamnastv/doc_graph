@@ -16,4 +16,4 @@ def test_mr_dataset():
     f.close()
 
 
-# test_mr_dataset()
+test_mr_dataset()
