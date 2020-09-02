@@ -126,7 +126,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             loss_c_accum += loss_c
             cl_new = cl_new.detach()
             num_itr += 1
-        print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c_accum/num_itr)
+        print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c_accum / num_itr)
 
     with torch.no_grad():
         cl = model_c(ge)
@@ -306,7 +306,7 @@ def main():
 
     args = parser.parse_args()
 
-    print(args)
+    print(args, flush=True)
 
     # set up seeds and gpu device
     torch.manual_seed(0)
@@ -319,8 +319,9 @@ def main():
     ge = initialize_graph_embedding(graphs, device)
 
     model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers_c).to(device)
-    model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout,
-                args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
+    model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
+                  args.final_dropout,
+                  args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
 
     optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
     optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
@@ -331,8 +332,10 @@ def main():
         scheduler.step()
         update_graph = epoch % (3 * args.iters_per_epoch) == 0
 
-        avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, False)
-        acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_graph)
+        avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
+                                                train_size, ge, False)
+        acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, epoch, ge,
+                                                          update_graph)
 
         if update_graph:
             for j in range(len(graphs)):
