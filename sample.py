@@ -1,6 +1,7 @@
 import numpy as np
 import time
 import networkx as nx
+import torch
 
 
 def test():
@@ -8,16 +9,20 @@ def test():
     print(time.time())
 
 
-test()
+# test()
 
-G = nx.DiGraph()
 A = np.array([[1, 2], [3, 4]])
-G = nx.from_numpy_matrix(A)
-# G.add_edge(2, 3, weight=5)
-# G.add_edge(3, 2, weight=3)
-# print(G.edges_iter(data='weight', default=1))
-x = [w['weight'] for i, j, w in G.edges(data=True)]
-print(x)
+A = torch.FloatTensor(A)
+print(torch.norm(A, dim=0, p=1, keepdim=True))
+
+# G = nx.DiGraph()
+# A = np.array([[1, 2], [3, 4]])
+# G = nx.from_numpy_matrix(A)
+# # G.add_edge(2, 3, weight=5)
+# # G.add_edge(3, 2, weight=3)
+# # print(G.edges_iter(data='weight', default=1))
+# x = [w['weight'] for i, j, w in G.edges(data=True)]
+# print(x)
 
 
 def test_mr_dataset():
