@@ -247,7 +247,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_g
         max_test_accuracy = acc_test
         max_acc_epoch = epoch
 
-    print('max test accuracy : ', max_test_accuracy, 'max acc epoch : ', max_acc_epoch)
+    print('max test accuracy : ', max_test_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
 
     # if epoch == 800:
     #     for i in range(len(test_graphs)):
@@ -326,7 +326,7 @@ def main():
     optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
-    print(time.time() - start_time, 's Training starts')
+    print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
         update_graph = epoch % (3 * args.iters_per_epoch) == 0
