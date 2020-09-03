@@ -100,7 +100,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     total_iter_c = 0
     cl_batch_size = 10 * args.batch_size
 
-    if epoch % args.iters_per_epoch == 1:
+    if epoch % args.update_freq == 1:
         total_iter_c = args.iters_per_epoch
 
     if epoch <= 2:
@@ -272,7 +272,9 @@ def main():
     parser.add_argument('--batch_size', type=int, default=64,
                         help='input batch size for training (default: 32)')
     parser.add_argument('--iters_per_epoch', type=int, default=50,
-                        help='number of iterations per each epoch (default: 50)')
+                        help='number of iterations on clustering (default: 50)')
+    parser.add_argument('--update_freq', type=int, default=50,
+                        help='number of epochs before updating graph  (default: 50)')
     parser.add_argument('--epochs', type=int, default=350,
                         help='number of epochs to train (default: 350)')
     parser.add_argument('--lr', type=float, default=0.01,
@@ -330,7 +332,7 @@ def main():
     print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
-        update_graph = epoch % args.iters_per_epoch == 0
+        update_graph = epoch % args.update_freq == 0
 
         avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                                                 train_size, ge, False)
