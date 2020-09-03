@@ -225,7 +225,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_g
 
     cl = model_c(ge)
 
-    output, ge_new, node_features = pass_data_iteratively(model_e, graphs, cl, ge, 64, update_graph, device)
+    output, ge_new, node_features = pass_data_iteratively(model_e, graphs, cl, ge, 128, update_graph, device)
 
     output_train, output_test = output[:train_size], output[train_size:]
     train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
@@ -269,7 +269,7 @@ def main():
         description='PyTorch graph convolutional neural net for whole-graph classification')
     parser.add_argument('--device', type=int, default=0,
                         help='which gpu to use if any (default: 0)')
-    parser.add_argument('--batch_size', type=int, default=32,
+    parser.add_argument('--batch_size', type=int, default=64,
                         help='input batch size for training (default: 32)')
     parser.add_argument('--iters_per_epoch', type=int, default=50,
                         help='number of iterations per each epoch (default: 50)')
@@ -330,7 +330,7 @@ def main():
     print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
-        update_graph = epoch % (3 * args.iters_per_epoch) == 0
+        update_graph = epoch % args.iters_per_epoch == 0
 
         avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                                                 train_size, ge, False)
