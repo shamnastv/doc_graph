@@ -205,11 +205,11 @@ def pass_data_iteratively(model_e, graphs, cl, ge, minibatch_size, update_graph,
         sampled_idx = full_idx[i:i + minibatch_size]
         if len(sampled_idx) == 0:
             continue
-        output, pooled_h, h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
-        outputs.append(output.detach())
+        with torch.no_grad():
+            output, pooled_h, h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
+        outputs.append(output)
         if update_graph:
-            ge_new[sampled_idx] = pooled_h.detach()
-            h = h.detach()
+            ge_new[sampled_idx] = pooled_h
             start_idx = 0
             for j in sampled_idx:
                 length = len(graphs[j].g)
@@ -223,7 +223,8 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_g
     model_c.eval()
     model_e.eval()
 
-    cl = model_c(ge)
+    with torch.no_grad():
+        cl = model_c(ge)
 
     output, ge_new, node_features = pass_data_iteratively(model_e, graphs, cl, ge, 128, update_graph, device)
 
