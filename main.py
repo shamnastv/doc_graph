@@ -103,7 +103,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     if epoch % args.update_freq == 1:
         total_iter_c = args.iters_per_epoch
 
-    if epoch <= 2:
+    if epoch <= 3:
         total_iter = int(epoch * args.iters_per_epoch / 4)
         total_iter_c = int(epoch * args.iters_per_epoch / 2)
 
