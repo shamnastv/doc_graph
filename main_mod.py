@@ -347,15 +347,15 @@ def main():
             #     ge[i] = ge_new[i].div(norm)
             ge = ge_new
 
-            model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
-                                args.num_mlp_layers_c).to(device)
-            model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
-                          num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type,
-                          args.neighbor_pooling_type, device, args.beta).to(device)
-
-            optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-            optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+            # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
+            #                     args.num_mlp_layers_c).to(device)
+            # model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
+            #               num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type,
+            #               args.neighbor_pooling_type, device, args.beta).to(device)
+            #
+            # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+            # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
+            # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
             print(time.time() - start_time, 'embeddings updated.', flush=True)
 
         if not args.filename == "":
