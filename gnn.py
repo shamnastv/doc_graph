@@ -137,7 +137,7 @@ class GNN(nn.Module):
 
         # Re-weights the center node representation when aggregating it with its neighbors
         if Cl is not None:
-            mul_fact = 1 / H.shape[0]
+            mul_fact = 10 / H.shape[0]
             pooled = (1 + self.ws[0]) * pooled + (1 + self.eps) * h
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, H)
