@@ -178,11 +178,10 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             batch_graph = [graphs[idx] for idx in selected_idx]
             if len(selected_idx) == 0:
                 continue
-            output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
+            with torch.no_grad():
+                output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
 
-            output = output.detach()
-            ge_new[selected_idx] = pooled_h.detach()
-            h = h.detach()
+            ge_new[selected_idx] = pooled_h
             start_idx = 0
             for j in selected_idx:
                 length = len(graphs[j].g)
