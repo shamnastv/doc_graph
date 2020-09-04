@@ -103,9 +103,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     if epoch % args.update_freq == 1:
         total_iter_c = args.iters_per_epoch
 
-    if epoch <= 3:
-        total_iter = int(epoch * args.iters_per_epoch / 4)
-        total_iter_c = int(epoch * args.iters_per_epoch / 2)
+    if epoch == -1:
+        total_iter = int(args.iters_per_epoch / 2)
+        total_iter_c = int(args.iters_per_epoch / 2)
 
     node_features = [0 for i in range(len(graphs))]
     ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
@@ -330,6 +330,12 @@ def main():
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
     print(time.time() - start_time, 's Training starts', flush=True)
+    for epoch in range(5):
+        avg_loss, ge, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -1,
+                                            train_size, ge, True)
+    acc_train, acc_test, ge, node_features = test(args, model_e, model_c, device, graphs, train_size, 1, ge, True)
+    print(time.time() - start_time, 's Embeddings Initialized', flush=True)
+
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
         update_graph = epoch % args.update_freq == 0
