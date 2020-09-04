@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import time
+import datetime
 
 import build_graph
 from cluster import ClusterNN
@@ -308,6 +309,7 @@ def main():
 
     args = parser.parse_args()
 
+    print(datetime.datetime.now())
     print(args, flush=True)
 
     # set up seeds and gpu device
