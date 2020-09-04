@@ -329,7 +329,7 @@ def main():
 
     optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
     optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
 
     print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(5):
