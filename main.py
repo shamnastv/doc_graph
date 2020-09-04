@@ -135,8 +135,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     if total_iter_c != 0:
         print_cluster(cl)
 
-    idx_train = np.random.permutation(train_size)
     for itr in range(total_iter):
+        idx_train = np.random.permutation(train_size)
         loss_accum = 0
         for i in range(0, train_size, args.batch_size):
             selected_idx = idx_train[i:i + args.batch_size]
