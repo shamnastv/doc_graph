@@ -34,7 +34,9 @@ class S2VGraph(object):
         self.g = g
         self.node_tags = node_tags
         # self.neighbors = []
-        self.node_features = torch.FloatTensor(node_features)
+        node_features = torch.FloatTensor(node_features)
+        norm = torch.norm(node_features, p=2, dim=1)
+        self.node_features = node_features.div(norm)
         self.edge_mat = 0
         self.edges_weights = []
 
