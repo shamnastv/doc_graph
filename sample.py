@@ -1,10 +1,10 @@
 import numpy as np
 import time
+import torch
 
-i = 10
-f = (i % 10 == 0)
-if f:
-    print('hi')
+x = torch.FloatTensor([[1, 0, 0], [1, 1, 1]])
+norm = torch.norm(x, p=1, dim=0, keepdim=True)
+print(norm)
 
 
 def test_mr_dataset():
@@ -16,4 +16,4 @@ def test_mr_dataset():
     f.close()
 
 
-test_mr_dataset()
+# test_mr_dataset()
