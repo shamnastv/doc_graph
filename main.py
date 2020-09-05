@@ -112,21 +112,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
 
     for itr in range(total_iter_c):
-        loss_c_accum = 0
-        full_idx = np.random.permutation(total_size)
-        num_itr = 0
-        for i in range(0, total_size, cl_batch_size):
-            selected_idx = full_idx[i:i + cl_batch_size]
-            cl_new = model_c(ge[selected_idx])
-            loss_c = my_loss(args.alpha, model_c.centroids, ge[selected_idx], cl_new, device)
-            if optimizer_c is not None:
-                optimizer_c.zero_grad()
-                loss_c.backward()
-                optimizer_c.step()
-            loss_c = loss_c.detach().cpu().numpy()
-            loss_c_accum += loss_c
-            cl_new = cl_new.detach()
-            num_itr += 1
+        loss_c_accum, num_itr = cluster_train(args, cl_batch_size, device, ge, model_c, optimizer_c, total_size)
         print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c_accum / num_itr)
 
     model_c.eval()
@@ -137,39 +123,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         print_cluster(cl)
 
     for itr in range(total_iter):
-        idx_train = np.random.permutation(train_size)
-        loss_accum = 0
-        for i in range(0, train_size, args.batch_size):
-            selected_idx = idx_train[i:i + args.batch_size]
-            batch_graph = [graphs[idx] for idx in selected_idx]
-            if len(selected_idx) == 0:
-                continue
-            output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
-
-            labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
-
-            # compute loss
-            loss = criterion(output, labels)
-
-            # backprop
-            if optimizer is not None:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-            loss = loss.detach().cpu().numpy()
-            loss_accum += loss
-
-            pooled_h = pooled_h.detach()
-            h = h.detach()
-            start_idx = 0
-            if itr == total_iter - 1 and update_graph:
-                ge_new[selected_idx] = pooled_h
-                for j in selected_idx:
-                    length = len(graphs[j].g)
-                    node_features[j] = h[start_idx:start_idx + length]
-                    start_idx += length
-
+        loss_accum = class_train(args, cl, device, ge, ge_new, graphs, itr, model_e, node_features, optimizer,
+                                 total_iter, train_size, update_graph)
         print('epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum)
 
     if update_graph:
@@ -193,6 +148,62 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
     return loss_accum, ge_new, node_features
+
+
+def class_train(args, cl, device, ge, ge_new, graphs, itr, model_e, node_features, optimizer, total_iter, train_size,
+                update_graph):
+    idx_train = np.random.permutation(train_size)
+    loss_accum = 0
+    for i in range(0, train_size, args.batch_size):
+        selected_idx = idx_train[i:i + args.batch_size]
+        batch_graph = [graphs[idx] for idx in selected_idx]
+        if len(selected_idx) == 0:
+            continue
+        output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
+
+        labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
+
+        # compute loss
+        loss = criterion(output, labels)
+
+        # backprop
+        if optimizer is not None:
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+        loss = loss.detach().cpu().numpy()
+        loss_accum += loss
+
+        pooled_h = pooled_h.detach()
+        h = h.detach()
+        start_idx = 0
+        if itr == total_iter - 1 and update_graph:
+            ge_new[selected_idx] = pooled_h
+            for j in selected_idx:
+                length = len(graphs[j].g)
+                node_features[j] = h[start_idx:start_idx + length]
+                start_idx += length
+    return loss_accum
+
+
+def cluster_train(args, cl_batch_size, device, ge, model_c, optimizer_c, total_size):
+    loss_c_accum = 0
+    full_idx = np.random.permutation(total_size)
+    num_itr = 0
+    for i in range(0, total_size, cl_batch_size):
+        selected_idx = full_idx[i:i + cl_batch_size]
+        cl_new = model_c(ge[selected_idx])
+        loss_c = my_loss(args.alpha, model_c.centroids, ge[selected_idx], cl_new, device)
+        if optimizer_c is not None:
+            optimizer_c.zero_grad()
+            loss_c.backward()
+            optimizer_c.step()
+        loss_c = loss_c.detach().cpu().numpy()
+        loss_c_accum += loss_c
+        cl_new = cl_new.detach()
+        num_itr += 1
+    return loss_c_accum, num_itr
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
