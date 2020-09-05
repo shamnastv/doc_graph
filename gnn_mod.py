@@ -172,8 +172,8 @@ class GNN(nn.Module):
         if Cl is not None:
             mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-            # tmp = mul_fact * torch.spmm(tmp, H)
-            norm = tmp.norm(p=2, dim=1, keepdim=True)
+            tmp = torch.spmm(tmp, H)
+            norm = torch.norm(tmp, p=2, dim=1, keepdim=True)
             tmp = tmp.div(norm)
             pooled = pooled + torch.spmm(graph_pool.transpose(0, 1), tmp)
         pooled_rep = self.mlp_es[layer](pooled)
