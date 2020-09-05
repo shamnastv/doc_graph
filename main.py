@@ -365,6 +365,15 @@ def main():
             ge = ge_new
             print('graph updated in epoch : ', epoch)
 
+            model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers_c).to(device)
+            model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
+                          args.final_dropout,
+                          args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
+
+            optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+            optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
+            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
+
         if not args.filename == "":
             with open(args.filename, 'w') as f:
                 f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
