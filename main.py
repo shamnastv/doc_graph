@@ -129,6 +129,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             num_itr += 1
         print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c_accum / num_itr)
 
+    model_c.eval()
     with torch.no_grad():
         cl = model_c(ge)
 
@@ -172,7 +173,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         print('epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum)
 
     if update_graph:
-        # model_e.eval()
+        model_e.eval()
         idx_test = np.arange(train_size, total_size)
         for i in range(0, test_size, args.batch_size):
             selected_idx = idx_test[i:i + args.batch_size]
