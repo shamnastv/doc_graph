@@ -297,7 +297,7 @@ def main():
                         help='output file')
     parser.add_argument('--alpha', type=float, default=1,
                         help='alpha')
-    parser.add_argument('--beta', type=float, default=1,
+    parser.add_argument('--beta', type=float, default=10,
                         help='beta')
 
     args = parser.parse_args()
