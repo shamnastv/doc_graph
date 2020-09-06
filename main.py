@@ -122,10 +122,11 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     if total_iter_c != 0:
         print_cluster(cl)
 
+    loss_accum = 0
     for itr in range(total_iter):
         loss_accum = class_train(args, cl, device, ge, ge_new, graphs, itr, model_e, node_features, optimizer,
                                  total_iter, train_size, update_graph)
-        print('epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum)
+        print(time.time() - start_time, 'epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum)
 
     if update_graph:
         model_e.eval()
@@ -145,7 +146,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                 node_features[j] = h[start_idx:start_idx + length]
                 start_idx += length
 
-    print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
+    # print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
     return loss_accum, ge_new, node_features
 
