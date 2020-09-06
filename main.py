@@ -116,7 +116,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     for itr in range(total_iter_c):
         loss_c_accum, num_itr = cluster_train(args, cl_batch_size, device, ge, model_c, optimizer_c, total_size)
-        print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c_accum / num_itr)
+        print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c_accum / num_itr, flush=True)
 
     model_c.eval()
     with torch.no_grad():
@@ -129,7 +129,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     for itr in range(total_iter):
         loss_accum = class_train(args, cl, device, ge, ge_new, graphs, itr, model_e, node_features, optimizer,
                                  total_iter, train_size, update_graph)
-        print(time.time() - start_time, 'epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum)
+        print(time.time() - start_time, 'epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum, flush=True)
 
     if update_graph:
         model_e.eval()
