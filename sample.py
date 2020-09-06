@@ -2,9 +2,14 @@ import numpy as np
 import time
 import torch
 
-x = torch.FloatTensor([[1, 0, 0], [1, 1, 1]])
-norm = torch.norm(x, p=1, dim=0, keepdim=True)
-print(norm)
+# x = torch.FloatTensor([[1, 0, 0], [1, 1, 1]])
+# norm = torch.norm(x, p=1, dim=0, keepdim=True)
+# print(norm)
+
+print('hi')
+x = input()
+print(x, end=' ')
+print('hi')
 
 
 def test_mr_dataset():

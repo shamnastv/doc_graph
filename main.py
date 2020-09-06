@@ -351,11 +351,11 @@ def main():
     for epoch in range(5):
         avg_loss, ge, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -1,
                                             train_size, ge, True)
+        scheduler.step()
     acc_train, acc_test, ge, node_features = test(args, model_e, model_c, device, graphs, train_size, 1, ge, True)
     print(time.time() - start_time, 's Embeddings Initialized', flush=True)
 
     for epoch in range(1, args.epochs + 1):
-        scheduler.step()
         update_graph = epoch % args.update_freq == 0
 
         avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
@@ -383,6 +383,7 @@ def main():
                 f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
                 f.write("\n")
         print("")
+        scheduler.step()
 
         # print(model.eps)
     print(time.time() - start_time, 's Completed')
