@@ -1,4 +1,4 @@
 dataset: mr
-window_size: 2
+window_size: 3
 save_graph: False
 retrieve_graph: False
