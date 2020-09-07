@@ -133,21 +133,22 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     if update_graph:
         model_e.eval()
-        idx_test = np.arange(train_size, total_size)
-        for i in range(0, test_size, args.batch_size):
-            selected_idx = idx_test[i:i + args.batch_size]
-            batch_graph = [graphs[idx] for idx in selected_idx]
-            if len(selected_idx) == 0:
-                continue
-            with torch.no_grad():
+        with torch.no_grad():
+            idx_test = np.arange(train_size, total_size)
+            for i in range(0, test_size, args.batch_size):
+                selected_idx = idx_test[i:i + args.batch_size]
+                batch_graph = [graphs[idx] for idx in selected_idx]
+                if len(selected_idx) == 0:
+                    continue
+
                 output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
 
-            ge_new[selected_idx] = pooled_h
-            start_idx = 0
-            for j in selected_idx:
-                length = len(graphs[j].g)
-                node_features[j] = h[start_idx:start_idx + length]
-                start_idx += length
+                ge_new[selected_idx] = pooled_h
+                start_idx = 0
+                for j in selected_idx:
+                    length = len(graphs[j].g)
+                    node_features[j] = h[start_idx:start_idx + length]
+                    start_idx += length
 
     # print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
@@ -322,6 +323,8 @@ def main():
                         help='output file')
     parser.add_argument('--alpha', type=float, default=1,
                         help='alpha')
+    parser.add_argument('--init_itr', type=int, default=5,
+                        help='number of initial iterations')
 
     args = parser.parse_args()
 
@@ -348,7 +351,7 @@ def main():
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
 
     print(time.time() - start_time, 's Training starts', flush=True)
-    for epoch in range(5):
+    for epoch in range(args.init_itr):
         avg_loss, ge, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -1,
                                             train_size, ge, True)
         scheduler.step()
