@@ -323,6 +323,8 @@ def main():
                         help='output file')
     parser.add_argument('--alpha', type=float, default=1,
                         help='alpha')
+    parser.add_argument('--beta', type=float, default=10,
+                        help='beta')
     parser.add_argument('--init_itr', type=int, default=5,
                         help='number of initial iterations')
 
@@ -344,7 +346,7 @@ def main():
     model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers_c).to(device)
     model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
                   args.final_dropout,
-                  args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
+                  args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
 
     optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
     optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
@@ -374,8 +376,8 @@ def main():
 
             model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers_c).to(device)
             model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
-                          args.final_dropout,
-                          args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
+                          args.final_dropout, args.learn_eps,
+                          args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
 
             optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
             optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)

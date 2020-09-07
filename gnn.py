@@ -7,7 +7,7 @@ from mlp import MLP
 
 class GNN(nn.Module):
     def __init__(self, num_mlp_layers, input_dim, hidden_dim, output_dim, final_dropout, learn_eps,
-                 graph_pooling_type, neighbor_pooling_type, device):
+                 graph_pooling_type, neighbor_pooling_type, device, beta):
         '''
             num_mlp_layers: number of layers in mlps (EXCLUDING the input layer)
             input_dim: dimensionality of input features
@@ -26,6 +26,7 @@ class GNN(nn.Module):
         self.device = device
         self.graph_pooling_type = graph_pooling_type
         self.neighbor_pooling_type = neighbor_pooling_type
+        self.beta = beta
         self.learn_eps = learn_eps
         self.eps = nn.Parameter(torch.zeros(1))
 
@@ -139,7 +140,7 @@ class GNN(nn.Module):
         # pooled = pooled + (1 + self.eps) * h
         pooled = (1 + self.ws[0]) * pooled + (1 + self.eps) * h
         if Cl is not None:
-            mul_fact = 10 / H.shape[0]
+            mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, H)
             pooled = pooled + mul_fact * (1 + self.ws[1]) * torch.spmm(graph_pool.transpose(0, 1), tmp)
@@ -167,7 +168,7 @@ class GNN(nn.Module):
 
         # representation of neighboring and center nodes
         if Cl is not None:
-            mul_fact = 10 / H.shape[0]
+            mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, H)
             pooled = (1 + self.ws[0]) * pooled + mul_fact * (1 + self.ws[1]) * (torch.spmm(graph_pool.transpose(0, 1), tmp))
