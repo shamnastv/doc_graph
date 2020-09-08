@@ -181,9 +181,9 @@ def class_train(args, cl, device, ge, ge_new, graphs, itr, model_e, node_feature
         loss_accum += loss
 
         pooled_h = pooled_h.detach()
-        h = h.detach()
-        start_idx = 0
+        h = h.detach().cpu()
         if itr == total_iter - 1 and update_graph:
+            start_idx = 0
             ge_new[selected_idx] = pooled_h
             for j in selected_idx:
                 length = len(graphs[j].g)
@@ -370,7 +370,7 @@ def main():
 
         if update_graph:
             for j in range(len(graphs)):
-                graphs[j].node_features = node_features[j]
+                graphs[j].node_features = node_features[j].to(device)
             ge = ge_new
             print('graph updated in epoch : ', epoch)
 
