@@ -129,7 +129,6 @@ def build_graph(config_file='param.yaml'):
     result = np.identity(doc_vocab_size)
 
     for i in range(doc_vocab_size):
-        # word_to_vec[doc_vocab[i]] = result[i][1][0]
         word_to_vec[doc_vocab[i]] = result[i]
 
     # bert_embedding = BertEmbedding()
