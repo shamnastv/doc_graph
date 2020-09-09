@@ -223,7 +223,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
 
     cl = model_c(ge)
 
-    output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 500, device)
+    output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 100, device)
 
     output_train, output_test = output[:train_size], output[train_size:]
     train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
