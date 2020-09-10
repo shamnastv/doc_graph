@@ -382,7 +382,7 @@ def main():
         # print(model.eps)
     print(time.time() - start_time, 's Completed')
     print('total size : ', len(graphs))
-    print('max test accuracy : ', max_test_accuracy)
+    print('max test accuracy : ', max_val_accuracy)
     print('max acc epoch : ', max_acc_epoch)
 
 
