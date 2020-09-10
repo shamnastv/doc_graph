@@ -14,8 +14,8 @@ from cluster_mod import ClusterNN
 from gnn_mod import GNN
 
 criterion = nn.CrossEntropyLoss()
-frequency_as_feature = True
-max_test_accuracy = 0
+frequency_as_feature = False
+max_val_accuracy = 0
 max_acc_epoch = 0
 start_time = time.time()
 
@@ -98,6 +98,9 @@ def print_cluster(cl):
 
 def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, initial=False):
     total_size = len(graphs)
+
+    val_size = int(train_size / args.n_fold)
+    train_size = train_size - val_size
     test_size = total_size - train_size
 
     model_e.train()
@@ -221,17 +224,25 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
     model_c.eval()
     model_e.eval()
 
+    val_size = int(train_size / args.n_fold)
+    train_size = train_size - val_size
+
     cl = model_c(ge)
 
     output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 100, device)
 
-    output_train, output_test = output[:train_size], output[train_size:]
-    train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
+    output_train, output_val, output_test = output[:train_size], output[train_size:train_size + val_size], output[train_size + val_size:]
+    train_graphs, val_graph, test_graphs = graphs[:train_size], graphs[train_size:train_size + val_size], graphs[train_size + val_size:]
 
     pred_train = output_train.max(1, keepdim=True)[1]
     labels_train = torch.LongTensor([graph.label for graph in train_graphs]).to(device)
     correct = pred_train.eq(labels_train.view_as(pred_train)).sum().cpu().item()
     acc_train = correct / float(len(train_graphs))
+
+    pred_val = output_val.max(1, keepdim=True)[1]
+    labels_val = torch.LongTensor([graph.label for graph in val_graph]).to(device)
+    correct = pred_val.eq(labels_val.view_as(pred_val)).sum().cpu().item()
+    acc_val = correct / float(len(val_graph))
 
     pred_test = output_test.max(1, keepdim=True)[1]
     labels_test = torch.LongTensor([graph.label for graph in test_graphs]).to(device)
@@ -239,12 +250,12 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
     acc_test = correct / float(len(test_graphs))
 
     print(time.time() - start_time, 's epoch : ', epoch)
-    print("accuracy train: %f test: %f" % (acc_train, acc_test))
-    global max_acc_epoch, max_test_accuracy
-    if acc_test > max_test_accuracy:
-        max_test_accuracy = acc_test
+    print("accuracy train: %f val: %f test: %f" % (acc_train, acc_val, acc_test))
+    global max_acc_epoch, max_val_accuracy
+    if acc_val > max_val_accuracy:
+        max_val_accuracy = acc_val
         max_acc_epoch = epoch
-    print('max test accuracy : ', max_test_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
+    print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
     print('epsilon : ', model_e.eps)
 
     # if epoch == 800:
@@ -299,6 +310,8 @@ def main():
                         help='alpha')
     parser.add_argument('--beta', type=float, default=10,
                         help='beta')
+    parser.add_argument('--n_fold', type=float, default=5,
+                        help='n_fold')
 
     args = parser.parse_args()
 
