@@ -16,6 +16,7 @@ from gnn_mod import GNN
 criterion = nn.CrossEntropyLoss()
 frequency_as_feature = False
 max_val_accuracy = 0
+test_accuracy = 0
 max_acc_epoch = 0
 start_time = time.time()
 
@@ -251,10 +252,12 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
 
     print(time.time() - start_time, 's epoch : ', epoch)
     print("accuracy train: %f val: %f test: %f" % (acc_train, acc_val, acc_test))
-    global max_acc_epoch, max_val_accuracy
+    global max_acc_epoch, max_val_accuracy, test_accuracy
     if acc_val > max_val_accuracy:
         max_val_accuracy = acc_val
         max_acc_epoch = epoch
+        test_accuracy = acc_test
+
     print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
     print('epsilon : ', model_e.eps)
 
@@ -346,10 +349,10 @@ def main():
     print('Embedding Initialized', flush=True)
     # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
-    # for i in range(len(ge)):
-    #     norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
-    #     ge[i] = ge_new[i].div(norm)
-    ge = ge_new
+    for i in range(len(ge)):
+        norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
+        ge[i] = ge_new[i].div(norm)
+    # ge = ge_new
 
     for epoch in range(1, args.epochs + 1):
         avg_loss, ge_new = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
@@ -357,10 +360,10 @@ def main():
         scheduler.step()
 
         if epoch % args.iters_per_epoch == 0:
-            # for i in range(len(ge)):
-            #     norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
-            #     ge[i] = ge_new[i].div(norm)
-            ge = ge_new
+            for i in range(len(ge)):
+                norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
+                ge[i] = ge_new[i].div(norm)
+            # ge = ge_new
 
             # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
             #                     args.num_mlp_layers_c).to(device)
@@ -379,11 +382,11 @@ def main():
                 f.write("\n")
         print("")
 
-        # print(model.eps)
     print(time.time() - start_time, 's Completed')
     print('total size : ', len(graphs))
-    print('max test accuracy : ', max_val_accuracy)
+    print('max validation accuracy : ', max_val_accuracy)
     print('max acc epoch : ', max_acc_epoch)
+    print('test accuracy : ', test_accuracy)
 
 
 if __name__ == '__main__':
