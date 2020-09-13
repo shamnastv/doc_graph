@@ -126,17 +126,17 @@ def build_graph(config_file='param.yaml'):
     doc_vocab = list(doc_word_set)
     doc_vocab_size = len(doc_vocab)
 
-    result = np.identity(doc_vocab_size)
-
-    for i in range(doc_vocab_size):
-        word_to_vec[doc_vocab[i]] = result[i]
-
-    # bert_embedding = BertEmbedding()
-    # result = bert_embedding(doc_vocab)
-    # if len(result) != doc_vocab_size:
-    #     print('Vocab size : ', doc_vocab_size, '\nresult size : ', len(result))
+    # result = np.identity(doc_vocab_size)
+    #
     # for i in range(doc_vocab_size):
-    #     word_to_vec[doc_vocab[i]] = result[i][1][0]
+    #     word_to_vec[doc_vocab[i]] = result[i]
+
+    bert_embedding = BertEmbedding()
+    result = bert_embedding(doc_vocab)
+    if len(result) != doc_vocab_size:
+        print('Vocab size : ', doc_vocab_size, '\nresult size : ', len(result))
+    for i in range(doc_vocab_size):
+        word_to_vec[doc_vocab[i]] = result[i][1][0]
 
     feature_list = []
     word_freq_list = []
