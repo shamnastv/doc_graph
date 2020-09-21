@@ -12,6 +12,7 @@ from sklearn.preprocessing import normalize
 import build_graph
 from cluster_mod import ClusterNN
 from gnn_mod import GNN
+from util import normalize_adj
 
 criterion = nn.CrossEntropyLoss()
 frequency_as_feature = False
@@ -49,6 +50,7 @@ def create_gaph(args):
     g_list = []
     for i, adj in enumerate(ls_adj):
         # adj = normalize(adj, norm='l1', axis=1, copy=False)
+        adj = normalize_adj(adj)
         g = nx.from_scipy_sparse_matrix(adj)
         lb = y[i]
         feat = feature_list[i]
