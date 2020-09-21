@@ -48,7 +48,7 @@ def create_gaph(args):
     ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph(config_file=args.configfile)
     g_list = []
     for i, adj in enumerate(ls_adj):
-        adj = normalize(adj, norm='l1', axis=1, copy=False)
+        # adj = normalize(adj, norm='l1', axis=1, copy=False)
         g = nx.from_scipy_sparse_matrix(adj)
         lb = y[i]
         feat = feature_list[i]
