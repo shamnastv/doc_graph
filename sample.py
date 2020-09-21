@@ -1,3 +1,5 @@
+from queue import Queue
+
 import numpy as np
 import time
 import networkx as nx
@@ -9,11 +11,29 @@ def test():
     print(time.time())
 
 
+n = 100000
+q = Queue()
+q.put(1)
+i = 0
+while i < n/2:
+    i += 1
+    s = q.get()
+    print(s)
+    q.put(s * 10)
+    q.put(s * 10 + 1)
+
+while i < n:
+    i += 1
+    s = q.get()
+    print(s)
+
+
+
 # test()
 
-A = np.array([[1, 2], [3, 4]])
-A = torch.FloatTensor(A)
-print(torch.norm(A, dim=0, p=1, keepdim=True))
+# A = np.array([[1, 2], [3, 4]])
+# A = torch.FloatTensor(A)
+# print(torch.norm(A, dim=0, p=1, keepdim=True))
 
 # G = nx.DiGraph()
 # A = np.array([[1, 2], [3, 4]])

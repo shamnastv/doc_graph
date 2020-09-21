@@ -241,15 +241,16 @@ def build_graph(config_file='param.yaml'):
             i = int(temp[0])
             j = int(temp[1])
             count = word_pair_count[key]
-            # word_freq_i = word_window_freq[vocab[i]]
-            # word_freq_j = word_window_freq[vocab[j]]
-            # pmi = log((1.0 * count / num_window) /
-            #           (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
-            # if pmi <= 0:
-            #     continue
+            word_freq_i = word_window_freq[vocab[i]]
+            word_freq_j = word_window_freq[vocab[j]]
+            pmi = log((1.0 * count / num_window) /
+                      (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
+            if pmi <= 0:
+                continue
             row.append(i)
             col.append(j)
-            weight.append(count)
+            # weight.append(count)
+            weight.append(pmi)
 
         node_size = vocab_size
         adj = sp.csr_matrix(
