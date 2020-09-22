@@ -5,12 +5,19 @@ from nltk.corpus import wordnet as wn
 from util import clean_str, loadWord2Vec
 import sys
 
-if len(sys.argv) != 2:
-    sys.exit("Use: python remove_words.py <dataset>")
 
 datasets = ['20ng', 'R8', 'R52', 'ohsumed', 'mr']
-dataset = sys.argv[1]
-min_freq = int(sys.argv[2])
+
+if len(sys.argv) == 3:
+    dataset = sys.argv[1]
+    min_freq = int(sys.argv[2])
+
+elif len(sys.argv) == 2:
+    dataset = sys.argv[1]
+    min_freq = 5
+
+else:
+    sys.exit("Use: python remove_words.py <dataset> <min_freq>")
 
 if dataset not in datasets:
     sys.exit("wrong dataset name")
