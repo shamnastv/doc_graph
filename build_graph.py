@@ -133,8 +133,8 @@ def build_graph(config_file='param.yaml'):
     # if len(result) != doc_vocab_size:
     #     print('Vocab size : ', doc_vocab_size, '\nresult size : ', len(result))
     for i in range(doc_vocab_size):
-        # word_to_vec[doc_vocab[i]] = result[i][1][0]
-        word_to_vec[doc_vocab[i]] = result[i]
+        word_to_vec[doc_vocab[i]] = result[i][1][0]
+        # word_to_vec[doc_vocab[i]] = result[i]
 
     feature_list = []
     word_freq_list = []
