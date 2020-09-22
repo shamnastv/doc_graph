@@ -67,6 +67,11 @@ def create_gaph(args):
         g.max_neighbor = max(degree_list)
         edges = [list(pair) for pair in g.g.edges()]
         edges.extend([[i, j] for j, i in edges])
+
+        if len(edges) == 0:
+            edges = [[0, 0]]
+            print('len of graph : ', len(g.g))
+
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
 
     return g_list, len(set(y)), train_size
