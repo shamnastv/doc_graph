@@ -117,6 +117,27 @@ class GNN(nn.Module):
 
         return Adj_block.to(self.device)
 
+    def __preprocess_graphpool_n(self, batch_graph):
+        # create sum or average pooling sparse matrix over entire nodes in each graph (num graphs x num nodes)
+
+        start_idx = [0]
+
+        # compute the padded neighbor list
+        for i, graph in enumerate(batch_graph):
+            start_idx.append(start_idx[i] + len(graph.g))
+
+        idx = []
+        elem = []
+        for i, graph in enumerate(batch_graph):
+            elem.extend([1] * len(graph.g))
+            idx.extend([[i, j] for j in range(start_idx[i], start_idx[i + 1], 1)])
+
+        elem = torch.FloatTensor(elem)
+        idx = torch.LongTensor(idx).transpose(0, 1)
+        graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([len(batch_graph), start_idx[-1]]))
+
+        return graph_pool.to(self.device)
+
     def __preprocess_graphpool(self, batch_graph):
         # create sum or average pooling sparse matrix over entire nodes in each graph (num graphs x num nodes)
 
@@ -212,6 +233,7 @@ class GNN(nn.Module):
     def forward(self, batch_graph, Cl, H, idx):
         X_concat = torch.cat([graph.node_features for graph in batch_graph], 0).to(self.device)
         graph_pool = self.__preprocess_graphpool(batch_graph)
+        graph_pool_n = self.__preprocess_graphpool_n(batch_graph)
 
         if self.neighbor_pooling_type == "max":
             padded_neighbor_list = self.__preprocess_neighbors_maxpool(batch_graph)
@@ -224,13 +246,13 @@ class GNN(nn.Module):
 
         for layer in range(self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
-                h = self.next_layer_eps(h, layer, idx, Cl, H[layer], graph_pool, padded_neighbor_list=padded_neighbor_list)
+                h = self.next_layer_eps(h, layer, idx, Cl, H[layer], graph_pool_n, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and self.learn_eps:
-                h = self.next_layer_eps(h, layer, idx, Cl, H[layer], graph_pool, Adj_block=Adj_block)
+                h = self.next_layer_eps(h, layer, idx, Cl, H[layer], graph_pool_n, Adj_block=Adj_block)
             elif self.neighbor_pooling_type == "max" and not self.learn_eps:
-                h = self.next_layer(h, layer, idx, Cl, H[layer], graph_pool, padded_neighbor_list=padded_neighbor_list)
+                h = self.next_layer(h, layer, idx, Cl, H[layer], graph_pool_n, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and not self.learn_eps:
-                h = self.next_layer(h, layer, idx, Cl, H[layer], graph_pool, Adj_block=Adj_block)
+                h = self.next_layer(h, layer, idx, Cl, H[layer], graph_pool_n, Adj_block=Adj_block)
 
             hidden_rep.append(h)
 
