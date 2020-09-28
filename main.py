@@ -1,6 +1,5 @@
 import networkx as nx
 import numpy as np
-import random
 import argparse
 import torch
 import torch.nn as nn
@@ -78,7 +77,7 @@ def create_gaph(args):
     return g_list, len(set(y)), train_size
 
 
-def my_loss(alpha, centroids, embeddings, cl, device):
+def cluster_loss(alpha, centroids, embeddings, cl, device):
     dm = len(cl[0])
     loss = 0
     for i, emb in enumerate(embeddings):
@@ -104,7 +103,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_c.train()
 
     total_size = len(graphs)
-    train_size = train_size - int(train_size / args.n_fold)
+    train_size = train_size - train_size // args.n_fold
     tv_size = total_size - train_size
 
     total_iter = 1
@@ -115,8 +114,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         total_iter_c = args.iters_per_epoch
 
     if epoch == -1:
-        total_iter = int(args.iters_per_epoch / 2)
-        total_iter_c = int(args.iters_per_epoch / 2)
+        total_iter = 20
+        total_iter_c = 20
 
     node_features = [0 for i in range(len(graphs))]
     ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
@@ -207,7 +206,7 @@ def cluster_train(args, cl_batch_size, device, ge, model_c, optimizer_c, total_s
     for i in range(0, total_size, cl_batch_size):
         selected_idx = full_idx[i:i + cl_batch_size]
         cl_new = model_c(ge[selected_idx])
-        loss_c = my_loss(args.alpha, model_c.centroids, ge[selected_idx], cl_new, device)
+        loss_c = cluster_loss(args.alpha, model_c.centroids, ge[selected_idx], cl_new, device)
         if optimizer_c is not None:
             optimizer_c.zero_grad()
             loss_c.backward()
@@ -375,9 +374,16 @@ def main():
 
     print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(args.init_itr):
-        avg_loss, ge, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -1,
-                                            train_size, ge, True)
-        scheduler.step()
+        avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -1,
+                                            train_size, ge, False)
+        acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, epoch, ge,
+                                                          True)
+        for j in range(len(graphs)):
+            graphs[j].node_features = graphs[j].node_features.cpu()
+            graphs[j].node_features = node_features[j].to(device)
+        ge = ge_new
+        print('graph updated in epoch : ', epoch)
+
     acc_train, acc_test, ge, node_features = test(args, model_e, model_c, device, graphs, train_size, 1, ge, True)
     print(time.time() - start_time, 's Embeddings Initialized', flush=True)
 
