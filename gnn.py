@@ -14,7 +14,8 @@ class GNN(nn.Module):
             hidden_dim: dimensionality of hidden units at ALL layers
             output_dim: number of classes for prediction
             final_dropout: dropout ratio on the final linear layer
-            learn_eps: If True, learn epsilon to distinguish center nodes from neighboring nodes. If False, aggregate neighbors and center nodes altogether.
+            learn_eps: If True, learn epsilon to distinguish center nodes from neighboring nodes.
+                       If False, aggregate neighbors and center nodes altogether.
             neighbor_pooling_type: how to aggregate neighbors (mean, average, or max)
             graph_pooling_type: how to aggregate entire nodes in a graph (mean, average)
             device: which device to use
@@ -54,7 +55,8 @@ class GNN(nn.Module):
                 # padding, dummy data is assumed to be stored in -1
                 pad.extend([-1] * (max_deg - len(pad)))
 
-                # Add center nodes in the maxpooling if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
+                # Add center nodes in the maxpooling if learn_eps is False, i.e., aggregate center nodes
+                # and neighbor nodes altogether.
                 if not self.learn_eps:
                     pad.append(j + start_idx[i])
 
@@ -74,7 +76,8 @@ class GNN(nn.Module):
         Adj_block_idx = torch.cat(edge_mat_list, 1)
         Adj_block_elem = torch.ones(Adj_block_idx.shape[1])
 
-        # Add self-loops in the adjacency matrix if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
+        # Add self-loops in the adjacency matrix if learn_eps is False, i.e., aggregate center nodes
+        # and neighbor nodes altogether.
 
         if not self.learn_eps:
             num_node = start_idx[-1]
@@ -171,7 +174,8 @@ class GNN(nn.Module):
             mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, H)
-            pooled = (1 + self.ws[0]) * pooled + mul_fact * (1 + self.ws[1]) * (torch.spmm(graph_pool.transpose(0, 1), tmp))
+            pooled = (1 + self.ws[0]) * pooled + mul_fact * (1 + self.ws[1]) * (torch.spmm(graph_pool.transpose(0, 1),
+                                                                                           tmp))
         pooled_rep = self.mlp_e(pooled)
         h = self.batch_norms_e(pooled_rep)
 

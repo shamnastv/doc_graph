@@ -15,8 +15,9 @@ from gnn import GNN
 
 criterion = nn.CrossEntropyLoss()
 frequency_as_feature = True
-max_test_accuracy = 0
+max_val_accuracy = 0
 max_acc_epoch = 0
+test_accuracy = 0
 start_time = time.time()
 
 
@@ -103,7 +104,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     model_c.train()
 
     total_size = len(graphs)
-    test_size = total_size - train_size
+    train_size = train_size - int(train_size / args.n_fold)
+    tv_size = total_size - train_size
 
     total_iter = 1
     total_iter_c = 0
@@ -134,13 +136,14 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     for itr in range(total_iter):
         loss_accum = class_train(args, cl, device, ge, ge_new, graphs, itr, model_e, node_features, optimizer,
                                  total_iter, train_size, update_graph)
-        print(time.time() - start_time, 'epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum, flush=True)
+        print(time.time() - start_time, 'epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum,
+              flush=True)
 
     if update_graph:
         model_e.eval()
         with torch.no_grad():
             idx_test = np.arange(train_size, total_size)
-            for i in range(0, test_size, args.batch_size):
+            for i in range(0, tv_size, args.batch_size):
                 selected_idx = idx_test[i:i + args.batch_size]
                 batch_graph = [graphs[idx] for idx in selected_idx]
                 if len(selected_idx) == 0:
@@ -245,18 +248,27 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_g
     model_c.eval()
     model_e.eval()
 
+    val_size = int(train_size / args.n_fold)
+    train_size = train_size - val_size
+
     with torch.no_grad():
         cl = model_c(ge)
 
     output, ge_new, node_features = pass_data_iteratively(model_e, graphs, cl, ge, 128, update_graph, device)
 
-    output_train, output_test = output[:train_size], output[train_size:]
-    train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
+    output_train, train_graphs = output[:train_size], graphs[:train_size]
+    output_val, val_graph = output[train_size:train_size + val_size], graphs[train_size:train_size + val_size]
+    output_test, test_graphs = output[train_size + val_size:], graphs[train_size + val_size:]
 
     pred_train = output_train.max(1, keepdim=True)[1]
     labels_train = torch.LongTensor([graph.label for graph in train_graphs]).to(device)
     correct = pred_train.eq(labels_train.view_as(pred_train)).sum().cpu().item()
     acc_train = correct / float(len(train_graphs))
+
+    pred_val = output_val.max(1, keepdim=True)[1]
+    labels_val = torch.LongTensor([graph.label for graph in val_graph]).to(device)
+    correct = pred_val.eq(labels_val.view_as(pred_val)).sum().cpu().item()
+    acc_val = correct / float(len(val_graph))
 
     pred_test = output_test.max(1, keepdim=True)[1]
     labels_test = torch.LongTensor([graph.label for graph in test_graphs]).to(device)
@@ -264,13 +276,15 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_g
     acc_test = correct / float(len(test_graphs))
 
     print(time.time() - start_time, 's epoch : ', epoch)
-    print("accuracy train: %f test: %f" % (acc_train, acc_test))
-    global max_acc_epoch, max_test_accuracy
-    if acc_test > max_test_accuracy:
-        max_test_accuracy = acc_test
+    print("accuracy train: %f val: %f test: %f" % (acc_train, acc_val, acc_test))
+    global max_acc_epoch, max_val_accuracy, test_accuracy
+    if acc_val > max_val_accuracy:
+        max_val_accuracy = acc_val
         max_acc_epoch = epoch
+        test_accuracy = acc_test
 
-    print('max test accuracy : ', max_test_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
+    print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
+    print('epsilon : ', model_e.eps)
 
     # if epoch == 800:
     #     for i in range(len(test_graphs)):
@@ -332,6 +346,8 @@ def main():
                         help='beta')
     parser.add_argument('--init_itr', type=int, default=5,
                         help='number of initial iterations')
+    parser.add_argument('--n_fold', type=float, default=5,
+                        help='n_fold')
 
     args = parser.parse_args()
 
@@ -399,8 +415,9 @@ def main():
         # print(model.eps)
     print(time.time() - start_time, 's Completed')
     print('total size : ', len(graphs))
-    print('max test accuracy : ', max_test_accuracy)
+    print('max validation accuracy : ', max_val_accuracy)
     print('max acc epoch : ', max_acc_epoch)
+    print('test accuracy : ', test_accuracy)
 
 
 if __name__ == '__main__':
