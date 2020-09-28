@@ -113,7 +113,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     if epoch % args.update_freq == 1:
         total_iter_c = args.iters_per_epoch
 
-    if epoch == -1:
+    if epoch < 0:
         total_iter = 20
         total_iter_c = 20
 
@@ -131,7 +131,6 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     if total_iter_c != 0:
         print_cluster(cl)
 
-    loss_accum = 0
     for itr in range(total_iter):
         loss_accum = class_train(args, cl, device, ge, ge_new, graphs, itr, model_e, node_features, optimizer,
                                  total_iter, train_size, update_graph)
@@ -343,7 +342,7 @@ def main():
                         help='alpha')
     parser.add_argument('--beta', type=float, default=10,
                         help='beta')
-    parser.add_argument('--init_itr', type=int, default=5,
+    parser.add_argument('--init_itr', type=int, default=100,
                         help='number of initial iterations')
     parser.add_argument('--n_fold', type=float, default=5,
                         help='n_fold')
@@ -374,9 +373,9 @@ def main():
 
     print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(args.init_itr):
-        avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -1,
+        avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -epoch,
                                             train_size, ge, False)
-        acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, epoch, ge,
+        acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, -epoch, ge,
                                                           True)
         for j in range(len(graphs)):
             graphs[j].node_features = graphs[j].node_features.cpu()
