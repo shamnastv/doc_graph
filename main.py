@@ -342,7 +342,7 @@ def main():
                         help='alpha')
     parser.add_argument('--beta', type=float, default=10,
                         help='beta')
-    parser.add_argument('--init_itr', type=int, default=100,
+    parser.add_argument('--init_itr', type=int, default=10,
                         help='number of initial iterations')
     parser.add_argument('--n_fold', type=float, default=5,
                         help='n_fold')
@@ -374,16 +374,16 @@ def main():
     print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(args.init_itr):
         avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -epoch,
-                                            train_size, ge, False)
-        acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, -epoch, ge,
-                                                          True)
+                                                train_size, ge, False)
+        acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, -epoch,
+                                                          ge, True)
         for j in range(len(graphs)):
-            graphs[j].node_features = graphs[j].node_features.cpu()
+            # graphs[j].node_features = graphs[j].node_features.cpu()
             graphs[j].node_features = node_features[j].to(device)
         ge = ge_new
-        print('graph updated in epoch : ', epoch)
+        print('graph updated in epoch : ', -epoch)
 
-    acc_train, acc_test, ge, node_features = test(args, model_e, model_c, device, graphs, train_size, 1, ge, True)
+    # acc_train, acc_test, ge, node_features = test(args, model_e, model_c, device, graphs, train_size, 1, ge, True)
     print(time.time() - start_time, 's Embeddings Initialized', flush=True)
 
     for epoch in range(1, args.epochs + 1):
@@ -394,6 +394,7 @@ def main():
         acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, epoch, ge,
                                                           update_graph)
 
+        scheduler.step()
         if update_graph:
             for j in range(len(graphs)):
                 graphs[j].node_features = graphs[j].node_features.cpu()
@@ -415,7 +416,6 @@ def main():
                 f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
                 f.write("\n")
         print("")
-        scheduler.step()
 
         # print(model.eps)
     print(time.time() - start_time, 's Completed')
