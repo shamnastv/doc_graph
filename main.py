@@ -114,8 +114,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         total_iter_c = args.iters_per_epoch
 
     if epoch < 0:
-        total_iter = 100
-        total_iter_c = 100
+        total_iter = 20
+        total_iter_c = 20
 
     node_features = [0 for i in range(len(graphs))]
     ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
@@ -342,7 +342,7 @@ def main():
                         help='alpha')
     parser.add_argument('--beta', type=float, default=10,
                         help='beta')
-    parser.add_argument('--init_itr', type=int, default=4,
+    parser.add_argument('--init_itr', type=int, default=100,
                         help='number of initial iterations')
     parser.add_argument('--n_fold', type=float, default=5,
                         help='n_fold')
