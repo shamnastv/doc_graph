@@ -369,7 +369,6 @@ def main():
 
     optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
     optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
 
     print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(args.init_itr):
@@ -385,6 +384,13 @@ def main():
 
     # acc_train, acc_test, ge, node_features = test(args, model_e, model_c, device, graphs, train_size, 1, ge, True)
     print(time.time() - start_time, 's Embeddings Initialized', flush=True)
+
+    model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
+                  args.final_dropout, args.learn_eps,
+                  args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
+
+    optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
 
     for epoch in range(1, args.epochs + 1):
         update_graph = epoch % args.update_freq == 0
