@@ -205,7 +205,8 @@ class GNN(nn.Module):
             h = self.next_layer(h, Cl, idx, H, graph_pool, Adj_block=Adj_block)
 
         pooled_h = torch.spmm(graph_pool, h)
-        score_over_layer = F.dropout(self.linear_prediction(pooled_h), self.final_dropout,
-                                     training=self.training)
+        # score_over_layer = F.dropout(self.linear_prediction(pooled_h), self.final_dropout,
+        #                              training=self.training)
+        score_over_layer = self.linear_prediction(pooled_h)
 
         return score_over_layer, pooled_h, h

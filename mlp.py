@@ -46,5 +46,5 @@ class MLP(nn.Module):
             # If MLP
             h = x
             for layer in range(self.num_layers - 1):
-                h = F.relu(self.batch_norms[layer](self.linears[layer](h)))
-            return self.linears[self.num_layers - 1](h)
+                h = F.dropout(F.relu(self.batch_norms[layer](self.linears[layer](h))), .5, training=self.training)
+            return F.dropout(self.linears[self.num_layers - 1](h), .5, training=self.training)
