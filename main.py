@@ -376,9 +376,9 @@ def main():
                                                 train_size, ge, False)
         acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, -epoch,
                                                           ge, True)
-        for j in range(len(graphs)):
-            # graphs[j].node_features = graphs[j].node_features.cpu()
-            graphs[j].node_features = node_features[j].to(device)
+        # for j in range(len(graphs)):
+        #     # graphs[j].node_features = graphs[j].node_features.cpu()
+        #     graphs[j].node_features = node_features[j].to(device)
         ge = ge_new
         print('graph updated in epoch : ', -epoch)
 
