@@ -202,6 +202,7 @@ class GNN(nn.Module):
 
         # non-linearity
         h = F.relu(h)
+        h = F.dropout(h, .5, training=self.training)
         return h
 
     def next_layer(self, h, layer, idx, Cl=None, H=None, graph_pool=None, padded_neighbor_list=None, Adj_block=None):
@@ -262,8 +263,9 @@ class GNN(nn.Module):
         # perform pooling over all nodes in each graph in every layer
         for layer, h in enumerate(hidden_rep):
             pooled_h = torch.spmm(graph_pool, h)
-            score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), self.final_dropout,
-                                          training=self.training)
+            # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), self.final_dropout,
+            #                               training=self.training)
+            score_over_layer += self.linears_prediction[layer](pooled_h)
             pooled_h_ls.append(pooled_h)
 
         return score_over_layer, pooled_h_ls
