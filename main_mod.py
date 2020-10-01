@@ -365,10 +365,10 @@ def main():
         scheduler.step()
 
         if epoch % args.iters_per_epoch == 0:
-            for i in range(len(ge)):
-                norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
-                ge[i] = ge_new[i].div(norm)
-            # ge = ge_new
+            # for i in range(len(ge)):
+            #     norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
+            #     ge[i] = ge_new[i].div(norm)
+            ge = ge_new
 
             # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
             #                     args.num_mlp_layers_c).to(device)
