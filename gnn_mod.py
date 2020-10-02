@@ -197,12 +197,10 @@ class GNN(nn.Module):
             # norm = torch.norm(tmp, p=2, dim=1, keepdim=True)
             # tmp = tmp.div(norm)
             pooled = pooled + torch.spmm(graph_pool.transpose(0, 1), tmp)
-        pooled_rep = self.mlp_es[layer](pooled)
-        h = self.batch_norms[layer](pooled_rep)
-
-        # non-linearity
+        h = self.mlp_es[layer](pooled)
         h = F.relu(h)
         h = F.dropout(h, .5, training=self.training)
+        h = self.batch_norms[layer](h)
         return h
 
     def next_layer(self, h, layer, idx, Cl=None, H=None, graph_pool=None, padded_neighbor_list=None, Adj_block=None):
