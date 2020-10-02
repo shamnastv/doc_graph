@@ -359,7 +359,7 @@ def main():
     for i in range(len(ge)):
         # norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
         # ge[i] = ge_new[i].div(norm)
-        ge[i] = normalize(ge_new[i])
+        ge[i] = normalize(ge_new[i].cpu()).to(device)
     # ge = ge_new
 
     for epoch in range(1, args.epochs + 1):
@@ -371,7 +371,7 @@ def main():
             for i in range(len(ge)):
                 # norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
                 # ge[i] = ge_new[i].div(norm)
-                ge[i] = normalize(ge_new[i])
+                ge[i] = normalize(ge_new[i].cpu()).to(device)
             # ge = ge_new
 
             # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
