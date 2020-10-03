@@ -49,7 +49,6 @@ def create_gaph(args):
     ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph(config_file=args.configfile)
     g_list = []
     for i, adj in enumerate(ls_adj):
-        # adj = normalize(adj, norm='l1', axis=1, copy=False)
         adj = normalize_adj(adj)
         g = nx.from_scipy_sparse_matrix(adj)
         lb = y[i]
@@ -280,7 +279,7 @@ def main():
                         help='which gpu to use if any (default: 0)')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='input batch size for training (default: 32)')
-    parser.add_argument('--batch_size_cl', type=int, default=128,
+    parser.add_argument('--batch_size_cl', type=int, default=500,
                         help='input batch size for clustering (default: 32)')
     parser.add_argument('--iters_per_epoch', type=int, default=50,
                         help='number of iterations per each epoch (default: 50)')
