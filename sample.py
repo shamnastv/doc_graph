@@ -6,12 +6,15 @@ import networkx as nx
 import torch
 
 
+print(torch.IntTensor([[1, 2], [3]]))
+
+
 def test():
     import time
     print(time.time())
 
 
-n = 100000
+n = 0
 q = Queue()
 q.put(1)
 i = 0

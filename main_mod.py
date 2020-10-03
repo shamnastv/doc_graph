@@ -123,9 +123,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
 
     if not initial:
-        if epoch % total_itr_c == 1 or True:
-            if epoch % total_itr_c != 1:
-                total_itr_c = 10
+        if epoch % total_itr_c == 1:
             for itr in range(total_itr_c):
                 loss_c_accum = 0
                 full_idx = np.random.permutation(total_size)
@@ -367,7 +365,7 @@ def main():
         acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
         scheduler.step()
 
-        if epoch % args.iters_per_epoch == 0 or True:
+        if epoch % args.iters_per_epoch == 0:
             # for i in range(len(ge)):
             #     # norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
             #     # ge[i] = ge_new[i].div(norm)
