@@ -104,7 +104,7 @@ def print_cluster(cl):
 def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, initial=False):
     total_size = len(graphs)
 
-    val_size = int(train_size / args.n_fold)
+    val_size = train_size // args.n_fold
     train_size = train_size - val_size
     test_size = total_size - train_size
 
@@ -191,10 +191,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                 continue
             output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
 
-            # output = output.detach()
             for layer in range(args.num_layers):
                 ge_new[layer][selected_idx] = pooled_h[layer]
-                # ge_new[layer][selected_idx] = pooled_h[layer].detach()
 
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
@@ -264,6 +262,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
 
     print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
     print('epsilon : ', model_e.eps)
+    print('w1 : ', model_e.w1)
 
     # if epoch == 800:
     #     for i in range(len(test_graphs)):
@@ -335,7 +334,8 @@ def main():
     graphs, num_classes, train_size = create_gaph(args)
     ge = [None for i in range(args.num_layers)]
 
-    model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers, args.num_mlp_layers_c).to(device)
+    model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
+                        args.num_mlp_layers_c).to(device)
     model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
                   args.final_dropout,
                   args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
