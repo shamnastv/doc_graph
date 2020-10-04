@@ -47,11 +47,15 @@ class GNN(nn.Module):
         ###List of batchnorms applied to the output of MLP (input of the final prediction linear layer)
         self.batch_norms = torch.nn.ModuleList()
 
+        self.norm_g_embd = torch.nn.ModuleList()
+
         for layer in range(self.num_layers - 1):
             if layer == 0:
                 self.mlp_es.append(MLP(num_mlp_layers, input_dim, hidden_dim, hidden_dim))
+                self.norm_g_embd.append(nn.BatchNorm1d(input_dim))
             else:
                 self.mlp_es.append(MLP(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim))
+                self.norm_g_embd.append(nn.BatchNorm1d(hidden_dim))
 
             self.batch_norms.append(nn.BatchNorm1d(hidden_dim))
 
@@ -193,7 +197,8 @@ class GNN(nn.Module):
         if Cl is not None:
             mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-            tmp = (1 + self.w1[layer]) * torch.spmm(tmp, H)
+            tmp = self.norm_g_embd[layer](torch.spmm(tmp, H))
+            # tmp = (1 + self.w1[layer]) * torch.spmm(tmp, H)
             # norm = torch.norm(tmp, p=2, dim=1, keepdim=True)
             # tmp = tmp.div(norm)
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
