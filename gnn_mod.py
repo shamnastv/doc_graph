@@ -197,8 +197,8 @@ class GNN(nn.Module):
         if Cl is not None:
             mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-            tmp = self.norm_g_embd[layer](torch.spmm(tmp, H))
-            # tmp = (1 + self.w1[layer]) * torch.spmm(tmp, H)
+            # tmp = self.norm_g_embd[layer](torch.spmm(tmp, H))
+            tmp = (1 + self.w1[layer]) * torch.spmm(tmp, H)
             # norm = torch.norm(tmp, p=2, dim=1, keepdim=True)
             # tmp = tmp.div(norm)
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
@@ -268,7 +268,7 @@ class GNN(nn.Module):
             pooled_h = torch.spmm(graph_pool, h)
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
             #                               training=self.training)
-            score_over_layer += self.linears_prediction[layer](pooled_h)
+            score_over_layer = self.linears_prediction[layer](pooled_h)
             pooled_h_ls.append(pooled_h)
 
         return score_over_layer, pooled_h_ls
