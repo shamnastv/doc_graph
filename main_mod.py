@@ -101,7 +101,7 @@ def print_cluster(cl):
     print(freq)
 
 
-def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, initial=False):
+def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, cl, initial=False):
     total_size = len(graphs)
 
     val_size = train_size // args.n_fold
@@ -143,13 +143,14 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     cl_new = cl_new.detach()
                     num_itr += 1
                 print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum/num_itr)
+            model_c.eval()
             with torch.no_grad():
                 cl = model_c(ge)
             print_cluster(cl)
             print('', flush=True)
-        else:
-            with torch.no_grad():
-                cl = model_c(ge)
+        # else:
+        #     with torch.no_grad():
+        #         cl = model_c(ge)
 
     else:
         cl = None
@@ -196,7 +197,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
-    return loss_accum, ge_new
+    return loss_accum, ge_new, cl
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
@@ -223,14 +224,14 @@ def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device)
     return torch.cat(outputs, 0), ge_new
 
 
-def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
+def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
     model_c.eval()
     model_e.eval()
 
     val_size = int(train_size / args.n_fold)
     train_size = train_size - val_size
 
-    cl = model_c(ge)
+    # cl = model_c(ge)
 
     output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 100, device)
 
@@ -345,11 +346,12 @@ def main():
     # optimizer = optim.SGD(model_e.parameters(), lr=args.lr, momentum=0.9)
     # optimizer_c = optim.SGD(model_c.parameters(), lr=args.lr_c, momentum=0.9)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+    cl = None
 
     print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(10):
-        avg_loss, ge_new = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
-                                 train_size, ge, initial=True)
+        avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
+                                 train_size, ge, cl, initial=True)
     print('Embedding Initialized', flush=True)
     # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
@@ -360,11 +362,12 @@ def main():
     ge = ge_new
 
     for epoch in range(1, args.epochs + 1):
-        avg_loss, ge_new = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
-        acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
+        avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer,
+                                 optimizer_c, epoch, train_size, ge, cl)
+        acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
         scheduler.step()
 
-        if epoch % args.iters_per_epoch == 0:
+        if epoch % args.iters_per_epoch == 0 or True:
             # for i in range(len(ge)):
             #     # norm = ge_new[i].norm(p=2, dim=1, keepdim=True)
             #     # ge[i] = ge_new[i].div(norm)
