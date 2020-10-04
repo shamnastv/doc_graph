@@ -315,7 +315,7 @@ def main():
                         help='output file')
     parser.add_argument('--alpha', type=float, default=1,
                         help='alpha')
-    parser.add_argument('--beta', type=float, default=10,
+    parser.add_argument('--beta', type=float, default=1,
                         help='beta')
     parser.add_argument('--n_fold', type=float, default=5,
                         help='n_fold')
