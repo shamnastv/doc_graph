@@ -110,12 +110,12 @@ class GNN(nn.Module):
 
         # Add self-loops in the adjacency matrix if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
 
-        if not self.learn_eps:
-            num_node = start_idx[-1]
-            self_loop_edge = torch.LongTensor([range(num_node), range(num_node)])
-            elem = torch.ones(num_node)
-            Adj_block_idx = torch.cat([Adj_block_idx, self_loop_edge], 1)
-            Adj_block_elem = torch.cat([Adj_block_elem, elem], 0)
+        # if not self.learn_eps:
+        #     num_node = start_idx[-1]
+        #     self_loop_edge = torch.LongTensor([range(num_node), range(num_node)])
+        #     elem = torch.ones(num_node)
+        #     Adj_block_idx = torch.cat([Adj_block_idx, self_loop_edge], 1)
+        #     Adj_block_elem = torch.cat([Adj_block_elem, elem], 0)
 
         Adj_block = torch.sparse.FloatTensor(Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]]))
 
@@ -193,7 +193,7 @@ class GNN(nn.Module):
 
         # Re-weights the center node representation when aggregating it with its neighbors
         # pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
-        pooled = pooled + (1 + self.eps[layer]) * h
+        # pooled = pooled + (1 + self.eps[layer]) * h
         if Cl is not None:
             mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
@@ -226,7 +226,7 @@ class GNN(nn.Module):
         if Cl is not None:
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, H)
-            pooled = pooled + 2 * (torch.spmm(graph_pool_n, tmp))
+            pooled = pooled + torch.spmm(graph_pool_n, tmp)
         pooled_rep = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](pooled_rep)
 
@@ -268,7 +268,7 @@ class GNN(nn.Module):
             pooled_h = torch.spmm(graph_pool, h)
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
             #                               training=self.training)
-            score_over_layer = self.linears_prediction[layer](pooled_h)
+            score_over_layer += self.linears_prediction[layer](pooled_h)
             pooled_h_ls.append(pooled_h)
 
         return score_over_layer, pooled_h_ls
