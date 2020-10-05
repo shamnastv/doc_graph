@@ -391,6 +391,7 @@ def main():
         print("")
 
     print(time.time() - start_time, 's Completed')
+    print(args)
     print('total size : ', len(graphs))
     print('max validation accuracy : ', max_val_accuracy)
     print('max acc epoch : ', max_acc_epoch)
