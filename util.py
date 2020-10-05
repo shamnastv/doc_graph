@@ -1,3 +1,4 @@
+import torch
 import yaml
 import scipy.sparse as sp
 import numpy as np
@@ -18,6 +19,12 @@ def normalize_adj(adj):
     d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
     d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
     return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
+
+
+def row_norm(x):
+    norm = torch.norm(x, p=2, dim=1, keepdim=True)
+    norm[norm < .00001] = .00001
+    return x.div(norm)
 
 
 def loadWord2Vec(filename):

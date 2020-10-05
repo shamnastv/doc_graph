@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from mlp import MLP
+from util import row_norm
 
 
 class GNN(nn.Module):
@@ -198,10 +199,8 @@ class GNN(nn.Module):
             # mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             # tmp = self.norm_g_embd[layer](torch.spmm(tmp, H))
-            tmp = (self.beta + self.w1[layer]) * torch.spmm(tmp, H)
-            norm = torch.norm(tmp, p=2, dim=1, keepdim=True)
-            norm[norm < .00001] = .00001
-            tmp = tmp.div(norm)
+            tmp = row_norm(torch.spmm(tmp, H))
+            tmp = (self.beta + self.w1[layer]) * tmp
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
         h = self.mlp_es[layer](pooled)
         h = F.relu(h)
