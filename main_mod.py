@@ -162,12 +162,12 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         batch_graph = [graphs[idx] for idx in selected_idx]
         if len(selected_idx) == 0:
             continue
-
-        ge_tmp = [ge_t[selected_idx] for ge_t in ge]
-        cl = model_c(ge_tmp)
         loss_c = 0
-        for layer in range(args.num_layers):
-            loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl_new, device)
+        if not initial:
+            ge_tmp = [ge_t[selected_idx] for ge_t in ge]
+            cl = model_c(ge_tmp)
+            for layer in range(args.num_layers):
+                loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl_new, device)
 
         output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
 
@@ -183,7 +183,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            optimizer.step()
+            if not initial:
+                optimizer_c.step()
+                cl = cl.detach()
 
         loss = loss.detach().cpu().numpy()
         loss_accum += loss
@@ -198,17 +200,18 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         batch_graph = [graphs[idx] for idx in selected_idx]
         if len(selected_idx) == 0:
             continue
-        ge_tmp = [ge_t[selected_idx] for ge_t in ge]
-        cl = model_c(ge_tmp)
-        loss_c = 0
-        for layer in range(args.num_layers):
-            loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl_new, device)
-        if optimizer_c is not None:
-            optimizer_c.zero_grad()
-            loss_c.backward()
-            optimizer_c.step()
-        loss_c = loss_c.detach().cpu().numpy()
-        cl = cl.detach()
+        if not initial:
+            ge_tmp = [ge_t[selected_idx] for ge_t in ge]
+            cl = model_c(ge_tmp)
+            loss_c = 0
+            for layer in range(args.num_layers):
+                loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl_new, device)
+            if optimizer_c is not None:
+                optimizer_c.zero_grad()
+                loss_c.backward()
+                optimizer_c.step()
+            loss_c = loss_c.detach().cpu().numpy()
+            cl = cl.detach()
 
         with torch.no_grad():
             output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
