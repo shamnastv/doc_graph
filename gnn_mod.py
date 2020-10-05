@@ -199,8 +199,9 @@ class GNN(nn.Module):
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             # tmp = self.norm_g_embd[layer](torch.spmm(tmp, H))
             tmp = (self.beta + self.w1[layer]) * torch.spmm(tmp, H)
-            # norm = torch.norm(tmp, p=2, dim=1, keepdim=True)
-            # tmp = tmp.div(norm)
+            norm = torch.norm(tmp, p=2, dim=1, keepdim=True)
+            norm[norm < .00001] = .00001
+            tmp = tmp.div(norm)
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
         h = self.mlp_es[layer](pooled)
         h = F.relu(h)
