@@ -154,7 +154,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     #
     # else:
     #     cl = None
-
+    if not initial:
+        with torch.no_grad():
+            cl = model_c(ge)
     idx_train = np.random.permutation(train_size)
     loss_accum = 0
     for i in range(0, train_size, args.batch_size):
@@ -165,9 +167,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         loss_c = 0
         if not initial:
             ge_tmp = [ge_t[selected_idx] for ge_t in ge]
-            cl = model_c(ge_tmp)
+            cl[selected_idx] = model_c(ge_tmp)
             for layer in range(args.num_layers):
-                loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl_new, device)
+                loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl[selected_idx], device)
 
         output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
 
@@ -202,10 +204,10 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             continue
         if not initial:
             ge_tmp = [ge_t[selected_idx] for ge_t in ge]
-            cl = model_c(ge_tmp)
+            cl[selected_idx] = model_c(ge_tmp)
             loss_c = 0
             for layer in range(args.num_layers):
-                loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl_new, device)
+                loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl[selected_idx], device)
             if optimizer_c is not None:
                 optimizer_c.zero_grad()
                 loss_c.backward()
