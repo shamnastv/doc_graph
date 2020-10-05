@@ -178,7 +178,7 @@ class GNN(nn.Module):
         pooled_rep = torch.max(h_with_dummy[padded_neighbor_list], dim=1)[0]
         return pooled_rep
 
-    def next_layer_eps(self, h, layer, idx, Cl=None, H=None, graph_pool_n=None, padded_neighbor_list=None, Adj_block=None):
+    def next_layer_eps(self, h, layer, idx, Cl=None, ge=None, graph_pool_n=None, padded_neighbor_list=None, Adj_block=None):
         # pooling neighboring nodes and center nodes separately by epsilon reweighting.
 
         if self.neighbor_pooling_type == "max":
@@ -194,21 +194,21 @@ class GNN(nn.Module):
 
         # Re-weights the center node representation when aggregating it with its neighbors
         # pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
-        pooled = pooled + (1 + self.eps[layer]) * h
         if Cl is not None:
             # mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             # tmp = self.norm_g_embd[layer](torch.spmm(tmp, H))
-            tmp = row_norm(torch.spmm(tmp, H))
+            tmp = row_norm(torch.spmm(tmp, ge))
             tmp = (self.beta + self.w1[layer]) * tmp
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
+        pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
         h = F.relu(h)
         h = F.dropout(h, self.final_dropout, training=self.training)
         h = self.batch_norms[layer](h)
         return h
 
-    def next_layer(self, h, layer, idx, Cl=None, H=None, graph_pool_n=None, padded_neighbor_list=None, Adj_block=None):
+    def next_layer(self, h, layer, idx, Cl=None, ge=None, graph_pool_n=None, padded_neighbor_list=None, Adj_block=None):
         # pooling neighboring nodes and center nodes  altogether
 
         if self.neighbor_pooling_type == "max":
@@ -225,7 +225,7 @@ class GNN(nn.Module):
         # representation of neighboring and center nodes
         if Cl is not None:
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-            tmp = torch.spmm(tmp, H)
+            tmp = torch.spmm(tmp, ge)
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
         pooled_rep = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](pooled_rep)
@@ -234,7 +234,7 @@ class GNN(nn.Module):
         h = F.relu(h)
         return h
 
-    def forward(self, batch_graph, Cl, H, idx):
+    def forward(self, batch_graph, Cl, ge, idx):
         X_concat = torch.cat([graph.node_features for graph in batch_graph], 0).to(self.device)
         graph_pool = self.__preprocess_graphpool(batch_graph)
         graph_pool_n = self.__preprocess_graphpool_n(batch_graph)
@@ -250,13 +250,13 @@ class GNN(nn.Module):
 
         for layer in range(self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
-                h = self.next_layer_eps(h, layer, idx, Cl, H[layer], graph_pool_n, padded_neighbor_list=padded_neighbor_list)
+                h = self.next_layer_eps(h, layer, idx, Cl, ge[layer], graph_pool_n, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and self.learn_eps:
-                h = self.next_layer_eps(h, layer, idx, Cl, H[layer], graph_pool_n, Adj_block=Adj_block)
+                h = self.next_layer_eps(h, layer, idx, Cl, ge[layer], graph_pool_n, Adj_block=Adj_block)
             elif self.neighbor_pooling_type == "max" and not self.learn_eps:
-                h = self.next_layer(h, layer, idx, Cl, H[layer], graph_pool_n, padded_neighbor_list=padded_neighbor_list)
+                h = self.next_layer(h, layer, idx, Cl, ge[layer], graph_pool_n, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and not self.learn_eps:
-                h = self.next_layer(h, layer, idx, Cl, H[layer], graph_pool_n, Adj_block=Adj_block)
+                h = self.next_layer(h, layer, idx, Cl, ge[layer], graph_pool_n, Adj_block=Adj_block)
 
             hidden_rep.append(h)
 
