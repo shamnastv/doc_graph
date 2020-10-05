@@ -6,7 +6,14 @@ import networkx as nx
 import torch
 
 
-print(torch.IntTensor([[1, 2], [3]]))
+d = {}
+d['s'] = 2
+if 's' in d:
+    print(d['s'])
+
+
+
+
 
 
 def test():
@@ -14,21 +21,21 @@ def test():
     print(time.time())
 
 
-n = 0
-q = Queue()
-q.put(1)
-i = 0
-while i < n/2:
-    i += 1
-    s = q.get()
-    print(s)
-    q.put(s * 10)
-    q.put(s * 10 + 1)
-
-while i < n:
-    i += 1
-    s = q.get()
-    print(s)
+# n = 0
+# q = Queue()
+# q.put(1)
+# i = 0
+# while i < n/2:
+#     i += 1
+#     s = q.get()
+#     print(s)
+#     q.put(s * 10)
+#     q.put(s * 10 + 1)
+#
+# while i < n:
+#     i += 1
+#     s = q.get()
+#     print(s)
 
 
 

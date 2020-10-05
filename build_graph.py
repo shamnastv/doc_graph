@@ -160,30 +160,33 @@ def build_graph(config_file='param.yaml'):
         vocab_size = len(vocab)
 
         features = []
+        wf = []
         for i in range(vocab_size):
             features.append(word_to_vec[vocab[i]])
+            wf.append(word_freq[vocab[i]])
 
         features = np.array(features)
         feature_list.append(features)
+        word_freq_list.append(wf)
 
         # Create map of word to id
         word_id_map = {}
         for i in range(vocab_size):
             word_id_map[vocab[i]] = i
 
-        # Create node attribute
-        node_size = vocab_size
-        row = []
-        col = []
-        val = []
-
-        for key in word_freq:
-            row.append(word_id_map[key])
-            col.append(0)
-            val.append(word_freq[key])
-        feat = sp.csr_matrix(
-            (val, (row, col)), shape=(node_size, 1))
-        word_freq_list.append(feat)
+        # # Create node attribute
+        # node_size = vocab_size
+        # row = []
+        # col = []
+        # val = []
+        #
+        # for key in word_freq:
+        #     row.append(word_id_map[key])
+        #     col.append(0)
+        #     val.append(word_freq[key])
+        # feat = sp.csr_matrix(
+        #     (val, (row, col)), shape=(node_size, 1))
+        # word_freq_list.append(feat)
 
         # Create windows
         length = len(words)
