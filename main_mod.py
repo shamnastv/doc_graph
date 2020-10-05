@@ -170,6 +170,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             cl[selected_idx] = model_c(ge_tmp)
             for layer in range(args.num_layers):
                 loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl[selected_idx], device)
+            loss_c.item()
 
         output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
 
