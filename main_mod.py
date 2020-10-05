@@ -98,7 +98,7 @@ def print_cluster(cl):
     indices = cl.max(1)[1]
     for i in indices:
         freq[i] += 1
-    print(freq)
+    print(freq, flush=True)
 
 
 def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, cl, initial=False):
@@ -157,6 +157,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     if not initial:
         with torch.no_grad():
             cl = model_c(ge)
+        print_cluster(cl)
+
     idx_train = np.random.permutation(train_size)
     loss_accum = 0
     for i in range(0, train_size, args.batch_size):
