@@ -157,8 +157,8 @@ class GNN(nn.Module):
         for i, graph in enumerate(batch_graph):
             # average pooling
             if self.graph_pooling_type == "average":
-                elem.extend([1. / len(graph.g)] * len(graph.g))
-
+                # elem.extend([1. / len(graph.g)] * len(graph.g))
+                elem.extend(graph.node_tags)
             else:
                 # sum pooling
                 elem.extend([1] * len(graph.g))

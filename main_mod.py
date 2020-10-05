@@ -15,7 +15,7 @@ from gnn_mod import GNN
 from util import normalize_adj, row_norm
 
 criterion = nn.CrossEntropyLoss()
-frequency_as_feature = True
+frequency_as_feature = False
 max_val_accuracy = 0
 test_accuracy = 0
 max_acc_epoch = 0
@@ -53,9 +53,11 @@ def create_gaph(args):
         lb = y[i]
         feat = feature_list[i]
         if frequency_as_feature:
-            # feat = np.concatenate((feat, word_freq_list[i].toarray()), axis=1)
-            feat = feat * word_freq_list[i].toarray()
-        g_list.append(S2VGraph(g, lb, node_features=feat))
+            feat = np.concatenate((feat, word_freq_list[i].toarray()), axis=1)
+            # feat = feat * word_freq_list[i].toarray()
+        s = sum(word_freq_list[i])
+        wf = [el/s for el in word_freq_list[i]]
+        g_list.append(S2VGraph(g, lb, node_features=feat, node_tags=wf))
 
     for g in g_list:
         # g.neighbors = [[] for i in range(len(g.g))]
