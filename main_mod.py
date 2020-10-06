@@ -146,7 +146,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl):
         for layer in range(args.num_layers):
             ge_new[layer][selected_idx] = pooled_h[layer].detach()
 
-    print('epoch : ', epoch, 'classification loss : ', loss_accum)
+    # print('epoch : ', epoch, ' loss : ', loss_accum)
 
     with torch.no_grad():
         # model_e.eval()
@@ -297,23 +297,23 @@ def main():
     ge = [None for i in range(args.num_layers)]
 
     print(time.time() - start_time, 's Training starts', flush=True)
-    for epoch in range(5):
-        avg_loss, ge_new, cl_new = train(args, model_e, device, graphs, optimizer, -epoch, train_size, ge, cl)
-        print('')
-        acc_train, acc_test, ge_new, cl_new = test(args, model_e, device, graphs, train_size, -epoch, ge, cl)
-        print('')
-    print('Embedding Initialized', flush=True)
+    # for epoch in range(5):
+    #     avg_loss, ge_new, cl_new = train(args, model_e, device, graphs, optimizer, -epoch, train_size, ge, cl)
+    #     # print('')
+    #     acc_train, acc_test, ge_new, cl_new = test(args, model_e, device, graphs, train_size, -epoch, ge, cl)
+    #     print('')
+    # print('Embedding Initialized', flush=True)
     # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
     # for i in range(len(ge)):
     #     ge[i] = row_norm(ge_new[i])
-    ge = ge_new
-    cl = cl_new
-    print_cluster(cl)
+    # ge = ge_new
+    # cl = cl_new
+    # print_cluster(cl)
 
     for epoch in range(1, args.epochs + 1):
         avg_loss, ge_new, cl_new = train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl)
-        print('')
+        # print('')
         acc_train, acc_test, ge_new, cl_new = test(args, model_e, device, graphs, train_size, epoch, ge, cl)
         scheduler.step()
 
@@ -327,7 +327,7 @@ def main():
             with open(args.filename, 'w') as f:
                 f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
                 f.write("\n")
-        print('')
+        print('', flush=True)
 
     print(time.time() - start_time, 's Completed')
     print(args)
