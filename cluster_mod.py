@@ -34,7 +34,7 @@ class ClusterNN(nn.Module):
 
     def forward(self, ge):
         cg = 0
-        for layer in range(self.num_layers):
+        for layer in range(1, self.num_layers):
             # cg += self.batch_norms_c[layer](self.mlp_cs[layer](ge[layer]))
             cg += self.mlp_cs[layer](ge[layer])
 
