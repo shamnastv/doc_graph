@@ -101,7 +101,7 @@ def print_cluster(cl):
     indices = cl.max(1)[1]
     for i in indices:
         freq[i] += 1
-    print(freq)
+    print(freq, flush=True)
 
 
 def train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl):
@@ -305,9 +305,9 @@ def main():
     print('Embedding Initialized', flush=True)
     # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
-    for i in range(len(ge)):
-        ge[i] = row_norm(ge_new[i])
-    # ge = ge_new
+    # for i in range(len(ge)):
+    #     ge[i] = row_norm(ge_new[i])
+    ge = ge_new
     cl = cl_new
     print_cluster(cl)
 
@@ -317,9 +317,9 @@ def main():
         acc_train, acc_test, ge_new, cl_new = test(args, model_e, device, graphs, train_size, epoch, ge, cl)
         scheduler.step()
 
-        for i in range(len(ge)):
-            ge[i] = row_norm(ge_new[i])
-        # ge = ge_new
+        # for i in range(len(ge)):
+        #     ge[i] = row_norm(ge_new[i])
+        ge = ge_new
         cl = cl_new
         print_cluster(cl)
 

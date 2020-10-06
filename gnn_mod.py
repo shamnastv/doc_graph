@@ -200,7 +200,8 @@ class GNN(nn.Module):
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, ge)
             tmp = row_norm(tmp)
-            tmp = (self.beta + self.w1[layer]) * tmp
+            # tmp = (self.beta + self.w1[layer]) * tmp
+            tmp = self.beta * tmp
             pooled = pooled - torch.spmm(graph_pool_n, tmp)
         pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
@@ -269,8 +270,8 @@ class GNN(nn.Module):
             pooled_h = torch.spmm(graph_pool, h)
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
             #                               training=self.training)
-            if layer > 0:
-                score_over_layer += self.linears_prediction[layer](pooled_h)
+            # if layer > 0:
+            score_over_layer += self.linears_prediction[layer](pooled_h)
             pooled_h_ls.append(pooled_h)
 
         return score_over_layer, pooled_h_ls
