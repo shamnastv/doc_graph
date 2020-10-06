@@ -198,11 +198,11 @@ class GNN(nn.Module):
         if Cl is not None:
             # mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-            # tmp = self.norm_g_embd[layer](torch.spmm(tmp, H))
-            tmp = row_norm(torch.spmm(tmp, ge))
+            tmp = torch.spmm(tmp, ge)
+            # tmp = row_norm(tmp)
             tmp = (self.beta + self.w1[layer]) * tmp
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
-        pooled = pooled + self.eps[layer] * h
+        pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
         h = F.relu(h)
         h = F.dropout(h, self.final_dropout, training=self.training)
