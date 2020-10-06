@@ -24,6 +24,7 @@ class GNN(nn.Module):
 
         super(GNN, self).__init__()
 
+        self.output_dim = output_dim
         self.final_dropout = final_dropout
         self.device = device
         self.num_layers = num_layers
