@@ -83,19 +83,6 @@ def create_gaph(args):
     return g_list, len(set(y)), train_size
 
 
-def my_loss(alpha, centroids, embeddings, cl, device):
-    dm = len(cl[0])
-    loss = 0
-    for i, emb in enumerate(embeddings):
-        tmp = torch.sum(torch.sub(centroids, emb) ** 2, dim=1, keepdim=True)
-        # tmp = torch.sub(centroids, emb)
-        # loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
-        loss += torch.mm(cl[i].reshape(1, -1), tmp)
-    tmp = torch.mm(cl.transpose(0, 1), cl)
-    loss += alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
-    return loss
-
-
 def print_cluster(cl):
     freq = [0 for i in range(cl.shape[1])]
     indices = cl.max(1)[1]
@@ -120,40 +107,6 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl):
             ge_new.append(torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device))
         else:
             ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
-
-    # if not initial:
-    #     if epoch % total_itr_c == 1:
-    #         for itr in range(total_itr_c):
-    #             loss_c_accum = 0
-    #             full_idx = np.random.permutation(total_size)
-    #             num_itr = 0
-    #             for i in range(0, total_size, cl_batch_size):
-    #                 selected_idx = full_idx[i:i + cl_batch_size]
-    #                 ge_tmp = [ge_t[selected_idx] for ge_t in ge]
-    #                 cl_new = model_c(ge_tmp)
-    #                 loss_c = 0
-    #                 for layer in range(1, args.num_layers):
-    #                     loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl_new, device)
-    #                 if optimizer_c is not None:
-    #                     optimizer_c.zero_grad()
-    #                     loss_c.backward()
-    #                     optimizer_c.step()
-    #                 loss_c = loss_c.detach().cpu().numpy()
-    #                 loss_c_accum += loss_c
-    #                 cl_new = cl_new.detach()
-    #                 num_itr += 1
-    #             print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum/num_itr)
-    #         model_c.eval()
-    #         with torch.no_grad():
-    #             cl = model_c(ge)
-    #         print_cluster(cl)
-    #         print('', flush=True)
-    #     # else:
-    #     #     with torch.no_grad():
-    #     #         cl = model_c(ge)
-    #
-    # else:
-    #     cl = None
 
     idx_train = np.random.permutation(train_size)
     loss_accum = 0
@@ -277,25 +230,16 @@ def main():
                         help='which gpu to use if any (default: 0)')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='input batch size for training (default: 32)')
-    parser.add_argument('--batch_size_cl', type=int, default=500,
-                        help='input batch size for clustering (default: 32)')
-    parser.add_argument('--iters_per_epoch', type=int, default=50,
-                        help='number of iterations per each epoch (default: 50)')
     parser.add_argument('--epochs', type=int, default=350,
                         help='number of epochs to train (default: 350)')
     parser.add_argument('--lr', type=float, default=0.01,
                         help='learning rate (default: 0.01)')
-    parser.add_argument('--lr_c', type=float, default=0.01,
-                        help='learning rate for clustering (default: 0.01)')
     parser.add_argument('--seed', type=int, default=0,
                         help='random seed for splitting the dataset into 10 (default: 0)')
     parser.add_argument('--num_layers', type=int, default=5,
                         help='number of layers INCLUDING the input one (default: 5)')
     parser.add_argument('--num_mlp_layers', type=int, default=2,
                         help='number of layers for MLP EXCLUDING the input one (default: 2). 1 means linear model.')
-    parser.add_argument('--num_mlp_layers_c', type=int, default=2,
-                        help='number of layers for MLP clustering EXCLUDING the input one (default: 2). 1 means '
-                             'linear model.')
     parser.add_argument('--hidden_dim', type=int, default=64,
                         help='number of hidden units (default: 64)')
     parser.add_argument('--final_dropout', type=float, default=0.5,
@@ -311,9 +255,7 @@ def main():
                         help='configuration file')
     parser.add_argument('--filename', type=str, default="",
                         help='output file')
-    parser.add_argument('--alpha', type=float, default=1,
-                        help='alpha')
-    parser.add_argument('--beta', type=float, default=1,
+    parser.add_argument('--beta', type=float, default=10,
                         help='beta')
     parser.add_argument('--n_fold', type=float, default=5,
                         help='n_fold')
@@ -333,16 +275,11 @@ def main():
     graphs, num_classes, train_size = create_gaph(args)
     ge = [None for i in range(args.num_layers)]
 
-    # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
-    #                     args.num_mlp_layers_c).to(device)
     model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
                   args.final_dropout,
                   args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
 
     optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-    # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-    # optimizer = optim.SGD(model_e.parameters(), lr=args.lr, momentum=0.9)
-    # optimizer_c = optim.SGD(model_c.parameters(), lr=args.lr_c, momentum=0.9)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     cl = None
 
@@ -366,22 +303,6 @@ def main():
         for i in range(len(ge)):
             ge[i] = row_norm(ge_new[i])
         cl = cl_new
-
-        # if epoch % args.iters_per_epoch == 0 or True:
-        #     for i in range(len(ge)):
-        #         ge[i] = row_norm(ge_new[i])
-        #     # ge = ge_new
-        #
-        #     # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
-        #     #                     args.num_mlp_layers_c).to(device)
-        #     # model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
-        #     #               num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type,
-        #     #               args.neighbor_pooling_type, device, args.beta).to(device)
-        #     #
-        #     # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-        #     # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-        #     # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
-        #     print(time.time() - start_time, 'embeddings updated.', flush=True)
 
         if not args.filename == "":
             with open(args.filename, 'w') as f:
