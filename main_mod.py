@@ -255,7 +255,7 @@ def main():
                         help='configuration file')
     parser.add_argument('--filename', type=str, default="",
                         help='output file')
-    parser.add_argument('--beta', type=float, default=10,
+    parser.add_argument('--beta', type=float, default=1,
                         help='beta')
     parser.add_argument('--n_fold', type=float, default=5,
                         help='n_fold')
@@ -293,6 +293,7 @@ def main():
     for i in range(len(ge)):
         ge[i] = row_norm(ge_new[i])
     cl = cl_new
+    print_cluster(cl)
     # ge = ge_new
 
     for epoch in range(1, args.epochs + 1):
@@ -303,6 +304,7 @@ def main():
         for i in range(len(ge)):
             ge[i] = row_norm(ge_new[i])
         cl = cl_new
+        print_cluster(cl)
 
         if not args.filename == "":
             with open(args.filename, 'w') as f:
