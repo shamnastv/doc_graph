@@ -44,8 +44,18 @@ class S2VGraph(object):
         # self.max_neighbor = 0
 
 
+def print_distr(y):
+    print('Class distributions')
+    freq = [0 for i in range(len(set(y)))]
+    for i in y:
+        freq[i] += 1
+    print(freq)
+    pass
+
+
 def create_gaph(args):
     ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph(config_file=args.configfile)
+    print_distr(y)
     g_list = []
     for i, adj in enumerate(ls_adj):
         adj = normalize_adj(adj)
@@ -286,7 +296,9 @@ def main():
     print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(10):
         avg_loss, ge_new, cl_new = train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl)
+        print('')
         acc_train, acc_test, ge_new, cl_new = test(args, model_e, device, graphs, train_size, epoch, ge, cl)
+        print('')
     print('Embedding Initialized', flush=True)
     # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
@@ -298,6 +310,7 @@ def main():
 
     for epoch in range(1, args.epochs + 1):
         avg_loss, ge_new, cl_new = train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl)
+        print('')
         acc_train, acc_test, ge_new, cl_new = test(args, model_e, device, graphs, train_size, epoch, ge, cl)
         scheduler.step()
 
@@ -310,7 +323,7 @@ def main():
             with open(args.filename, 'w') as f:
                 f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
                 f.write("\n")
-        print("")
+        print('')
 
     print(time.time() - start_time, 's Completed')
     print(args)
