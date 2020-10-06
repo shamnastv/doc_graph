@@ -199,7 +199,7 @@ class GNN(nn.Module):
             # mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, ge)
-            # tmp = row_norm(tmp)
+            tmp = row_norm(tmp)
             tmp = (self.beta + self.w1[layer]) * tmp
             pooled = pooled - torch.spmm(graph_pool_n, tmp)
         pooled = pooled + (1 + self.eps[layer]) * h
