@@ -44,18 +44,21 @@ class S2VGraph(object):
         # self.max_neighbor = 0
 
 
-def print_distr(y):
+def print_distr(y, train_size):
     print('Class distributions')
     freq = [0 for i in range(len(set(y)))]
-    for i in y:
+    for i in y[:train_size]:
         freq[i] += 1
-    print(freq)
-    pass
+    print('on train : ', freq)
+    freq = [0 for i in range(len(set(y)))]
+    for i in y[train_size:]:
+        freq[i] += 1
+    print('on test : ', freq)
 
 
 def create_gaph(args):
     ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph(config_file=args.configfile)
-    print_distr(y)
+    print_distr(y, train_size)
     g_list = []
     for i, adj in enumerate(ls_adj):
         adj = normalize_adj(adj)
@@ -283,7 +286,6 @@ def main():
     print('device : ', device, flush=True)
 
     graphs, num_classes, train_size = create_gaph(args)
-    ge = [None for i in range(args.num_layers)]
 
     model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
                   args.final_dropout,
@@ -292,12 +294,13 @@ def main():
     optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
     cl = None
+    ge = [None for i in range(args.num_layers)]
 
     print(time.time() - start_time, 's Training starts', flush=True)
-    for epoch in range(10):
-        avg_loss, ge_new, cl_new = train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl)
+    for epoch in range(5):
+        avg_loss, ge_new, cl_new = train(args, model_e, device, graphs, optimizer, -epoch, train_size, ge, cl)
         print('')
-        acc_train, acc_test, ge_new, cl_new = test(args, model_e, device, graphs, train_size, epoch, ge, cl)
+        acc_train, acc_test, ge_new, cl_new = test(args, model_e, device, graphs, train_size, -epoch, ge, cl)
         print('')
     print('Embedding Initialized', flush=True)
     # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
