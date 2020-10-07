@@ -203,9 +203,9 @@ class GNN(nn.Module):
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
         pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
+        h = self.batch_norms[layer](h)
         h = F.relu(h)
         h = F.dropout(h, self.final_dropout, training=self.training)
-        h = self.batch_norms[layer](h)
         return h
 
     def next_layer(self, h, layer, idx, Cl=None, ge=None, graph_pool_n=None, padded_neighbor_list=None, Adj_block=None):

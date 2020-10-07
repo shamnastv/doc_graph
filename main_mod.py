@@ -281,9 +281,9 @@ def main():
     parser.add_argument('--device', type=int, default=0,
                         help='which gpu to use if any (default: 0)')
     parser.add_argument('--batch_size', type=int, default=64,
-                        help='input batch size for training (default: 32)')
-    parser.add_argument('--batch_size_cl', type=int, default=500,
-                        help='input batch size for clustering (default: 32)')
+                        help='input batch size for training (default: 64)')
+    parser.add_argument('--batch_size_cl', type=int, default=512,
+                        help='input batch size for clustering (default: 512)')
     parser.add_argument('--iters_per_epoch', type=int, default=50,
                         help='number of iterations per each epoch (default: 50)')
     parser.add_argument('--epochs', type=int, default=350,
