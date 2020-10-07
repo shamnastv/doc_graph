@@ -37,7 +37,7 @@ class S2VGraph(object):
         self.node_tags = node_tags
         # self.neighbors = []
         self.node_features = torch.FloatTensor(node_features)
-        self.node_features = row_norm(self.node_features)
+        # self.node_features = row_norm(self.node_features)
         self.edge_mat = 0
         self.edges_weights = []
 
@@ -358,9 +358,9 @@ def main():
     print('Embedding Initialized', flush=True)
     # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
-    for i in range(len(ge)):
-        ge[i] = row_norm(ge_new[i])
-    # ge = ge_new
+    # for i in range(len(ge)):
+    #     ge[i] = row_norm(ge_new[i])
+    ge = ge_new
 
     for epoch in range(1, args.epochs + 1):
         avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer,
@@ -369,9 +369,9 @@ def main():
         scheduler.step()
 
         if epoch % args.iters_per_epoch == 0 or True:
-            for i in range(len(ge)):
-                ge[i] = row_norm(ge_new[i])
-            # ge = ge_new
+            # for i in range(len(ge)):
+            #     ge[i] = row_norm(ge_new[i])
+            ge = ge_new
 
             # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
             #                     args.num_mlp_layers_c).to(device)
