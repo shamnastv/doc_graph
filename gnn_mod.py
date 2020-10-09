@@ -202,7 +202,7 @@ class GNN(nn.Module):
             tmp = row_norm(tmp)
             # tmp = (self.beta + self.w1[layer]) * tmp
             tmp = self.beta * tmp
-            pooled = pooled + torch.spmm(graph_pool_n, tmp)
+            pooled = pooled - torch.spmm(graph_pool_n, tmp)
         pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
         h = F.relu(h)
