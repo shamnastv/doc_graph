@@ -50,6 +50,13 @@ def print_distr(y, train_size):
     for i in y[:train_size]:
         freq[i] += 1
     print('on train : ', freq)
+    m = 1
+    for i in freq:
+        if i < m:
+            m = i
+    weights = [m/i if i != 0 else 1 for i in freq]
+    global criterion
+    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(weights))
     freq = [0 for i in range(len(set(y)))]
     for i in y[train_size:]:
         freq[i] += 1
