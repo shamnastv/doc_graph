@@ -15,6 +15,7 @@ from gnn_mod import GNN
 from util import normalize_adj, row_norm
 
 criterion = nn.CrossEntropyLoss()
+d = torch.device("cpu")
 frequency_as_feature = False
 max_val_accuracy = 0
 test_accuracy = 0
@@ -56,7 +57,7 @@ def print_distr(y, train_size):
             m = i
     weights = [m/i if i != 0 else 1 for i in freq]
     global criterion
-    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(weights))
+    criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(weights).to(d))
     freq = [0 for i in range(len(set(y)))]
     for i in y[train_size:]:
         freq[i] += 1
@@ -292,6 +293,8 @@ def main():
         torch.cuda.manual_seed_all(0)
     print('device : ', device, flush=True)
 
+    global d
+    d = device
     graphs, num_classes, train_size = create_gaph(args)
 
     model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
