@@ -31,6 +31,11 @@ class ClusterNN(nn.Module):
         #     self.linears_prediction.append(nn.Linear(num_class, num_class))
 
         # self.batch_norm_c = nn.BatchNorm1d(num_class)
+        self.reset_parameters()
+
+    def reset_parameters(self) -> None:
+        for centroid in self.centroids:
+            nn.init.uniform_(centroid)
 
     def forward(self, ge):
         cg = 0
