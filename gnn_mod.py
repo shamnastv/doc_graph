@@ -32,7 +32,7 @@ class GNN(nn.Module):
         self.learn_eps = learn_eps
         self.eps = nn.Parameter(torch.zeros(self.num_layers - 1))
         self.w1 = nn.Parameter(torch.zeros(self.num_layers - 1))
-        self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
+        # self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
         self.beta = beta
 
         # for layer in self.layers:
@@ -67,6 +67,12 @@ class GNN(nn.Module):
                 self.linears_prediction.append(nn.Linear(input_dim, output_dim))
             else:
                 self.linears_prediction.append(nn.Linear(hidden_dim, output_dim))
+        self.reset_parameters()
+
+    def reset_parameters(self) -> None:
+        nn.init.uniform_(self.eps)
+        nn.init.uniform_(self.w1)
+        nn.init.uniform_(self.eps)
 
     def __preprocess_neighbors_maxpool(self, batch_graph):
         # create padded_neighbor_list in concatenated graph
