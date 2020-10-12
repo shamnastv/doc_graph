@@ -203,12 +203,26 @@ def build_graph(config_file='param.yaml'):
         # word_freq_list.append(feat)
 
         # Create windows
+        # length = len(words)
+        # if length <= window_size:
+        #     windows.append(words)
+        # else:
+        #     for j in range(length - window_size + 1):
+        #         window = words[j: j + window_size]
+        #         windows.append(window)
+
         length = len(words)
-        if length <= window_size:
+        if length <= 1:
             windows.append(words)
         else:
-            for j in range(length - window_size + 1):
-                window = words[j: j + window_size]
+            for j in range(2 - window_size, length - 1):
+                start = j
+                end = j + window_size
+                if start < 0:
+                    start = 0
+                if end > length:
+                    end = length
+                window = words[start: end]
                 windows.append(window)
 
         # Find Word window frequency
@@ -258,16 +272,16 @@ def build_graph(config_file='param.yaml'):
             i = int(temp[0])
             j = int(temp[1])
             count = word_pair_count[key]
-            # word_freq_i = word_window_freq[vocab[i]]
-            # word_freq_j = word_window_freq[vocab[j]]
-            # pmi = log((1.0 * count / num_window) /
-            #           (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
-            # if pmi <= 0:
-            #     continue
+            word_freq_i = word_window_freq[vocab[i]]
+            word_freq_j = word_window_freq[vocab[j]]
+            pmi = log((2.0 * count / num_window) /
+                      (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
+            if pmi <= 0:
+                continue
             row.append(i)
             col.append(j)
-            weight.append(count)
-            # weight.append(pmi)
+            # weight.append(count)
+            weight.append(pmi)
 
         node_size = vocab_size
         adj = sp.csr_matrix(
