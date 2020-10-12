@@ -344,6 +344,8 @@ def main():
                         help='beta')
     parser.add_argument('--n_fold', type=float, default=5,
                         help='n_fold')
+    parser.add_argument('--early_stop', type=int, default=50,
+                        help='early_stop')
 
     args = parser.parse_args()
 
@@ -413,6 +415,8 @@ def main():
                 f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
                 f.write("\n")
         print("")
+        if epoch > max_acc_epoch + args.early_stop:
+            break
 
     print(time.time() - start_time, 's Completed')
     print(args)
