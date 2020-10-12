@@ -97,6 +97,7 @@ def create_gaph(args):
         edges.extend([[i, j] for j, i in edges])
         edges_w.extend([w for w in edges_w])
         if len(edges) == 0:
+            print('zero edge : ', len(g.g))
             edges = [[0, 0]]
             edges_w = [1]
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
@@ -371,7 +372,7 @@ def main():
     optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
     # optimizer = optim.SGD(model_e.parameters(), lr=args.lr, momentum=0.9)
     # optimizer_c = optim.SGD(model_c.parameters(), lr=args.lr_c, momentum=0.9)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
     cl = None
 
     print(time.time() - start_time, 's Training starts', flush=True)
