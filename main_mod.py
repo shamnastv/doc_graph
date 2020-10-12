@@ -344,7 +344,7 @@ def main():
                         help='beta')
     parser.add_argument('--n_fold', type=float, default=5,
                         help='n_fold')
-    parser.add_argument('--early_stop', type=int, default=50,
+    parser.add_argument('--early_stop', type=int, default=80,
                         help='early_stop')
 
     args = parser.parse_args()
