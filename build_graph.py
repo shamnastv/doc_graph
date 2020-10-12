@@ -119,10 +119,21 @@ def build_graph(config_file='param.yaml'):
     # Creating word embeddding
     word_to_vec = {}
     doc_word_set = set()
+    idf = {}
     for doc_words in shuffle_doc_words_list:
+        tmp_word_set = set()
         words = doc_words.split()
         for word in words:
             doc_word_set.add(word)
+            if word not in tmp_word_set:
+                if word in idf:
+                    idf[word] += 1
+                else:
+                    idf[word] = 1
+                tmp_word_set.add(word)
+
+    for word in idf:
+        idf[word] = log(total_size/idf[word])
 
     doc_vocab = list(doc_word_set)
     doc_vocab_size = len(doc_vocab)
@@ -165,7 +176,7 @@ def build_graph(config_file='param.yaml'):
         wf = []
         for i in range(vocab_size):
             features.append(word_to_vec[vocab[i]])
-            wf.append(word_freq[vocab[i]])
+            wf.append(word_freq[vocab[i]] * idf[word])
 
         features = np.array(features)
         feature_list.append(features)

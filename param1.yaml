@@ -1,5 +1,5 @@
 dataset: R52
-window_size: 7
+window_size: 5
 save_graph: False
 retrieve_graph: False
 identity_feature: False
