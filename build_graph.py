@@ -144,7 +144,8 @@ def build_graph(config_file='param.yaml'):
             word_to_vec[doc_vocab[i]] = result[i]
 
     else:
-        bert_embedding = BertEmbedding(model='bert_24_1024_16')
+        # bert_embedding = BertEmbedding(model='bert_24_1024_16')
+        bert_embedding = BertEmbedding()
         result = bert_embedding(doc_vocab)
         for i in range(doc_vocab_size):
             word_to_vec[doc_vocab[i]] = result[i][1][0]
