@@ -250,7 +250,7 @@ def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device)
 
 
 def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
-    model_c.eval()
+    # model_c.eval()
     model_e.eval()
 
     val_size = int(train_size / args.n_fold)
@@ -379,8 +379,10 @@ def main():
 
     print(time.time() - start_time, 's Training starts', flush=True)
     for epoch in range(10):
-        avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
+        avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -epoch,
                                  train_size, ge, cl, initial=True)
+        acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, -epoch, ge, cl)
+
     print('Embedding Initialized', flush=True)
     # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
