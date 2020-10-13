@@ -2,4 +2,4 @@ dataset: R8
 window_size: 5
 save_graph: False
 retrieve_graph: False
-identity_feature: True
+identity_feature: False
