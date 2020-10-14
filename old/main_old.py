@@ -1,19 +1,17 @@
 import networkx as nx
 import numpy as np
-import random
 import argparse
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 import time
 
 import build_graph
-from cluster import ClusterNN
-from gnn1 import GNN
+from old.cluster_old import ClusterNN
+from old.gnn_old import GNN
 
 criterion = nn.CrossEntropyLoss()
-frequency_as_feature = False
+frequency_as_feature = True
 max_test_accuracy = 0
 max_acc_epoch = 0
 start_time = time.time()
@@ -49,7 +47,7 @@ def create_gaph(args):
         if frequency_as_feature:
             # feat = np.concatenate((feat, word_freq_list[i].toarray()), axis=1)
             feat = feat * word_freq_list[i].toarray()
-        g_list.append(S2VGraph(g, lb, node_features=np.concatenate((feat, feat), axis=1)))
+        g_list.append(S2VGraph(g, lb, node_features=feat))
 
     for g in g_list:
         g.neighbors = [[] for i in range(len(g.g))]
@@ -79,18 +77,38 @@ def my_loss(alpha, centroids, embeddings, cl, device):
     return loss
 
 
-def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge):
+def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, update_graph):
     model_e.train()
     model_c.train()
-    input_dim = graphs[0].node_features.shape[1]
 
-    ge_new = torch.zeros(len(graphs), input_dim).to(device)
+    total_iter = 1
+    total_iter_c = 0
 
-    for rep in range(10):
-        cl = train_cluster(args, device, ge, model_c, optimizer_c)
+    cl = model_c(ge)
+    cl = cl.detach()
+
+    if epoch % args.iters_per_epoch == 1:
+        total_iter_c = args.iters_per_epoch
+
+    if epoch < 6:
+        total_iter = args.iters_per_epoch
+        total_iter_c = total_iter
+
+    node_features = [0 for i in range(len(graphs))]
+    ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
+
+    for itr in range(total_iter_c):
+        cl = model_c(ge)
+        loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
+        if optimizer_c is not None:
+            optimizer_c.zero_grad()
+            loss_c.backward()
+            optimizer_c.step()
+        cl = cl.detach()
+        print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c.detach().cpu().numpy())
 
     idx_train = np.random.permutation(train_size)
-    for rep in range(10):
+    for itr in range(total_iter):
         loss_accum = 0
         for i in range(0, train_size, args.batch_size):
             selected_idx = idx_train[i:i + args.batch_size]
@@ -113,54 +131,50 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             loss = loss.detach().cpu().numpy()
             loss_accum += loss
 
-            ge_new[selected_idx, int(input_dim/2):] = pooled_h.detach()
+            pooled_h = pooled_h.detach()
             h = h.detach()
-            if epoch == 9:
-                start_idx = 0
+            start_idx = 0
+            if itr == total_iter - 1 and update_graph:
+                ge_new[selected_idx] = pooled_h
                 for j in selected_idx:
                     length = len(graphs[j].g)
-                    graphs[j].node_features[:, int(input_dim/2):] = h[start_idx:start_idx + length]
+                    node_features[j] = h[start_idx:start_idx + length]
                     start_idx += length
 
-    model_e.eval()
-    total_size = len(graphs)
-    test_size = total_size - train_size
-    idx_test = np.arange(train_size, total_size)
-    for i in range(0, test_size, args.batch_size):
-        selected_idx = idx_test[i:i + args.batch_size]
-        batch_graph = [graphs[idx] for idx in selected_idx]
-        if len(selected_idx) == 0:
-            continue
-        output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
+        print('epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum, 'W : ', model_e.ws)
 
-        output = output.detach()
-        ge_new[selected_idx, int(input_dim/2):] = pooled_h.detach()
-        h = h.detach()
-        start_idx = 0
-        for j in selected_idx:
-            length = len(graphs[j].g)
-            graphs[j].node_features[:, int(input_dim/2):] = h[start_idx:start_idx + length]
-            start_idx += length
+    if update_graph:
+        # model_e.eval()
+        total_size = len(graphs)
+        test_size = total_size - train_size
+        idx_test = np.arange(train_size, total_size)
+        for i in range(0, test_size, args.batch_size):
+            selected_idx = idx_test[i:i + args.batch_size]
+            batch_graph = [graphs[idx] for idx in selected_idx]
+            if len(selected_idx) == 0:
+                continue
+            output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
+
+            output = output.detach()
+            ge_new[selected_idx] = pooled_h.detach()
+            h = h.detach()
+            start_idx = 0
+            for j in selected_idx:
+                length = len(graphs[j].g)
+                node_features[j] = h[start_idx:start_idx + length]
+                start_idx += length
 
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
-    return loss_accum, ge_new, graphs
-
-
-def train_cluster(args, device, ge, model_c, optimizer_c):
-    cl = model_c(ge)
-    loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
-    if optimizer_c is not None:
-        optimizer_c.zero_grad()
-        loss_c.backward()
-        optimizer_c.step()
-    cl = cl.detach()
-    return cl
+    return loss_accum, ge_new, node_features
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
-def pass_data_iteratively(model_e, graphs, cl, ge, minibatch_size=64):
+def pass_data_iteratively(model_e, graphs, cl, ge, minibatch_size, update_graph, device):
     outputs = []
+    node_features = [0 for i in range(len(graphs))]
+    ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
+
     full_idx = np.arange(len(graphs))
     for i in range(0, len(graphs), minibatch_size):
         sampled_idx = full_idx[i:i + minibatch_size]
@@ -168,16 +182,25 @@ def pass_data_iteratively(model_e, graphs, cl, ge, minibatch_size=64):
             continue
         output, pooled_h, h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
         outputs.append(output.detach())
-    return torch.cat(outputs, 0)
+        if update_graph:
+            ge_new[sampled_idx] = pooled_h.detach()
+            h = h.detach()
+            start_idx = 0
+            for j in sampled_idx:
+                length = len(graphs[j].g)
+                node_features[j] = h[start_idx:start_idx + length]
+                start_idx += length
+
+    return torch.cat(outputs, 0), ge_new, node_features
 
 
-def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
+def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_graph):
     model_c.eval()
     model_e.eval()
 
     cl = model_c(ge)
 
-    output = pass_data_iteratively(model_e, graphs, cl, ge)
+    output, ge_new, node_features = pass_data_iteratively(model_e, graphs, cl, ge, 64, update_graph, device)
 
     output_train, output_test = output[:train_size], output[train_size:]
     train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
@@ -203,12 +226,11 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge):
         for i in range(len(test_graphs)):
             print('label : ', labels_test[i], ' pred : ', pred_test[i])
 
-    return acc_train, acc_test
+    return acc_train, acc_test, ge_new, node_features
 
 
 def initialize_graph_embedding(graphs, device):
-    input_dim = graphs[0].node_features.shape[1]
-    embeddings = torch.zeros(len(graphs), input_dim).to(device)
+    embeddings = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
     for i, g in enumerate(graphs):
         embeddings[i] = g.node_features.mean(dim=0).to(device)
 
@@ -222,6 +244,8 @@ def main():
                         help='which gpu to use if any (default: 0)')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='input batch size for training (default: 32)')
+    parser.add_argument('--iters_per_epoch', type=int, default=50,
+                        help='number of iterations per each epoch (default: 50)')
     parser.add_argument('--epochs', type=int, default=350,
                         help='number of epochs to train (default: 350)')
     parser.add_argument('--lr', type=float, default=0.01,
@@ -233,7 +257,8 @@ def main():
     parser.add_argument('--num_mlp_layers', type=int, default=2,
                         help='number of layers for MLP EXCLUDING the input one (default: 2). 1 means linear model.')
     parser.add_argument('--num_mlp_layers_c', type=int, default=2,
-                        help='number of layers for MLP clustering EXCLUDING the input one (default: 2). 1 means linear model.')
+                        help='number of layers for MLP clustering EXCLUDING the input one (default: 2). 1 means '
+                             'linear model.')
     parser.add_argument('--hidden_dim', type=int, default=64,
                         help='number of hidden units (default: 64)')
     parser.add_argument('--final_dropout', type=float, default=0.5,
@@ -270,16 +295,23 @@ def main():
     model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout,
                 args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
 
-    optimizer = optim.Adam(model_e.parameters(), lr=args.lr_c)
-    optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr)
+    optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+    optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
 
     print(time.time() - start_time, 's Training starts')
     for epoch in range(1, args.epochs + 1):
         scheduler.step()
+        update_graph = epoch % (3 * args.iters_per_epoch) == 0
 
-        avg_loss, ge, graphs = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge)
-        acc_train, acc_test = test(args, model_e, model_c, device, graphs, train_size, epoch, ge)
+        avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, False)
+        acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_graph)
+
+        if update_graph:
+            for j in range(len(graphs)):
+                graphs[j].node_features = node_features[j]
+            ge = ge_new
+            print('graph updated in epoch : ', epoch)
 
         if not args.filename == "":
             with open(args.filename, 'w') as f:

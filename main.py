@@ -7,14 +7,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import time
+from sklearn.preprocessing import normalize
 
 import build_graph
 from cluster import ClusterNN
 from gnn import GNN
+from util import normalize_adj, row_norm
 
 criterion = nn.CrossEntropyLoss()
-frequency_as_feature = True
-max_test_accuracy = 0
+d = torch.device("cpu")
+frequency_as_feature = False
+max_val_accuracy = 0
+test_accuracy = 0
 max_acc_epoch = 0
 start_time = time.time()
 
@@ -32,39 +36,72 @@ class S2VGraph(object):
         self.label = label
         self.g = g
         self.node_tags = node_tags
-        self.neighbors = []
+        # self.neighbors = []
         self.node_features = torch.FloatTensor(node_features)
+        self.node_features = row_norm(self.node_features)
         self.edge_mat = 0
+        self.edges_weights = []
 
-        self.max_neighbor = 0
+        # self.max_neighbor = 0
+
+
+def print_distr(y, train_size):
+    print('Class distributions')
+    freq = [0 for i in range(len(set(y)))]
+    for i in y[:train_size]:
+        freq[i] += 1
+    print('on train : ', freq)
+    m = 1
+    for i in freq:
+        if i < m:
+            m = i
+    weights = [m/i if i != 0 else 1 for i in freq]
+    global criterion
+    # criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(weights).to(d))
+    freq = [0 for i in range(len(set(y)))]
+    for i in y[train_size:]:
+        freq[i] += 1
+    print('on test : ', freq)
 
 
 def create_gaph(args):
     ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph(config_file=args.configfile)
+    print_distr(y, train_size)
     g_list = []
     for i, adj in enumerate(ls_adj):
+        adj = normalize_adj(adj)
         g = nx.from_scipy_sparse_matrix(adj)
         lb = y[i]
         feat = feature_list[i]
         if frequency_as_feature:
-            # feat = np.concatenate((feat, word_freq_list[i].toarray()), axis=1)
-            feat = feat * word_freq_list[i].toarray()
-        g_list.append(S2VGraph(g, lb, node_features=feat))
+            feat = np.concatenate((feat, word_freq_list[i].toarray()), axis=1)
+            # feat = feat * word_freq_list[i].toarray()
+        if i == 10:
+            print(word_freq_list[i])
+        s = sum(word_freq_list[i])
+        wf = [el/s for el in word_freq_list[i]]
+        g_list.append(S2VGraph(g, lb, node_features=feat, node_tags=wf))
 
     for g in g_list:
-        g.neighbors = [[] for i in range(len(g.g))]
-        for i, j in g.g.edges():
-            g.neighbors[i].append(j)
-            g.neighbors[j].append(i)
-        degree_list = []
-        for i in range(len(g.g)):
-            g.neighbors[i] = g.neighbors[i]
-            degree_list.append(len(g.neighbors[i]))
-        g.max_neighbor = max(degree_list)
+        # g.neighbors = [[] for i in range(len(g.g))]
+        # for i, j in g.g.edges():
+        #     g.neighbors[i].append(j)
+        #     g.neighbors[j].append(i)
+        # degree_list = []
+        # for i in range(len(g.g)):
+        #     g.neighbors[i] = g.neighbors[i]
+        #     degree_list.append(len(g.neighbors[i]))
+        # g.max_neighbor = max(degree_list)
         edges = [list(pair) for pair in g.g.edges()]
+        edges_w = [w['weight'] for i, j, w in g.g.edges(data=True)]
         edges.extend([[i, j] for j, i in edges])
+        edges_w.extend([w for w in edges_w])
+        if len(edges) == 0:
+            print('zero edge : ', len(g.g))
+            edges = [[0, 0]]
+            edges_w = [1]
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
-
+        g.edges_weights = torch.FloatTensor(edges_w)
     return g_list, len(set(y)), train_size
 
 
@@ -72,145 +109,169 @@ def my_loss(alpha, centroids, embeddings, cl, device):
     dm = len(cl[0])
     loss = 0
     for i, emb in enumerate(embeddings):
-        tmp = torch.sub(centroids, emb)
-        loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
+        tmp = torch.sum(torch.sub(centroids, emb) ** 2, dim=1, keepdim=True)
+        # tmp = torch.sub(centroids, emb)
+        # loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
+        loss += torch.mm(cl[i].reshape(1, -1), tmp)
     tmp = torch.mm(cl.transpose(0, 1), cl)
-    loss += alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / dm ** .5)
+    loss += alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
     return loss
 
 
-def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, update_graph):
+def print_cluster(cl):
+    freq = [0 for i in range(cl.shape[1])]
+    indices = cl.max(1)[1]
+    for i in indices:
+        freq[i] += 1
+    print(freq)
+
+
+def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, cl, initial=False):
+    total_size = len(graphs)
+
+    val_size = train_size // args.n_fold
+    train_size = train_size - val_size
+    test_size = total_size - train_size
+
     model_e.train()
     model_c.train()
 
-    total_iter = 1
-    total_iter_c = 0
+    total_itr_c = args.iters_per_epoch
+    cl_batch_size = args.batch_size_cl
 
-    cl = model_c(ge)
-    cl = cl.detach()
+    ge_new = []
+    for layer in range(args.num_layers):
+        if layer == 0:
+            ge_new.append(torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device))
+        else:
+            ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
 
-    if epoch % args.iters_per_epoch == 1:
-        total_iter_c = args.iters_per_epoch
+    if not initial:
+        if epoch % total_itr_c == 1:
+            for itr in range(total_itr_c):
+                loss_c_accum = 0
+                full_idx = np.random.permutation(total_size)
+                num_itr = 0
+                for i in range(0, total_size, cl_batch_size):
+                    selected_idx = full_idx[i:i + cl_batch_size]
+                    ge_tmp = [ge_t[selected_idx] for ge_t in ge]
+                    cl_new = model_c(ge_tmp)
+                    loss_c = 0
+                    for layer in range(1, args.num_layers):
+                        loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl_new, device)
+                    if optimizer_c is not None:
+                        optimizer_c.zero_grad()
+                        loss_c.backward()
+                        optimizer_c.step()
+                    loss_c = loss_c.detach().cpu().numpy()
+                    loss_c_accum += loss_c
+                    cl_new = cl_new.detach()
+                    num_itr += 1
+                print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum/num_itr)
+            model_c.eval()
+            with torch.no_grad():
+                cl = model_c(ge)
+            print_cluster(cl)
+            print('', flush=True)
+        # else:
+        #     with torch.no_grad():
+        #         cl = model_c(ge)
 
-    if epoch < 6:
-        total_iter = args.iters_per_epoch
-        total_iter_c = total_iter
-
-    node_features = [0 for i in range(len(graphs))]
-    ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
-
-    for itr in range(total_iter_c):
-        cl = model_c(ge)
-        loss_c = my_loss(args.alpha, model_c.centroids, ge, cl, device)
-        if optimizer_c is not None:
-            optimizer_c.zero_grad()
-            loss_c.backward()
-            optimizer_c.step()
-        cl = cl.detach()
-        print('epoch : ', epoch, 'itr : ', itr, 'cluster loss : ', loss_c.detach().cpu().numpy())
+    else:
+        cl = None
 
     idx_train = np.random.permutation(train_size)
-    for itr in range(total_iter):
-        loss_accum = 0
-        for i in range(0, train_size, args.batch_size):
-            selected_idx = idx_train[i:i + args.batch_size]
-            batch_graph = [graphs[idx] for idx in selected_idx]
-            if len(selected_idx) == 0:
-                continue
-            output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
+    loss_accum = 0
+    for i in range(0, train_size, args.batch_size):
+        selected_idx = idx_train[i:i + args.batch_size]
+        batch_graph = [graphs[idx] for idx in selected_idx]
+        if len(selected_idx) == 0:
+            continue
+        output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
 
-            labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
+        labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
 
-            # compute loss
-            loss = criterion(output, labels)
+        # compute loss
+        loss = criterion(output, labels)
 
-            # backprop
-            if optimizer is not None:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+        # backprop
+        if optimizer is not None:
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
-            loss = loss.detach().cpu().numpy()
-            loss_accum += loss
+        loss = loss.detach().cpu().numpy()
+        loss_accum += loss
+        for layer in range(args.num_layers):
+            ge_new[layer][selected_idx] = pooled_h[layer].detach()
 
-            pooled_h = pooled_h.detach()
-            h = h.detach()
-            start_idx = 0
-            if itr == total_iter - 1 and update_graph:
-                ge_new[selected_idx] = pooled_h
-                for j in selected_idx:
-                    length = len(graphs[j].g)
-                    node_features[j] = h[start_idx:start_idx + length]
-                    start_idx += length
+    print('epoch : ', epoch, 'classification loss : ', loss_accum)
 
-        print('epoch : ', epoch, 'itr : ', itr, 'classification loss : ', loss_accum, 'W : ', model_e.ws)
-
-    if update_graph:
+    with torch.no_grad():
         # model_e.eval()
-        total_size = len(graphs)
-        test_size = total_size - train_size
         idx_test = np.arange(train_size, total_size)
         for i in range(0, test_size, args.batch_size):
             selected_idx = idx_test[i:i + args.batch_size]
             batch_graph = [graphs[idx] for idx in selected_idx]
             if len(selected_idx) == 0:
                 continue
-            output, pooled_h, h = model_e(batch_graph, cl, ge, selected_idx)
+            output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
 
-            output = output.detach()
-            ge_new[selected_idx] = pooled_h.detach()
-            h = h.detach()
-            start_idx = 0
-            for j in selected_idx:
-                length = len(graphs[j].g)
-                node_features[j] = h[start_idx:start_idx + length]
-                start_idx += length
+            for layer in range(args.num_layers):
+                ge_new[layer][selected_idx] = pooled_h[layer]
 
     print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
 
-    return loss_accum, ge_new, node_features
+    return loss_accum, ge_new, cl
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
-def pass_data_iteratively(model_e, graphs, cl, ge, minibatch_size, update_graph, device):
+def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device):
     outputs = []
-    node_features = [0 for i in range(len(graphs))]
-    ge_new = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
+    ge_new = []
+    for layer in range(args.num_layers):
+        if layer == 0:
+            ge_new.append(torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device))
+        else:
+            ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
 
     full_idx = np.arange(len(graphs))
     for i in range(0, len(graphs), minibatch_size):
         sampled_idx = full_idx[i:i + minibatch_size]
         if len(sampled_idx) == 0:
             continue
-        output, pooled_h, h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
-        outputs.append(output.detach())
-        if update_graph:
-            ge_new[sampled_idx] = pooled_h.detach()
-            h = h.detach()
-            start_idx = 0
-            for j in sampled_idx:
-                length = len(graphs[j].g)
-                node_features[j] = h[start_idx:start_idx + length]
-                start_idx += length
+        with torch.no_grad():
+            output, pooled_h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
+        outputs.append(output)
+        for layer in range(args.num_layers):
+            ge_new[layer][sampled_idx] = pooled_h[layer]
 
-    return torch.cat(outputs, 0), ge_new, node_features
+    return torch.cat(outputs, 0), ge_new
 
 
-def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_graph):
-    model_c.eval()
+def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
+    # model_c.eval()
     model_e.eval()
 
-    cl = model_c(ge)
+    val_size = int(train_size / args.n_fold)
+    train_size = train_size - val_size
 
-    output, ge_new, node_features = pass_data_iteratively(model_e, graphs, cl, ge, 64, update_graph, device)
+    # cl = model_c(ge)
 
-    output_train, output_test = output[:train_size], output[train_size:]
-    train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
+    output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 100, device)
+
+    output_train, output_val, output_test = output[:train_size], output[train_size:train_size + val_size], output[train_size + val_size:]
+    train_graphs, val_graph, test_graphs = graphs[:train_size], graphs[train_size:train_size + val_size], graphs[train_size + val_size:]
 
     pred_train = output_train.max(1, keepdim=True)[1]
     labels_train = torch.LongTensor([graph.label for graph in train_graphs]).to(device)
     correct = pred_train.eq(labels_train.view_as(pred_train)).sum().cpu().item()
     acc_train = correct / float(len(train_graphs))
+
+    pred_val = output_val.max(1, keepdim=True)[1]
+    labels_val = torch.LongTensor([graph.label for graph in val_graph]).to(device)
+    correct = pred_val.eq(labels_val.view_as(pred_val)).sum().cpu().item()
+    acc_val = correct / float(len(val_graph))
 
     pred_test = output_test.max(1, keepdim=True)[1]
     labels_test = torch.LongTensor([graph.label for graph in test_graphs]).to(device)
@@ -218,34 +279,35 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_g
     acc_test = correct / float(len(test_graphs))
 
     print(time.time() - start_time, 's epoch : ', epoch)
-    print("accuracy train: %f test: %f" % (acc_train, acc_test))
-    global max_acc_epoch, max_test_accuracy
-    if acc_test > max_test_accuracy:
-        max_test_accuracy = acc_test
+    print("accuracy train: %f val: %f test: %f" % (acc_train, acc_val, acc_test))
+    global max_acc_epoch, max_val_accuracy, test_accuracy
+    if acc_val > max_val_accuracy:
+        max_val_accuracy = acc_val
         max_acc_epoch = epoch
+        test_accuracy = acc_test
 
-    if epoch == 800:
-        for i in range(len(test_graphs)):
-            print('label : ', labels_test[i], ' pred : ', pred_test[i])
+    print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
+    print('epsilon : ', model_e.eps)
+    print('w1 : ', model_e.w1)
 
-    return acc_train, acc_test, ge_new, node_features
+    # if epoch == 800:
+    #     for i in range(len(test_graphs)):
+    #         print('label : ', labels_test[i].cpu().item(), ' pred : ', pred_test[i].cpu().item())
 
-
-def initialize_graph_embedding(graphs, device):
-    embeddings = torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device)
-    for i, g in enumerate(graphs):
-        embeddings[i] = g.node_features.mean(dim=0).to(device)
-
-    return embeddings
+    return acc_train, acc_test, ge_new
 
 
 def main():
+    global max_acc_epoch, max_val_accuracy, test_accuracy
+    acc_test = 0
     parser = argparse.ArgumentParser(
         description='PyTorch graph convolutional neural net for whole-graph classification')
     parser.add_argument('--device', type=int, default=0,
                         help='which gpu to use if any (default: 0)')
-    parser.add_argument('--batch_size', type=int, default=32,
-                        help='input batch size for training (default: 32)')
+    parser.add_argument('--batch_size', type=int, default=64,
+                        help='input batch size for training (default: 64)')
+    parser.add_argument('--batch_size_cl', type=int, default=512,
+                        help='input batch size for clustering (default: 512)')
     parser.add_argument('--iters_per_epoch', type=int, default=50,
                         help='number of iterations per each epoch (default: 50)')
     parser.add_argument('--epochs', type=int, default=350,
@@ -256,6 +318,8 @@ def main():
                         help='learning rate for clustering (default: 0.01)')
     parser.add_argument('--seed', type=int, default=0,
                         help='random seed for splitting the dataset into 10 (default: 0)')
+    parser.add_argument('--num_layers', type=int, default=5,
+                        help='number of layers INCLUDING the input one (default: 5)')
     parser.add_argument('--num_mlp_layers', type=int, default=2,
                         help='number of layers for MLP EXCLUDING the input one (default: 2). 1 means linear model.')
     parser.add_argument('--num_mlp_layers_c', type=int, default=2,
@@ -278,6 +342,12 @@ def main():
                         help='output file')
     parser.add_argument('--alpha', type=float, default=1,
                         help='alpha')
+    parser.add_argument('--beta', type=float, default=1,
+                        help='beta')
+    parser.add_argument('--n_fold', type=float, default=5,
+                        help='n_fold')
+    parser.add_argument('--early_stop', type=int, default=80,
+                        help='early_stop')
 
     args = parser.parse_args()
 
@@ -289,43 +359,96 @@ def main():
     device = torch.device("cuda:" + str(args.device)) if torch.cuda.is_available() else torch.device("cpu")
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(0)
+    print('device : ', device, flush=True)
 
-    graphs, num_classes, train_size = create_gaph(args)
-    ge = initialize_graph_embedding(graphs, device)
+    global d
+    d = device
+    all_graphs, num_classes, train_size = create_gaph(args)
+    # graphs = all_graphs
 
-    model_c = ClusterNN(num_classes, ge.shape[1], args.num_mlp_layers_c).to(device)
-    model_e = GNN(args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout,
-                args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
+    acc_detais = []
+    val_size = train_size // args.n_fold
+    for k in range(args.n_fold):
+        start = k * val_size
+        end = start + val_size
+        graphs = all_graphs[:start] + all_graphs[end: train_size] + all_graphs[start:end] + all_graphs[train_size:]
 
-    optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-    optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.5)
+        ge = [None for i in range(args.num_layers)]
 
-    print(time.time() - start_time, 's Training starts')
-    for epoch in range(1, args.epochs + 1):
-        scheduler.step()
-        update_graph = epoch % (3 * args.iters_per_epoch) == 0
+        model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
+                            args.num_mlp_layers_c).to(device)
+        model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
+                      args.final_dropout,
+                      args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
 
-        avg_loss, ge_new, node_features = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, False)
-        acc_train, acc_test, ge_new, node_features = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_graph)
+        optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+        optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
+        # optimizer = optim.SGD(model_e.parameters(), lr=args.lr, momentum=0.9)
+        # optimizer_c = optim.SGD(model_c.parameters(), lr=args.lr_c, momentum=0.9)
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
+        cl = None
 
-        if update_graph:
-            for j in range(len(graphs)):
-                graphs[j].node_features = node_features[j]
-            ge = ge_new
-            print('graph updated in epoch : ', epoch)
+        print(time.time() - start_time, 's Training starts', flush=True)
+        for epoch in range(10):
+            avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -epoch,
+                                     train_size, ge, cl, initial=True)
+            acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, -epoch, ge, cl)
 
-        if not args.filename == "":
-            with open(args.filename, 'w') as f:
-                f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
-                f.write("\n")
-        print("")
+        print('Embedding Initialized', flush=True)
+        # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
-        # print(model.eps)
-    print(time.time() - start_time, 's Completed')
-    print('total size : ', len(graphs))
-    print('max test accuracy : ', max_test_accuracy)
-    print('max acc epoch : ', max_acc_epoch)
+        # for i in range(len(ge)):
+        #     ge[i] = row_norm(ge_new[i])
+        ge = ge_new
+
+        for epoch in range(1, args.epochs + 1):
+            avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer,
+                                     optimizer_c, epoch, train_size, ge, cl)
+            acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
+            scheduler.step()
+
+            if epoch % args.iters_per_epoch == 0 or True:
+                # for i in range(len(ge)):
+                #     ge[i] = row_norm(ge_new[i])
+                ge = ge_new
+
+                # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
+                #                     args.num_mlp_layers_c).to(device)
+                # model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
+                #               num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type,
+                #               args.neighbor_pooling_type, device, args.beta).to(device)
+                #
+                # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+                # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
+                # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+                print(time.time() - start_time, 'embeddings updated.', flush=True)
+
+            if not args.filename == "":
+                with open(args.filename, 'w') as f:
+                    f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
+                    f.write("\n")
+            print("")
+            if epoch > max_acc_epoch + args.early_stop:
+                break
+
+        print(time.time() - start_time, 's Completed')
+        print(args)
+        print('total size : ', len(graphs))
+        print('max validation accuracy : ', max_val_accuracy)
+        print('max acc epoch : ', max_acc_epoch)
+        print('test accuracy : ', test_accuracy)
+        acc_detais.append((max_val_accuracy, max_acc_epoch, test_accuracy, acc_test))
+        print('\n')
+        max_val_accuracy = 0
+        test_accuracy = 0
+        max_acc_epoch = 0
+
+    for k in range(args.n_fold):
+        print('\n Summary\n', 'k = ', k)
+        print('max validation accuracy : ', acc_detais[k][0],
+              '\tmax acc epoch : ', acc_detais[k][1],
+              '\ttest accuracy : ',  acc_detais[k][2],
+              '\nlast test accuracy', acc_detais[k][3])
 
 
 if __name__ == '__main__':

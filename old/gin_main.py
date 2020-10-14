@@ -1,21 +1,19 @@
-import copy
-
 import networkx as nx
 import numpy as np
-import random
 import argparse
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 
 from tqdm import tqdm
 
 import build_graph
-from graphcnn import GraphCNN
+from old.graphcnn_old import GraphCNN
 
 criterion = nn.CrossEntropyLoss()
 frequency_as_feature = False
+max_test_accuracy = 0
+max_acc_epoch = 0
 
 
 class S2VGraph(object):
@@ -118,7 +116,7 @@ def pass_data_iteratively(model, graphs, minibatch_size=64):
     return torch.cat(output, 0)
 
 
-def validate(args, model, device, train_graphs, test_graphs, epoch):
+def test(args, model, device, train_graphs, test_graphs, epoch):
     model.eval()
 
     output = pass_data_iteratively(model, train_graphs)
@@ -134,7 +132,11 @@ def validate(args, model, device, train_graphs, test_graphs, epoch):
     acc_test = correct / float(len(test_graphs))
 
     print('epoch : ', epoch)
-    print("accuracy train: %f validate: %f" % (acc_train, acc_test))
+    print("accuracy train: %f test: %f" % (acc_train, acc_test))
+    global max_acc_epoch, max_test_accuracy
+    if acc_test > max_test_accuracy:
+        max_test_accuracy = acc_test
+        max_acc_epoch = epoch
 
     if epoch == 800:
         for i in range(len(test_graphs)):
@@ -143,24 +145,7 @@ def validate(args, model, device, train_graphs, test_graphs, epoch):
     return acc_train, acc_test
 
 
-def test(args, model, device, test_graphs):
-    model.eval()
-
-    output = pass_data_iteratively(model, test_graphs)
-    pred = output.max(1, keepdim=True)[1]
-    labels = torch.LongTensor([graph.label for graph in test_graphs]).to(device)
-    correct = pred.eq(labels.view_as(pred)).sum().cpu().item()
-    acc_test = correct / float(len(test_graphs))
-
-    return acc_test
-
-
 def main():
-
-    max_test_accuracy = 0
-    max_acc_epoch = 0
-    saved_model = None
-
     parser = argparse.ArgumentParser(
         description='PyTorch graph convolutional neural net for whole-graph classification')
     parser.add_argument('--device', type=int, default=0,
@@ -211,11 +196,7 @@ def main():
 
     graphs, num_classes, train_size = create_gaph(args)
 
-    val_size = int(train_size * 0.2)
-    train_size = train_size - val_size
-
-    train_graphs, val_graphs = graphs[:train_size], graphs[train_size:train_size + val_size]
-    test_graphs = graphs[train_size + val_size:]
+    train_graphs, test_graphs = graphs[:train_size], graphs[train_size:]
     model = GraphCNN(args.num_layers, args.num_mlp_layers, train_graphs[0].node_features.shape[1], args.hidden_dim, num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
@@ -225,12 +206,7 @@ def main():
         scheduler.step()
 
         avg_loss = train(args, model, device, train_graphs, optimizer, epoch)
-        acc_train, acc_test = validate(args, model, device, train_graphs, val_graphs, epoch)
-
-        if acc_test > max_test_accuracy:
-            max_test_accuracy = acc_test
-            max_acc_epoch = epoch
-            saved_model = copy.deepcopy(model)
+        acc_train, acc_test = test(args, model, device, train_graphs, test_graphs, epoch)
 
         if not args.filename == "":
             with open(args.filename, 'w') as f:
@@ -239,14 +215,10 @@ def main():
         print("")
 
         # print(model.eps)
-    acc_test = test(args, saved_model, device, test_graphs)
-    print("Accuracy test: %f" % acc_test)
-
     print('total size : ', len(graphs))
     print('size of train graph : ', len(train_graphs))
-    print('size of validation graph : ', len(val_graphs))
     print('size of test graph : ', len(test_graphs))
-    print('max val accuracy : ', max_test_accuracy)
+    print('max test accuracy : ', max_test_accuracy)
     print('max acc epoch : ', max_acc_epoch)
 
 
