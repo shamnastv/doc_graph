@@ -217,9 +217,9 @@ class GNN(nn.Module):
         pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](h)
-        # h = F.relu(h)
+        h = F.relu(h)
         # h = F.leaky_relu(h)
-        h = F.tanh(h)
+        # h = F.tanh(h)
         h = F.dropout(h, self.final_dropout, training=self.training)
         return h
 
