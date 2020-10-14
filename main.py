@@ -346,7 +346,7 @@ def main():
                         help='beta')
     parser.add_argument('--n_fold', type=float, default=5,
                         help='n_fold')
-    parser.add_argument('--early_stop', type=int, default=80,
+    parser.add_argument('--early_stop', type=int, default=30,
                         help='early_stop')
 
     args = parser.parse_args()
@@ -385,7 +385,7 @@ def main():
         optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
         # optimizer = optim.SGD(model_e.parameters(), lr=args.lr, momentum=0.9)
         # optimizer_c = optim.SGD(model_c.parameters(), lr=args.lr_c, momentum=0.9)
-        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5)
         cl = None
 
         print(time.time() - start_time, 's Training starts', flush=True)
@@ -428,7 +428,7 @@ def main():
                     f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
                     f.write("\n")
             print("")
-            if epoch > max_acc_epoch + args.early_stop:
+            if epoch > max_acc_epoch + args.early_stop and epoch % args.iters_per_epoch > args.early_stop // 2:
                 break
 
         print(time.time() - start_time, 's Completed')
@@ -437,19 +437,19 @@ def main():
         print('max validation accuracy : ', max_val_accuracy)
         print('max acc epoch : ', max_acc_epoch)
         print('test accuracy : ', test_accuracy)
-        acc_detais.append((max_val_accuracy, max_acc_epoch, test_accuracy, acc_test))
+        acc_detais.append((max_val_accuracy, test_accuracy, max_acc_epoch, acc_test))
         print('\n')
         max_val_accuracy = 0
         test_accuracy = 0
         max_acc_epoch = 0
 
-    print('\n ==========================Summary================================')
+    print('=' * 50 + 'Summary' + '=' * 50)
     for k in range(args.n_fold):
         print('k : ', k,
-              '\tmax validation accuracy : ', acc_detais[k][0],
-              '\tmax acc epoch : ', acc_detais[k][1],
-              '\ttest accuracy : ',  acc_detais[k][2],
-              '\nlast test accuracy', acc_detais[k][3])
+              '\tval accuracy : ', acc_detais[k][0],
+              '\ttest accuracy : ', acc_detais[k][1],
+              '\tmax acc epoch : ', acc_detais[k][2],
+              '\tlast test accuracy', acc_detais[k][3])
 
 
 if __name__ == '__main__':
