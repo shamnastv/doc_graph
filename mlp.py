@@ -40,7 +40,6 @@ class MLP(nn.Module):
 
     def forward(self, x):
         if self.linear_or_not:
-            # If linear model
             return self.linear(x)
         else:
             # If MLP
@@ -48,6 +47,6 @@ class MLP(nn.Module):
             for layer in range(self.num_layers - 1):
                 h = self.linears[layer](h)
                 h = self.batch_norms[layer](h)
-                # h = F.relu(h)
-                h = F.tanh(h)
+                h = F.relu(h)
+                # h = F.tanh(h)
             return self.linears[self.num_layers - 1](h)

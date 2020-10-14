@@ -129,7 +129,7 @@ def print_cluster(cl):
 def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, cl, initial=False):
     total_size = len(graphs)
 
-    val_size = train_size // args.n_fold
+    val_size = train_size // args.k_fold
     train_size = train_size - val_size
     test_size = total_size - train_size
 
@@ -253,7 +253,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
     # model_c.eval()
     model_e.eval()
 
-    val_size = int(train_size / args.n_fold)
+    val_size = train_size // args.k_fold
     train_size = train_size - val_size
 
     # cl = model_c(ge)
@@ -344,7 +344,7 @@ def main():
                         help='alpha')
     parser.add_argument('--beta', type=float, default=1,
                         help='beta')
-    parser.add_argument('--n_fold', type=float, default=5,
+    parser.add_argument('--k_fold', type=float, default=0,
                         help='n_fold')
     parser.add_argument('--early_stop', type=int, default=30,
                         help='early_stop')
@@ -367,8 +367,12 @@ def main():
     # graphs = all_graphs
 
     acc_detais = []
-    val_size = train_size // args.n_fold
-    for k in range(args.n_fold):
+    k_start = 0
+    if args.k_fold == 1:
+        k_start = 9
+        args.k_fold = 10
+    val_size = train_size // args.k_fold
+    for k in range(k_start, args.k_fold):
         start = k * val_size
         end = start + val_size
         graphs = all_graphs[:start] + all_graphs[end: train_size] + all_graphs[start:end] + all_graphs[train_size:]
@@ -444,7 +448,7 @@ def main():
         max_acc_epoch = 0
 
     print('=' * 50 + 'Summary' + '=' * 50)
-    for k in range(args.n_fold):
+    for k in range(len(acc_detais)):
         print('k : ', k,
               '\tval accuracy : ', acc_detais[k][0],
               '\ttest accuracy : ', acc_detais[k][1],
