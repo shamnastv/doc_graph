@@ -206,6 +206,11 @@ class GNN(nn.Module):
             # tmp = self.norm_g_embd[layer](torch.spmm(tmp, H))
             tmp = row_norm(torch.spmm(tmp, ge))
             tmp = (self.beta + self.w1[layer]) * tmp
+            tmp = self.beta * tmp
+            if self.training:
+                tmp = tmp * torch.empty(tmp.shape).uniform_(0, 1)
+            else:
+                tmp = .5 * tmp
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
         pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
