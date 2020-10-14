@@ -361,71 +361,87 @@ def main():
 
     global d
     d = device
-    graphs, num_classes, train_size = create_gaph(args)
-    ge = [None for i in range(args.num_layers)]
+    all_graphs, num_classes, train_size = create_gaph(args)
+    # graphs = all_graphs
 
-    model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
-                        args.num_mlp_layers_c).to(device)
-    model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
-                  args.final_dropout,
-                  args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
+    acc_detais = []
+    val_size = train_size // args.n_fold
+    for k in range(args.n_fold):
+        start = k * val_size
+        end = start + val_size
+        graphs = graphs[:start] + graphs[end: train_size] + graphs[start:end] + graphs[train_size:]
 
-    optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-    optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-    # optimizer = optim.SGD(model_e.parameters(), lr=args.lr, momentum=0.9)
-    # optimizer_c = optim.SGD(model_c.parameters(), lr=args.lr_c, momentum=0.9)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
-    cl = None
+        ge = [None for i in range(args.num_layers)]
 
-    print(time.time() - start_time, 's Training starts', flush=True)
-    for epoch in range(10):
-        avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -epoch,
-                                 train_size, ge, cl, initial=True)
-        acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, -epoch, ge, cl)
+        model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
+                            args.num_mlp_layers_c).to(device)
+        model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
+                      args.final_dropout,
+                      args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
 
-    print('Embedding Initialized', flush=True)
-    # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
+        optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+        optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
+        # optimizer = optim.SGD(model_e.parameters(), lr=args.lr, momentum=0.9)
+        # optimizer_c = optim.SGD(model_c.parameters(), lr=args.lr_c, momentum=0.9)
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.5)
+        cl = None
 
-    # for i in range(len(ge)):
-    #     ge[i] = row_norm(ge_new[i])
-    ge = ge_new
+        print(time.time() - start_time, 's Training starts', flush=True)
+        for epoch in range(10):
+            avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -epoch,
+                                     train_size, ge, cl, initial=True)
+            acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, -epoch, ge, cl)
 
-    for epoch in range(1, args.epochs + 1):
-        avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer,
-                                 optimizer_c, epoch, train_size, ge, cl)
-        acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
-        scheduler.step()
+        print('Embedding Initialized', flush=True)
+        # acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, 10, ge)
 
-        if epoch % args.iters_per_epoch == 0 or True:
-            # for i in range(len(ge)):
-            #     ge[i] = row_norm(ge_new[i])
-            ge = ge_new
+        # for i in range(len(ge)):
+        #     ge[i] = row_norm(ge_new[i])
+        ge = ge_new
 
-            # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
-            #                     args.num_mlp_layers_c).to(device)
-            # model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
-            #               num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type,
-            #               args.neighbor_pooling_type, device, args.beta).to(device)
-            #
-            # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-            # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-            # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
-            print(time.time() - start_time, 'embeddings updated.', flush=True)
+        for epoch in range(1, args.epochs + 1):
+            avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer,
+                                     optimizer_c, epoch, train_size, ge, cl)
+            acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
+            scheduler.step()
 
-        if not args.filename == "":
-            with open(args.filename, 'w') as f:
-                f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
-                f.write("\n")
-        print("")
-        if epoch > max_acc_epoch + args.early_stop:
-            break
+            if epoch % args.iters_per_epoch == 0 or True:
+                # for i in range(len(ge)):
+                #     ge[i] = row_norm(ge_new[i])
+                ge = ge_new
 
-    print(time.time() - start_time, 's Completed')
-    print(args)
-    print('total size : ', len(graphs))
-    print('max validation accuracy : ', max_val_accuracy)
-    print('max acc epoch : ', max_acc_epoch)
-    print('test accuracy : ', test_accuracy)
+                # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
+                #                     args.num_mlp_layers_c).to(device)
+                # model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
+                #               num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type,
+                #               args.neighbor_pooling_type, device, args.beta).to(device)
+                #
+                # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+                # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
+                # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+                print(time.time() - start_time, 'embeddings updated.', flush=True)
+
+            if not args.filename == "":
+                with open(args.filename, 'w') as f:
+                    f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
+                    f.write("\n")
+            print("")
+            if epoch > max_acc_epoch + args.early_stop:
+                break
+
+        print(time.time() - start_time, 's Completed')
+        print(args)
+        print('total size : ', len(graphs))
+        print('max validation accuracy : ', max_val_accuracy)
+        print('max acc epoch : ', max_acc_epoch)
+        print('test accuracy : ', test_accuracy)
+        acc_detais.append((max_val_accuracy, max_acc_epoch, test_accuracy))
+
+    for k in range(args.n_fold):
+        print('\n Summary\n', 'k = ', k)
+        print('max validation accuracy : ', acc_detais[k][0],
+              '\tmax acc epoch : ', acc_detais[k][0],
+              '\ttest accuracy : ',  acc_detais[k][0])
 
 
 if __name__ == '__main__':
