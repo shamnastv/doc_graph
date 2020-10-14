@@ -344,8 +344,8 @@ def main():
                         help='alpha')
     parser.add_argument('--beta', type=float, default=1,
                         help='beta')
-    parser.add_argument('--k_fold', type=float, default=0,
-                        help='n_fold')
+    parser.add_argument('--k_fold', type=int, default=0,
+                        help='k_fold')
     parser.add_argument('--early_stop', type=int, default=30,
                         help='early_stop')
 
