@@ -436,6 +436,11 @@ def main():
         print('max acc epoch : ', max_acc_epoch)
         print('test accuracy : ', test_accuracy)
         acc_detais.append((max_val_accuracy, max_acc_epoch, test_accuracy))
+        print('\n')
+        global max_acc_epoch, max_val_accuracy, test_accuracy
+        max_val_accuracy = 0
+        test_accuracy = 0
+        max_acc_epoch = 0
 
     for k in range(args.n_fold):
         print('\n Summary\n', 'k = ', k)
