@@ -344,7 +344,7 @@ def main():
                         help='alpha')
     parser.add_argument('--beta', type=float, default=1,
                         help='beta')
-    parser.add_argument('--k_fold', type=int, default=0,
+    parser.add_argument('--k_fold', type=int, default=5,
                         help='k_fold')
     parser.add_argument('--early_stop', type=int, default=30,
                         help='early_stop')
@@ -368,7 +368,7 @@ def main():
 
     acc_detais = []
     k_start = 0
-    if args.k_fold == 1:
+    if args.k_fold == 0:
         k_start = 9
         args.k_fold = 10
     val_size = train_size // args.k_fold
