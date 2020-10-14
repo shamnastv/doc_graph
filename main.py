@@ -443,9 +443,10 @@ def main():
         test_accuracy = 0
         max_acc_epoch = 0
 
+    print('\n ==========================Summary================================')
     for k in range(args.n_fold):
-        print('\n Summary\n', 'k = ', k)
-        print('max validation accuracy : ', acc_detais[k][0],
+        print('k : ', k,
+              '\tmax validation accuracy : ', acc_detais[k][0],
               '\tmax acc epoch : ', acc_detais[k][1],
               '\ttest accuracy : ',  acc_detais[k][2],
               '\nlast test accuracy', acc_detais[k][3])
