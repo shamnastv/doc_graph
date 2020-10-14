@@ -435,7 +435,7 @@ def main():
         print('max validation accuracy : ', max_val_accuracy)
         print('max acc epoch : ', max_acc_epoch)
         print('test accuracy : ', test_accuracy)
-        acc_detais.append((max_val_accuracy, max_acc_epoch, test_accuracy))
+        acc_detais.append((max_val_accuracy, max_acc_epoch, test_accuracy, acc_test))
         print('\n')
         global max_acc_epoch, max_val_accuracy, test_accuracy
         max_val_accuracy = 0
@@ -445,8 +445,9 @@ def main():
     for k in range(args.n_fold):
         print('\n Summary\n', 'k = ', k)
         print('max validation accuracy : ', acc_detais[k][0],
-              '\tmax acc epoch : ', acc_detais[k][0],
-              '\ttest accuracy : ',  acc_detais[k][0])
+              '\tmax acc epoch : ', acc_detais[k][1],
+              '\ttest accuracy : ',  acc_detais[k][2],
+              '\nlast test accuracy', acc_detais[k][3])
 
 
 if __name__ == '__main__':
