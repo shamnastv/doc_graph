@@ -369,7 +369,7 @@ def main():
     for k in range(args.n_fold):
         start = k * val_size
         end = start + val_size
-        graphs = graphs[:start] + graphs[end: train_size] + graphs[start:end] + graphs[train_size:]
+        graphs = all_graphs[:start] + all_graphs[end: train_size] + all_graphs[start:end] + all_graphs[train_size:]
 
         ge = [None for i in range(args.num_layers)]
 
