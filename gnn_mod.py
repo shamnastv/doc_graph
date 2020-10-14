@@ -1,3 +1,5 @@
+import random
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -208,7 +210,8 @@ class GNN(nn.Module):
             # tmp = (self.beta + self.w1[layer]) * tmp
             tmp = self.beta * tmp
             if self.training:
-                tmp = tmp * tmp.new(tmp).uniform_(0, 1)
+                if bool(random.getrandbits(1)):
+                    tmp = 0 * tmp
             else:
                 tmp = .5 * tmp
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
