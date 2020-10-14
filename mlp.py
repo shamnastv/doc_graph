@@ -48,5 +48,6 @@ class MLP(nn.Module):
             for layer in range(self.num_layers - 1):
                 h = self.linears[layer](h)
                 h = self.batch_norms[layer](h)
-                h = F.relu(h)
+                # h = F.relu(h)
+                h = F.tanh(h)
             return self.linears[self.num_layers - 1](h)
