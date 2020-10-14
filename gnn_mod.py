@@ -208,7 +208,7 @@ class GNN(nn.Module):
             tmp = (self.beta + self.w1[layer]) * tmp
             tmp = self.beta * tmp
             if self.training:
-                tmp = tmp * torch.empty(tmp.shape).uniform_(0, 1)
+                tmp = tmp * tmp.new_empty(tmp).uniform_(0, 1)
             else:
                 tmp = .5 * tmp
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
