@@ -207,8 +207,8 @@ class GNN(nn.Module):
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             # tmp = self.norm_g_embd[layer](torch.spmm(tmp, H))
             tmp = row_norm(torch.spmm(tmp, ge))
-            # tmp = (self.beta + self.w1[layer]) * tmp
-            tmp = self.beta * tmp
+            tmp = (self.beta + self.w1[layer]) * tmp
+            # tmp = self.beta * tmp
             if self.training:
                 if bool(random.getrandbits(1)):
                     tmp = 0 * tmp
