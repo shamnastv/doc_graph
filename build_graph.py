@@ -277,8 +277,7 @@ def build_graph(config_file='param.yaml'):
             pmi = log((4.0 * count / num_window) /
                       (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
             if pmi <= 0:
-                print('dropped edge : ', key)
-                print(exp(pmi))
+                print('dropped edge : ', key, ' ', exp(pmi))
                 continue
             row.append(i)
             col.append(j)
