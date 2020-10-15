@@ -2,7 +2,7 @@ import pickle
 import random
 import numpy as np
 import scipy.sparse as sp
-from math import log
+from math import log, exp
 
 from util import read_param
 
@@ -277,6 +277,8 @@ def build_graph(config_file='param.yaml'):
             pmi = log((2.0 * count / num_window) /
                       (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
             if pmi <= 0:
+                print('dropped edge')
+                print(exp(pmi))
                 continue
             row.append(i)
             col.append(j)
