@@ -51,7 +51,9 @@ for doc_content in doc_content_list:
             word_freq[word] = 1
 
 clean_docs = []
+removed_words = set()
 for doc_content in doc_content_list:
+    removed_words_ls = []
     temp = clean_str(doc_content)
     words = temp.split()
     doc_words = []
@@ -61,12 +63,21 @@ for doc_content in doc_content_list:
             doc_words.append(word)
         elif word not in stop_words and word_freq[word] >= min_freq:
             doc_words.append(word)
+        elif word not in stop_words:
+            removed_words_ls.append(word)
 
     if len(doc_words) == 0:
+        print('empty doc : ')
+        print(doc_content)
+        removed_words_ls = []
         for word in words:
             # word not in stop_words and word_freq[word] >= 5
             if word not in stop_words and word_freq[word] >= 5:
                 doc_words.append(word)
+            elif word not in stop_words:
+                removed_words_ls.append(word)
+
+    removed_words.update(removed_words_ls)
 
     doc_str = ' '.join(doc_words).strip()
     # if doc_str == '':
@@ -101,3 +112,4 @@ aver_len = 1.0 * aver_len / len(lines)
 print('min_len : ' + str(min_len))
 print('max_len : ' + str(max_len))
 print('average_len : ' + str(aver_len))
+print('removed words : ', removed_words)
