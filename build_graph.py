@@ -156,6 +156,7 @@ def build_graph(config_file='param.yaml'):
     window_size = param['window_size']
     index = 0
 
+    n_dropped_edges = 0
     for doc_words in shuffle_doc_words_list:
         windows = []
         words = doc_words.split()
@@ -274,10 +275,11 @@ def build_graph(config_file='param.yaml'):
             count = word_pair_count[key]
             word_freq_i = word_window_freq[vocab[i]]
             word_freq_j = word_window_freq[vocab[j]]
-            pmi = log((10.0 * count / num_window) /
+            pmi = log((4.0 * count / num_window) /
                       (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
             if pmi <= 0:
-                print('dropped edge : ', vocab[i], ' ', vocab[j], ' ', exp(pmi))
+                # print('dropped edge : ', vocab[i], ' ', vocab[j], ' ', exp(pmi))
+                n_dropped_edges += 1
                 continue
             row.append(i)
             col.append(j)
@@ -300,6 +302,7 @@ def build_graph(config_file='param.yaml'):
         #     print(feat)
         #     print(adj)
         index += 1
+    print('total dropped edges : ', n_dropped_edges)
     if param['save_graph']:
         save_graph(dataset, ls_adj, feature_list, word_freq_list, y, y_hot, train_size)
         
