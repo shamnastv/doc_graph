@@ -205,8 +205,6 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         for layer in range(args.num_layers):
             ge_new[layer][selected_idx] = pooled_h[layer].detach()
 
-    print('epoch : ', epoch, 'classification loss : ', loss_accum)
-
     with torch.no_grad():
         # model_e.eval()
         idx_test = np.arange(train_size, total_size)
@@ -220,8 +218,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             for layer in range(args.num_layers):
                 ge_new[layer][selected_idx] = pooled_h[layer]
 
-    print(time.time() - start_time, 's Epoch : ', epoch, 'loss training: ', loss_accum)
-
+    print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', abs(time.time() - start_time))
     return loss_accum, ge_new, cl
 
 
@@ -278,21 +275,22 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
     correct = pred_test.eq(labels_test.view_as(pred_test)).sum().cpu().item()
     acc_test = correct / float(len(test_graphs))
 
-    print(time.time() - start_time, 's epoch : ', epoch)
-    print("accuracy train: %f val: %f test: %f" % (acc_train, acc_val, acc_test))
+    if args.debug:
+        print(time.time() - start_time, 's epoch : ', epoch)
+    print("accuracy train: %f val: %f test: %f" % (acc_train, acc_val, acc_test), flush=True)
     global max_acc_epoch, max_val_accuracy, test_accuracy
     if acc_val > max_val_accuracy:
         max_val_accuracy = acc_val
         max_acc_epoch = epoch
         test_accuracy = acc_test
 
-    print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
-    print('epsilon : ', model_e.eps)
-    print('w1 : ', model_e.w1)
+    if args.debug:
+        print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
+        print('epsilon : ', model_e.eps.detach().cpu().numpy(), 'w1 : ', model_e.w1.detach().cpu().numpy(), flush=True)
 
-    # if epoch == 800:
-    #     for i in range(len(test_graphs)):
-    #         print('label : ', labels_test[i].cpu().item(), ' pred : ', pred_test[i].cpu().item())
+        # if epoch == 800:
+        #     for i in range(len(test_graphs)):
+        #         print('label : ', labels_test[i].cpu().item(), ' pred : ', pred_test[i].cpu().item())
 
     return acc_train, acc_test, ge_new
 
@@ -348,6 +346,8 @@ def main():
                         help='k_fold')
     parser.add_argument('--early_stop', type=int, default=30,
                         help='early_stop')
+    parser.add_argument('--debug', action="store_true",
+                        help='run in debug mode')
 
     args = parser.parse_args()
 
@@ -425,7 +425,7 @@ def main():
                 # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
                 # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
                 # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
-                print(time.time() - start_time, 'embeddings updated.', flush=True)
+                # print(time.time() - start_time, 'embeddings updated.', flush=True)
 
             if not args.filename == "":
                 with open(args.filename, 'w') as f:
@@ -435,9 +435,7 @@ def main():
             if epoch > max_acc_epoch + args.early_stop and epoch % args.iters_per_epoch > args.early_stop // 2:
                 break
 
-        print(time.time() - start_time, 's Completed')
-        print(args)
-        print('total size : ', len(graphs))
+        print('K : ', k, 'Time : ', abs(time.time() - start_time))
         print('max validation accuracy : ', max_val_accuracy)
         print('max acc epoch : ', max_acc_epoch)
         print('test accuracy : ', test_accuracy)
@@ -447,13 +445,15 @@ def main():
         test_accuracy = 0
         max_acc_epoch = 0
 
+    print(args)
+    print('total size : ', len(all_graphs), '\n')
     print('=' * 50 + 'Summary' + '=' * 50)
     for k in range(len(acc_detais)):
         print('k : ', k,
-              '\tval accuracy : ', acc_detais[k][0],
-              '\ttest accuracy : ', acc_detais[k][1],
-              '\tmax acc epoch : ', acc_detais[k][2],
-              '\tlast test accuracy', acc_detais[k][3])
+              '\tval_accuracy : ', acc_detais[k][0],
+              '\ttest_accuracy : ', acc_detais[k][1],
+              '\tmax_acc epoch : ', acc_detais[k][2],
+              '\tlatest_test_accuracy', acc_detais[k][3])
 
 
 if __name__ == '__main__':
