@@ -174,7 +174,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                         optimizer_c.step()
                     loss_c_accum += loss_c.detach().cpu().item()
                     loss1_accum += loss1_c.detach().cpu().item()
-                    loss1_accum += loss1_c.detach().cpu().item()
+                    loss2_accum += loss2_c.detach().cpu().item()
                     cl_new = cl_new.detach()
                     num_itr += 1
                 print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum, 'loss1 : ',
