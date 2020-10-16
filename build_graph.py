@@ -7,42 +7,43 @@ from math import log, exp
 from util import read_param
 
 
-def dump_data(dataset, data_name, data):
-    with open(dataset + data_name, 'wb') as f:
+def dump_data(config, data_name, data):
+    with open(config + data_name, 'wb') as f:
         pickle.dump(data, f)
 
 
-def save_graph(dataset, ls_adj, feature_list, word_freq_list, y, y_hot, train_size):
-    dump_data(dataset, 'ls_adj', ls_adj)
-    dump_data(dataset, 'feature_list', feature_list)
-    dump_data(dataset, 'word_freq_list', word_freq_list)
-    dump_data(dataset, 'y', y)
-    dump_data(dataset, 'y_hot', y_hot)
-    dump_data(dataset, 'train_size', train_size)
+def save_graph(config, ls_adj, feature_list, word_freq_list, y, y_hot, train_size):
+    dump_data(config, 'ls_adj', ls_adj)
+    dump_data(config, 'feature_list', feature_list)
+    dump_data(config, 'word_freq_list', word_freq_list)
+    dump_data(config, 'y', y)
+    dump_data(config, 'y_hot', y_hot)
+    dump_data(config, 'train_size', train_size)
 
 
-def read_data(dataset, dataname):
-    f = open(dataset + dataname, 'rb')
+def read_data(config, dataname):
+    f = open(config + dataname, 'rb')
     return pickle.load(f)
 
 
-def retrieve_graph(dataset):
-    ls_adj = read_data(dataset, 'ls_adj')
-    feature_list = read_data(dataset, 'feature_list')
-    word_freq_list = read_data(dataset, 'word_freq_list')
-    y = read_data(dataset, 'y')
-    y_hot = read_data(dataset, 'y_hot')
-    train_size = read_data(dataset, 'train_size')
+def retrieve_graph(config):
+    ls_adj = read_data(config, 'ls_adj')
+    feature_list = read_data(config, 'feature_list')
+    word_freq_list = read_data(config, 'word_freq_list')
+    y = read_data(config, 'y')
+    y_hot = read_data(config, 'y_hot')
+    train_size = read_data(config, 'train_size')
     return ls_adj, feature_list, word_freq_list, y, y_hot, train_size
 
 
-def build_graph(config_file='param.yaml'):
+def build_graph(config='param'):
+    config_file = 'config/' + config + '.yaml'
     param = read_param(config_file)
     print(param)
     dataset = param['dataset']
     
     if param['retrieve_graph']:
-        return retrieve_graph(dataset)
+        return retrieve_graph('saved_graphs/data_' + config)
 
     from bert_embedding import BertEmbedding
 
@@ -313,7 +314,7 @@ def build_graph(config_file='param.yaml'):
     print('total_possible_edges : ', total_possible_edges)
     print('total dropped edges : ', n_dropped_edges)
     if param['save_graph']:
-        save_graph(dataset, ls_adj, feature_list, word_freq_list, y, y_hot, train_size)
+        save_graph('saved_graphs/data_' + config, ls_adj, feature_list, word_freq_list, y, y_hot, train_size)
         
     return ls_adj, feature_list, word_freq_list, y, y_hot, train_size
 
