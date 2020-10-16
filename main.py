@@ -171,7 +171,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                         optimizer_c.zero_grad()
                         loss_c.backward()
                         optimizer_c.step()
-                    loss_c_accum += loss_c.detach().cpu().numpy()
+                    loss_c_accum += loss_c.detach().cpu().item()
                     loss1_accum += loss1_c.detach().cpu().item()
                     loss1_accum += loss1_c.detach().cpu().item()
                     cl_new = cl_new.detach()
