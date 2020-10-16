@@ -39,7 +39,7 @@ def retrieve_graph(config):
 def build_graph(config='param'):
     config_file = 'config/' + config + '.yaml'
     param = read_param(config_file)
-    print(param)
+    print(param, flush=True)
     dataset = param['dataset']
     
     if param['retrieve_graph']:
