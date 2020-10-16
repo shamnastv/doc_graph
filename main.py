@@ -107,15 +107,15 @@ def create_gaph(args):
 
 def my_loss(alpha, centroids, embeddings, cl, device):
     dm = len(cl[0])
-    loss = 0
+    loss1 = 0
     for i, emb in enumerate(embeddings):
         tmp = torch.sum(torch.sub(centroids, emb) ** 2, dim=1, keepdim=True)
         # tmp = torch.sub(centroids, emb)
         # loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
-        loss += torch.mm(cl[i].reshape(1, -1), tmp)
+        loss1 += torch.mm(cl[i].reshape(1, -1), tmp)
     tmp = torch.mm(cl.transpose(0, 1), cl)
-    loss += alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
-    return loss
+    loss2 = alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
+    return loss1 + loss2, loss1, loss2
 
 
 def print_cluster(cl):
@@ -150,6 +150,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         if epoch % total_itr_c == 1:
             for itr in range(total_itr_c):
                 loss_c_accum = 0
+                loss1_accum = 0
+                loss2_accum = 0
                 full_idx = np.random.permutation(total_size)
                 num_itr = 0
                 for i in range(0, total_size, cl_batch_size):
@@ -157,17 +159,25 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     ge_tmp = [ge_t[selected_idx] for ge_t in ge]
                     cl_new = model_c(ge_tmp)
                     loss_c = 0
+                    loss1_c = 0
+                    loss2_c = 0
+                    alpha = args.alpha * len(ge_tmp) / total_size
                     for layer in range(1, args.num_layers):
-                        loss_c += my_loss(args.alpha, model_c.centroids[layer], ge_tmp[layer], cl_new, device)
+                        loss, loss1, loss2 = my_loss(alpha, model_c.centroids[layer], ge_tmp[layer], cl_new, device)
+                        loss_c += loss
+                        loss1_c += loss1
+                        loss2_c += loss2
                     if optimizer_c is not None:
                         optimizer_c.zero_grad()
                         loss_c.backward()
                         optimizer_c.step()
-                    loss_c = loss_c.detach().cpu().numpy()
-                    loss_c_accum += loss_c
+                    loss_c_accum += loss_c.detach().cpu().numpy()
+                    loss1_accum += loss1_c.detach().cpu().item()
+                    loss1_accum += loss1_c.detach().cpu().item()
                     cl_new = cl_new.detach()
                     num_itr += 1
-                print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum/num_itr)
+                print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum, 'loss1 : ',
+                      loss1_accum, 'loss2 : ', loss2_accum)
             model_c.eval()
             with torch.no_grad():
                 cl = model_c(ge)
