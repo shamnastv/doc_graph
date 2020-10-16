@@ -65,7 +65,7 @@ def print_distr(y, train_size):
 
 
 def create_gaph(args):
-    ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph(config_file=args.configfile)
+    ls_adj, feature_list, word_freq_list, y, y_hot, train_size = build_graph.build_graph(config=args.configfile)
     print_distr(y, train_size)
     g_list = []
     for i, adj in enumerate(ls_adj):
@@ -350,7 +350,7 @@ def main():
     parser.add_argument('--learn_eps', action="store_true",
                         help='Whether to learn the epsilon weighting for the center nodes. Does not affect training '
                              'accuracy though.')
-    parser.add_argument('--configfile', type=str, default="param.yaml",
+    parser.add_argument('--configfile', type=str, default="param",
                         help='configuration file')
     parser.add_argument('--filename', type=str, default="",
                         help='output file')
