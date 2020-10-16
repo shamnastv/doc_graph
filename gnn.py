@@ -283,8 +283,9 @@ class GNN(nn.Module):
             pooled_h = torch.spmm(graph_pool, h)
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
             #                               training=self.training)
-            if layer == self.num_layers - 1:
-                score_over_layer += self.linears_prediction[layer](pooled_h)
+            # if layer == self.num_layers - 1:
+            #     score_over_layer += self.linears_prediction[layer](pooled_h)
+            score_over_layer += self.linears_prediction[layer](pooled_h)
             pooled_h_ls.append(pooled_h)
 
         return score_over_layer, pooled_h_ls

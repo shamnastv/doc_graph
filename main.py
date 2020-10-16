@@ -105,17 +105,24 @@ def create_gaph(args):
     return g_list, len(set(y)), train_size
 
 
-def my_loss(alpha, centroids, embeddings, cl, device):
-    dm = len(cl[0])
+def my_loss_1(centroids, embeddings, cl):
+    # dm = len(cl[0])
     loss1 = 0
     for i, emb in enumerate(embeddings):
         tmp = torch.sum(torch.sub(centroids, emb) ** 2, dim=1, keepdim=True)
         # tmp = torch.sub(centroids, emb)
         # loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
         loss1 += torch.mm(cl[i].reshape(1, -1), tmp)
+    # tmp = torch.mm(cl.transpose(0, 1), cl)
+    # loss2 = alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
+    return loss1
+
+
+def my_loss_2(alpha, cl, device):
+    dm = len(cl[0])
     tmp = torch.mm(cl.transpose(0, 1), cl)
     loss2 = alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
-    return loss1 + loss2, loss1, loss2
+    return loss2
 
 
 def print_cluster(cl):
@@ -153,21 +160,19 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                 loss1_accum = 0
                 loss2_accum = 0
                 full_idx = np.random.permutation(total_size)
-                num_itr = 0
                 for i in range(0, total_size, cl_batch_size):
                     selected_idx = full_idx[i:i + cl_batch_size]
                     ge_tmp = [ge_t[selected_idx] for ge_t in ge]
                     cl_new = model_c(ge_tmp)
-                    loss_c = 0
                     loss1_c = 0
-                    loss2_c = 0
                     # alpha = args.alpha * len(selected_idx) / total_size
                     alpha = args.alpha
-                    for layer in range(args.num_layers - 1, args.num_layers):
-                        loss, loss1, loss2 = my_loss(alpha, model_c.centroids[layer], ge_tmp[layer], cl_new, device)
-                        loss_c += loss
-                        loss1_c += loss1
-                        loss2_c += loss2
+
+                    for layer in range(1, args.num_layers):
+                        loss1_c += my_loss_1(model_c.centroids[layer], ge_tmp[layer], cl_new)
+                    loss2_c = my_loss_2(alpha, cl_new, device)
+
+                    loss_c = loss1_c + loss2_c
                     if optimizer_c is not None:
                         optimizer_c.zero_grad()
                         loss_c.backward()
@@ -176,7 +181,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     loss1_accum += loss1_c.detach().cpu().item()
                     loss2_accum += loss2_c.detach().cpu().item()
                     cl_new = cl_new.detach()
-                    num_itr += 1
+
                 print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum, 'loss1 : ',
                       loss1_accum, 'loss2 : ', loss2_accum)
             model_c.eval()
