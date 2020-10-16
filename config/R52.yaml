@@ -3,3 +3,4 @@ window_size: 5
 save_graph: False
 retrieve_graph: False
 identity_feature: False
+pmi_c: 4

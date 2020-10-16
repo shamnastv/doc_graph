@@ -154,9 +154,12 @@ def build_graph(config_file='param.yaml'):
     word_freq_list = []
     ls_adj = []
     window_size = param['window_size']
+    pmi_c = param['pmi_c'] * 1.0
     index = 0
 
     n_dropped_edges = 0
+    total_edges = 0
+
     for doc_words in shuffle_doc_words_list:
         windows = []
         words = doc_words.split()
@@ -275,7 +278,7 @@ def build_graph(config_file='param.yaml'):
             count = word_pair_count[key]
             word_freq_i = word_window_freq[vocab[i]]
             word_freq_j = word_window_freq[vocab[j]]
-            pmi = log((2.0 * count / num_window) /
+            pmi = log((pmi_c * count / num_window) /
                       (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
             if pmi <= 0:
                 # print('dropped edge : ', vocab[i], ' ', vocab[j], ' ', exp(pmi))
@@ -285,6 +288,7 @@ def build_graph(config_file='param.yaml'):
             col.append(j)
             # weight.append(count)
             weight.append(pmi)
+            total_edges += 1
 
         node_size = vocab_size
         adj = sp.csr_matrix(
@@ -302,6 +306,8 @@ def build_graph(config_file='param.yaml'):
         #     print(feat)
         #     print(adj)
         index += 1
+    print('total docs : ', len(ls_adj))
+    print('total edges : ', total_edges)
     print('total dropped edges : ', n_dropped_edges)
     if param['save_graph']:
         save_graph(dataset, ls_adj, feature_list, word_freq_list, y, y_hot, train_size)
