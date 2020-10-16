@@ -159,6 +159,7 @@ def build_graph(config_file='param.yaml'):
 
     n_dropped_edges = 0
     total_edges = 0
+    total_possible_edges = 0
 
     for doc_words in shuffle_doc_words_list:
         windows = []
@@ -177,6 +178,7 @@ def build_graph(config_file='param.yaml'):
         vocab = list(word_set)
         vocab_size = len(vocab)
 
+        total_possible_edges += vocab_size * (vocab_size - 1)
         features = []
         wf = []
         for i in range(vocab_size):
@@ -308,6 +310,7 @@ def build_graph(config_file='param.yaml'):
         index += 1
     print('total docs : ', len(ls_adj))
     print('total edges : ', total_edges)
+    print('total_possible_edges : ', total_possible_edges)
     print('total dropped edges : ', n_dropped_edges)
     if param['save_graph']:
         save_graph(dataset, ls_adj, feature_list, word_freq_list, y, y_hot, train_size)
