@@ -2,5 +2,5 @@ dataset: mr
 window_size: 5
 save_graph: False
 retrieve_graph: False
-identity_feature: False
+embed_type: bert
 pmi_c: 4

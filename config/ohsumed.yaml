@@ -2,5 +2,5 @@ dataset: ohsumed
 window_size: 5
 save_graph: False
 retrieve_graph: False
-identity_feature: True
+embed_type: fast
 pmi_c: 4

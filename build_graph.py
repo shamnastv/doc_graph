@@ -46,6 +46,7 @@ def build_graph(config='param'):
         return retrieve_graph('saved_graphs/data_' + config)
 
     from bert_embedding import BertEmbedding
+    import fasttext
 
     doc_name_list = []
     doc_train_list = []
@@ -139,17 +140,22 @@ def build_graph(config='param'):
     doc_vocab = list(doc_word_set)
     doc_vocab_size = len(doc_vocab)
 
-    if param['identity_feature']:
+    if param['embed_type'] == 'identity':
         result = np.identity(doc_vocab_size)
         for i in range(doc_vocab_size):
             word_to_vec[doc_vocab[i]] = result[i]
 
-    else:
+    elif param['embed_type'] == 'identity':
         # bert_embedding = BertEmbedding(model='bert_24_1024_16')
         bert_embedding = BertEmbedding()
         result = bert_embedding(doc_vocab)
         for i in range(doc_vocab_size):
             word_to_vec[doc_vocab[i]] = result[i][1][0]
+    elif param['embed_type'] == 'fast':
+        model = fasttext.train_unsupervised('data/corpus/' + dataset + '.clean.txt', dim=300)
+        for i in range(doc_vocab_size):
+            word_to_vec[doc_vocab[i]] = model.get_word_vector(doc_vocab[i])
+        model = None
 
     feature_list = []
     word_freq_list = []
