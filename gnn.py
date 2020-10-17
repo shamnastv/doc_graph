@@ -285,7 +285,7 @@ class GNN(nn.Module):
             if Cl is not None:
                 tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
                 tmp = torch.spmm(tmp, ge[layer])
-                # tmp = row_norm(tmp)
+                tmp = row_norm(tmp)
                 tmp = (self.beta + self.w1[layer]) * tmp
                 tmp = pooled_h + tmp
             else:
