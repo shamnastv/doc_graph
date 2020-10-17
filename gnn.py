@@ -287,12 +287,14 @@ class GNN(nn.Module):
                 tmp = torch.spmm(tmp, ge[layer])
                 # tmp = row_norm(tmp)
                 tmp = (self.beta + self.w1[layer]) * tmp
-                pooled_h = pooled_h + tmp
+                tmp = pooled_h + tmp
+            else:
+                tmp = pooled_h
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
             #                               training=self.training)
             # if layer == self.num_layers - 1:
             #     score_over_layer += self.linears_prediction[layer](pooled_h)
-            score_over_layer += self.linears_prediction[layer](pooled_h)
+            score_over_layer += self.linears_prediction[layer](tmp)
             pooled_h_ls.append(pooled_h)
 
         return score_over_layer, pooled_h_ls
