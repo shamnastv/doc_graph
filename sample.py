@@ -14,7 +14,7 @@ if 's' in d:
 
 
 
-
+np.linalg.norm(x)
 
 def test():
     import time

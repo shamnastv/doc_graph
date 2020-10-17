@@ -205,7 +205,7 @@ class GNN(nn.Module):
         if Cl is not None:
             # mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-            tmp = row_norm(torch.spmm(tmp, ge))
+            # tmp = row_norm(torch.spmm(tmp, ge))
             tmp = (self.beta + self.w1[layer]) * tmp
             # tmp = self.beta * tmp
             # if self.training:

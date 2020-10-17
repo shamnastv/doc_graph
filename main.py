@@ -38,7 +38,7 @@ class S2VGraph(object):
         self.node_tags = node_tags
         # self.neighbors = []
         self.node_features = torch.FloatTensor(node_features)
-        self.node_features = row_norm(self.node_features)
+        # self.node_features = row_norm(self.node_features)
         self.edge_mat = 0
         self.edges_weights = []
 
@@ -356,7 +356,7 @@ def main():
                         help='configuration file')
     parser.add_argument('--filename', type=str, default="",
                         help='output file')
-    parser.add_argument('--alpha', type=float, default=1,
+    parser.add_argument('--alpha', type=float, default=1000,
                         help='alpha')
     parser.add_argument('--beta', type=float, default=1,
                         help='beta')
