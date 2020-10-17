@@ -145,7 +145,7 @@ def build_graph(config='param'):
         for i in range(doc_vocab_size):
             word_to_vec[doc_vocab[i]] = result[i]
 
-    elif param['embed_type'] == 'identity':
+    elif param['embed_type'] == 'bert':
         # bert_embedding = BertEmbedding(model='bert_24_1024_16')
         bert_embedding = BertEmbedding()
         result = bert_embedding(doc_vocab)
