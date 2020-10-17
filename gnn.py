@@ -202,7 +202,7 @@ class GNN(nn.Module):
 
         # Re-weights the center node representation when aggregating it with its neighbors
         # pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
-        if Cl is not None:
+        if Cl is not None and False:
             # mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, ge)
@@ -282,6 +282,12 @@ class GNN(nn.Module):
         # perform pooling over all nodes in each graph in every layer
         for layer, h in enumerate(hidden_rep):
             pooled_h = torch.spmm(graph_pool, h)
+
+            tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
+            tmp = torch.spmm(tmp, ge[layer])
+            # tmp = row_norm(tmp)
+            tmp = (self.beta + self.w1[layer]) * tmp
+            pooled_h = pooled_h + tmp
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
             #                               training=self.training)
             # if layer == self.num_layers - 1:

@@ -412,7 +412,7 @@ def main():
         cl = None
 
         print(time.time() - start_time, 's Training starts', flush=True)
-        for epoch in range(200):
+        for epoch in range(10):
             avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -epoch,
                                          train_size, ge, cl, initial=True)
             acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, -epoch, ge, cl)
