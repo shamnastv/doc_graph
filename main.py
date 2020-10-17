@@ -55,7 +55,7 @@ def print_distr(y, train_size):
     for i in freq:
         if i < m:
             m = i
-    weights = [m/i if i != 0 else 1 for i in freq]
+    weights = [m / i if i != 0 else 1 for i in freq]
     global criterion
     # criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(weights).to(d))
     freq = [0 for i in range(len(set(y)))]
@@ -79,7 +79,7 @@ def create_gaph(args):
         if i == 10:
             print(word_freq_list[i])
         s = sum(word_freq_list[i])
-        wf = [el/s for el in word_freq_list[i]]
+        wf = [el / s for el in word_freq_list[i]]
         g_list.append(S2VGraph(g, lb, node_features=feat, node_tags=wf))
 
     for g in g_list:
@@ -273,8 +273,10 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
 
     output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 100, device)
 
-    output_train, output_val, output_test = output[:train_size], output[train_size:train_size + val_size], output[train_size + val_size:]
-    train_graphs, val_graph, test_graphs = graphs[:train_size], graphs[train_size:train_size + val_size], graphs[train_size + val_size:]
+    output_train, output_val, output_test = output[:train_size], output[train_size:train_size + val_size], output[
+                                                                                                           train_size + val_size:]
+    train_graphs, val_graph, test_graphs = graphs[:train_size], graphs[train_size:train_size + val_size], graphs[
+                                                                                                          train_size + val_size:]
 
     pred_train = output_train.max(1, keepdim=True)[1]
     labels_train = torch.LongTensor([graph.label for graph in train_graphs]).to(device)
@@ -300,8 +302,8 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
         max_acc_epoch = epoch
         test_accuracy = acc_test
 
+    print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
     if args.debug:
-        print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
         print('epsilon : ', model_e.eps.detach().cpu().numpy(), 'w1 : ', model_e.w1.detach().cpu().numpy(), flush=True)
 
         # if epoch == 800:
@@ -397,7 +399,8 @@ def main():
 
         model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
                             args.num_mlp_layers_c).to(device)
-        model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim, num_classes,
+        model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
+                      num_classes,
                       args.final_dropout,
                       args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
 
@@ -411,7 +414,7 @@ def main():
         print(time.time() - start_time, 's Training starts', flush=True)
         for epoch in range(10):
             avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -epoch,
-                                     train_size, ge, cl, initial=True)
+                                         train_size, ge, cl, initial=True)
             acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, -epoch, ge, cl)
 
         print('Embedding Initialized', flush=True)
@@ -423,7 +426,7 @@ def main():
 
         for epoch in range(1, args.epochs + 1):
             avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer,
-                                     optimizer_c, epoch, train_size, ge, cl)
+                                         optimizer_c, epoch, train_size, ge, cl)
             acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
             scheduler.step()
 
