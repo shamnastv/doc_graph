@@ -152,7 +152,7 @@ def build_graph(config='param'):
         for i in range(doc_vocab_size):
             word_to_vec[doc_vocab[i]] = result[i][1][0]
     elif param['embed_type'] == 'fast':
-        model = fasttext.train_unsupervised('data/corpus/' + dataset + '.clean.txt', dim=300)
+        model = fasttext.train_unsupervised('data/corpus/' + dataset + '.clean.txt', dim=400)
         for i in range(doc_vocab_size):
             word_to_vec[doc_vocab[i]] = model.get_word_vector(doc_vocab[i])
         model = None
