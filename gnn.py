@@ -33,7 +33,7 @@ class GNN(nn.Module):
         self.neighbor_pooling_type = neighbor_pooling_type
         self.learn_eps = learn_eps
         self.eps = nn.Parameter(torch.zeros(self.num_layers - 1))
-        self.w1 = nn.Parameter(torch.zeros(self.num_layers - 1))
+        self.w1 = nn.Parameter(torch.zeros(self.num_layers))
         # self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
         self.beta = beta
 
