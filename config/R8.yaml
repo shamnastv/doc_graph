@@ -2,5 +2,5 @@ dataset: R8
 window_size: 5
 save_graph: False
 retrieve_graph: False
-embed_type: bert
+embed_type: fast
 pmi_c: 2
