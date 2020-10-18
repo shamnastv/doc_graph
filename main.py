@@ -82,6 +82,7 @@ def create_gaph(args):
         wf = [el / s for el in word_freq_list[i]]
         g_list.append(S2VGraph(g, lb, node_features=feat, node_tags=wf))
 
+    zero_edges = 0
     for g in g_list:
         # g.neighbors = [[] for i in range(len(g.g))]
         # for i, j in g.g.edges():
@@ -97,11 +98,13 @@ def create_gaph(args):
         edges.extend([[i, j] for j, i in edges])
         edges_w.extend([w for w in edges_w])
         if len(edges) == 0:
-            print('zero edge : ', len(g.g))
+            # print('zero edge : ', len(g.g))
+            zero_edges += 1
             edges = [[0, 0]]
-            edges_w = [1]
+            edges_w = [0]
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
         g.edges_weights = torch.FloatTensor(edges_w)
+    print('total zero edge graphs : ', zero_edges)
     return g_list, len(set(y)), train_size
 
 
