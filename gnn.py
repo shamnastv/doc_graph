@@ -66,9 +66,9 @@ class GNN(nn.Module):
         self.linears_prediction = torch.nn.ModuleList()
         for layer in range(num_layers):
             if layer == 0:
-                self.linears_prediction.append(nn.Linear(input_dim, output_dim))
+                self.linears_prediction.append(nn.Linear(input_dim * 2, output_dim))
             else:
-                self.linears_prediction.append(nn.Linear(hidden_dim, output_dim))
+                self.linears_prediction.append(nn.Linear(hidden_dim * 2, output_dim))
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
@@ -282,19 +282,21 @@ class GNN(nn.Module):
         # perform pooling over all nodes in each graph in every layer
         for layer, h in enumerate(hidden_rep):
             pooled_h = torch.spmm(graph_pool, h)
-            if Cl is not None:
+            if Cl is None:
+                tmp2 = torch.cat((pooled_h, torch.zeros(pooled_h.shape)), dim=1)
+            else:
                 tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
                 tmp = torch.spmm(tmp, ge[layer])
                 tmp = row_norm(tmp)
-                tmp = (self.beta + self.w1[layer]) * tmp
-                tmp = pooled_h + tmp
-            else:
-                tmp = pooled_h
+                # tmp = (self.beta + self.w1[layer]) * tmp
+                # tmp = pooled_h + tmp
+                tmp2 = torch.cat((pooled_h, tmp), dim=1)
+
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
             #                               training=self.training)
             # if layer == self.num_layers - 1:
             #     score_over_layer += self.linears_prediction[layer](pooled_h)
-            score_over_layer += self.linears_prediction[layer](tmp)
+            score_over_layer += self.linears_prediction[layer](tmp2)
             pooled_h_ls.append(pooled_h)
 
         return score_over_layer, pooled_h_ls
