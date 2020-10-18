@@ -283,7 +283,7 @@ class GNN(nn.Module):
         for layer, h in enumerate(hidden_rep):
             pooled_h = torch.spmm(graph_pool, h)
             if Cl is None:
-                tmp2 = torch.cat((pooled_h, torch.zeros(pooled_h.shape)), dim=1)
+                tmp2 = torch.cat((pooled_h, pooled_h.new_zeros(pooled_h.shape)), dim=1)
             else:
                 tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
                 tmp = torch.spmm(tmp, ge[layer])
