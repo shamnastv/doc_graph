@@ -1,6 +1,6 @@
 import fasttext
 
-dataset = 'wiki'
+dataset = 'whole'
 # model = fasttext.train_unsupervised('data/corpus/R8.clean.txt', dim=300)
 model = fasttext.train_unsupervised('data/corpus/' + dataset + '.clean.txt', dim=400)
 
