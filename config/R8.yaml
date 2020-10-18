@@ -3,4 +3,4 @@ window_size: 5
 save_graph: False
 retrieve_graph: False
 embed_type: fast
-pmi_c: 2
+pmi_c: 1
