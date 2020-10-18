@@ -428,7 +428,7 @@ def main():
             avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer,
                                          optimizer_c, epoch, train_size, ge, cl)
             acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
-            # scheduler.step()
+            scheduler.step()
 
             if epoch % args.iters_per_epoch == 0 or True:
                 # for i in range(len(ge)):
@@ -451,22 +451,26 @@ def main():
                     f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
                     f.write("\n")
             print("")
-            if epoch > max_acc_epoch + args.early_stop and epoch % args.iters_per_epoch > args.early_stop // 2:
+            if epoch > max_acc_epoch + args.early_stop \
+                    and (epoch % args.iters_per_epoch > args.early_stop // 2
+                         or epoch % args.iters_per_epoch > args.iters_per_epoch // 2):
                 break
 
+        print('=' * 200)
         print('K : ', k, 'Time : ', abs(time.time() - start_time))
         print('max validation accuracy : ', max_val_accuracy)
         print('max acc epoch : ', max_acc_epoch)
         print('test accuracy : ', test_accuracy)
+        print('latest_test_accuracy', acc_test)
+        print('=' * 200 + '\n')
         acc_detais.append((max_val_accuracy, test_accuracy, max_acc_epoch, acc_test))
-        print('\n')
         max_val_accuracy = 0
         test_accuracy = 0
         max_acc_epoch = 0
 
     print(args)
     print('total size : ', len(all_graphs), '\n')
-    print('=' * 50 + 'Summary' + '=' * 50)
+    print('=' * 70 + 'Summary' + '=' * 70)
     for k in range(len(acc_detais)):
         print('k : ', k,
               '\tval_accuracy : ', acc_detais[k][0],
