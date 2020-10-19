@@ -171,7 +171,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     # alpha = args.alpha * len(selected_idx) / total_size
                     alpha = args.alpha
 
-                    for layer in range(1, args.num_layers):
+                    for layer in range(0, args.num_layers):
                         loss1_c += my_loss_1(model_c.centroids[layer], ge_tmp[layer], cl_new)
                     loss2_c = my_loss_2(alpha, cl_new, device)
 
