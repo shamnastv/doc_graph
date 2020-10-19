@@ -215,7 +215,7 @@ class GNN(nn.Module):
             # else:
             #     tmp = .5 * tmp
             pooled = pooled + torch.spmm(graph_pool_n, tmp)
-        # pooled = pooled + (1 + self.eps[layer]) * h
+        pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](h)
         h = F.relu(h)
