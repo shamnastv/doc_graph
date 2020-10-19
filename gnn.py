@@ -64,11 +64,14 @@ class GNN(nn.Module):
 
         # Linear function that maps the hidden representation at dofferemt layers into a prediction score
         self.linears_prediction = torch.nn.ModuleList()
+        self.graph_pool_layer = torch.nn.ModuleList()
         for layer in range(num_layers):
             if layer == 0:
                 self.linears_prediction.append(nn.Linear(input_dim * 2, output_dim))
+                self.graph_pool_layer.append(nn.Linear(input_dim, 1))
             else:
                 self.linears_prediction.append(nn.Linear(hidden_dim * 2, output_dim))
+                self.graph_pool_layer.append(nn.Linear(hidden_dim, 1))
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
@@ -281,6 +284,8 @@ class GNN(nn.Module):
 
         # perform pooling over all nodes in each graph in every layer
         for layer, h in enumerate(hidden_rep):
+            g_p = self.graph_pool_layer[layer](h)
+            graph_pool = g_p * graph_pool
             pooled_h = torch.spmm(graph_pool, h)
             if Cl is None:
                 tmp2 = torch.cat((pooled_h, pooled_h.new_zeros(pooled_h.shape)), dim=1)
