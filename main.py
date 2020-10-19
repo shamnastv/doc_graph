@@ -276,10 +276,10 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
 
     output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 100, device)
 
-    output_train, output_val, output_test = output[:train_size], output[train_size:train_size + val_size], output[
-                                                                                                           train_size + val_size:]
-    train_graphs, val_graph, test_graphs = graphs[:train_size], graphs[train_size:train_size + val_size], graphs[
-                                                                                                          train_size + val_size:]
+    output_train, output_val, output_test = output[:train_size], output[train_size:train_size + val_size]\
+        , output[train_size + val_size:]
+    train_graphs, val_graph, test_graphs = graphs[:train_size], graphs[train_size:train_size + val_size]\
+        , graphs[train_size + val_size:]
 
     pred_train = output_train.max(1, keepdim=True)[1]
     labels_train = torch.LongTensor([graph.label for graph in train_graphs]).to(device)
@@ -464,7 +464,7 @@ def main():
         print('max validation accuracy : ', max_val_accuracy)
         print('max acc epoch : ', max_acc_epoch)
         print('test accuracy : ', test_accuracy)
-        print('latest_test_accuracy', acc_test)
+        print('latest_test_accuracy : ', acc_test)
         print('=' * 200 + '\n')
         acc_detais.append((max_val_accuracy, test_accuracy, max_acc_epoch, acc_test))
         max_val_accuracy = 0
@@ -479,7 +479,7 @@ def main():
               '\tval_accuracy : ', acc_detais[k][0],
               '\ttest_accuracy : ', acc_detais[k][1],
               '\tmax_acc epoch : ', acc_detais[k][2],
-              '\tlatest_test_accuracy', acc_detais[k][3])
+              '\tlatest_test_accuracy : ', acc_detais[k][3])
 
 
 if __name__ == '__main__':
