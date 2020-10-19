@@ -285,7 +285,7 @@ class GNN(nn.Module):
         # perform pooling over all nodes in each graph in every layer
         for layer, h in enumerate(hidden_rep):
             g_p = self.graph_pool_layer[layer](h)
-            graph_pool = g_p * graph_pool
+            graph_pool = g_p.transpose(0, 1) * graph_pool
             pooled_h = torch.spmm(graph_pool, h)
             if Cl is None:
                 tmp2 = torch.cat((pooled_h, pooled_h.new_zeros(pooled_h.shape)), dim=1)
