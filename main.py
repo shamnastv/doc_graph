@@ -79,6 +79,7 @@ def create_gaph(args):
         if i == 10:
             print(word_freq_list[i])
         # s = sum(word_freq_list[i])
+        s = 1
         wf = [el / s for el in word_freq_list[i]]
         g_list.append(S2VGraph(g, lb, node_features=feat, node_tags=wf))
 
