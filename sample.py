@@ -10,6 +10,13 @@ def test():
     print(time.time())
 
 
+X = torch.tensor([7, 4])
+y = torch.tensor([[3, 5], [5, 5], [1, 0]])
+
+print(X.shape)
+print(y.shape)
+print(X * y)
+
 # n = 0
 # q = Queue()
 # q.put(1)
@@ -35,14 +42,14 @@ def test():
 # print(torch.norm(A, dim=0, p=1, keepdim=True))
 
 
-G = nx.DiGraph()
-A = np.array([[1, 2], [3, 4]])
-G = nx.from_numpy_matrix(A)
-# G.add_edge(2, 3, weight=5)
-# G.add_edge(3, 2, weight=3)
-# print(G.edges_iter(data='weight', default=1))
-x = [w['weight'] for i, j, w in G.edges(data=True)]
-print(x)
+# G = nx.DiGraph()
+# A = np.array([[1, 2], [3, 4]])
+# G = nx.from_numpy_matrix(A)
+# # G.add_edge(2, 3, weight=5)
+# # G.add_edge(3, 2, weight=3)
+# # print(G.edges_iter(data='weight', default=1))
+# x = [w['weight'] for i, j, w in G.edges(data=True)]
+# print(x)
 
 
 def test_mr_dataset():
