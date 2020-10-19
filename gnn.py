@@ -279,6 +279,7 @@ class GNN(nn.Module):
 
             hidden_rep.append(h)
 
+        graph_pool = graph_pool.to_dense()
         score_over_layer = 0
         pooled_h_ls = []
 
