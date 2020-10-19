@@ -294,7 +294,7 @@ class GNN(nn.Module):
             else:
                 tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
                 tmp = torch.spmm(tmp, ge[layer])
-                # tmp = row_norm(tmp)
+                tmp = row_norm(tmp)
                 # tmp = (self.beta + self.w1[layer]) * tmp
                 # tmp = pooled_h + tmp
                 tmp2 = torch.cat((pooled_h, tmp), dim=1)
