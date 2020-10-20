@@ -423,9 +423,9 @@ def main():
 
         print('Embedding Initialized', flush=True)
 
-        for i in range(len(ge)):
-            ge[i] = row_norm(ge_new[i])
-        # ge = ge_new
+        # for i in range(len(ge)):
+        #     ge[i] = row_norm(ge_new[i])
+        ge = ge_new
 
         model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
                       num_classes,
@@ -442,9 +442,9 @@ def main():
             scheduler.step()
 
             if epoch % args.iters_per_epoch == 0 or True:
-                for i in range(len(ge)):
-                    ge[i] = row_norm(ge_new[i])
-                # ge = ge_new
+                # for i in range(len(ge)):
+                #     ge[i] = row_norm(ge_new[i])
+                ge = ge_new
 
                 # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
                 #                     args.num_mlp_layers_c).to(device)
