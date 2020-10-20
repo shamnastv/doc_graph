@@ -463,16 +463,17 @@ def main():
                     f.write("\n")
             print("")
             if epoch > max_acc_epoch + args.early_stop \
+                    and epoch > args.early_stop \
                     and (epoch % args.iters_per_epoch > args.early_stop // 2
                          or epoch % args.iters_per_epoch > args.iters_per_epoch // 2):
                 break
 
         print('=' * 200)
         print('K : ', k, 'Time : ', abs(time.time() - start_time))
-        print('max validation accuracy : ', max_val_accuracy)
+        print('max validation accuracy : ', max_val_accuracy * 100)
         print('max acc epoch : ', max_acc_epoch)
-        print('test accuracy : ', test_accuracy)
-        print('latest_test_accuracy : ', acc_test)
+        print('test accuracy : ', test_accuracy * 100)
+        print('latest_test_accuracy : ', acc_test * 100)
         print('=' * 200 + '\n')
         acc_detais.append((max_val_accuracy, test_accuracy, max_acc_epoch, acc_test))
         max_val_accuracy = 0
@@ -484,10 +485,10 @@ def main():
     print('=' * 71 + 'Summary' + '=' * 71)
     for k in range(len(acc_detais)):
         print('k : ', k,
-              '\tval_accuracy : ', acc_detais[k][0],
-              '\ttest_accuracy : ', acc_detais[k][1],
+              '\tval_accuracy : ', acc_detais[k][0] * 100,
+              '\ttest_accuracy : ', acc_detais[k][1] * 100,
               '\tmax_acc epoch : ', acc_detais[k][2],
-              '\tlatest_test_accuracy : ', acc_detais[k][3])
+              '\tlatest_test_accuracy : ', acc_detais[k][3] * 100)
 
 
 if __name__ == '__main__':
