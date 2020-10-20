@@ -122,10 +122,10 @@ def my_loss_1(centroids, embeddings, cl):
     return loss1
 
 
-def my_loss_2(alpha, cl, device):
+def my_loss_2(cl, device):
     dm = len(cl[0])
     tmp = torch.mm(cl.transpose(0, 1), cl)
-    loss2 = alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
+    loss2 = torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
     return loss2
 
 
@@ -170,13 +170,13 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     cl_new = model_c(ge_tmp)
                     loss1_c = 0
                     # alpha = args.alpha * len(selected_idx) / total_size
-                    alpha = args.alpha
-
-                    for layer in range(1, args.num_layers):
+                    layers = 0
+                    for layer in range(0, args.num_layers):
                         loss1_c += my_loss_1(model_c.centroids[layer], ge_tmp[layer], cl_new)
-                    loss2_c = my_loss_2(alpha, cl_new, device)
+                        layers += 1
+                    loss2_c = my_loss_2(cl_new, device)
 
-                    loss_c = loss1_c + loss2_c
+                    loss_c = loss1_c + layers * args.alpha * loss2_c
                     if optimizer_c is not None:
                         optimizer_c.zero_grad()
                         loss_c.backward()
