@@ -33,8 +33,6 @@ print(X * y)
 #     s = q.get()
 #     print(s)
 
-
-
 # test()
 
 # A = np.array([[1, 2], [3, 4]])
