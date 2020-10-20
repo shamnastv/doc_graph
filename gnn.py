@@ -300,9 +300,9 @@ class GNN(nn.Module):
                 # tmp = row_norm(tmp)
                 # tmp = (self.beta + self.w1[layer]) * tmp
                 # tmp = pooled_h + tmp
-                # c_c = self.cluster_cat(torch.cat((pooled_h, tmp), dim=1))
-                # tmp2 = torch.cat((pooled_h, tmp * c_c), dim=1)
-                tmp2 = torch.cat((pooled_h, tmp), dim=1)
+                c_c = self.cluster_cat(torch.cat((pooled_h, tmp), dim=1))
+                tmp2 = torch.cat((pooled_h, tmp * c_c), dim=1)
+                # tmp2 = torch.cat((pooled_h, tmp), dim=1)
 
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
             #                               training=self.training)
