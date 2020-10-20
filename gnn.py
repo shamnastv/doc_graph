@@ -65,13 +65,16 @@ class GNN(nn.Module):
         # Linear function that maps the hidden representation at dofferemt layers into a prediction score
         self.linears_prediction = torch.nn.ModuleList()
         self.graph_pool_layer = torch.nn.ModuleList()
+        self.cluster_cat = torch.nn.ModuleList()
         for layer in range(num_layers):
             if layer == 0:
                 self.linears_prediction.append(nn.Linear(input_dim * 2, output_dim))
                 self.graph_pool_layer.append(nn.Linear(input_dim, 1))
+                self.cluster_cat.append(nn.Linear(input_dim * 2, 1))
             else:
                 self.linears_prediction.append(nn.Linear(hidden_dim * 2, output_dim))
                 self.graph_pool_layer.append(nn.Linear(hidden_dim, 1))
+                self.cluster_cat.append(nn.Linear(hidden_dim * 2, 1))
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
@@ -286,7 +289,7 @@ class GNN(nn.Module):
         # perform pooling over all nodes in each graph in every layer
         for layer, h in enumerate(hidden_rep):
             g_p = F.sigmoid(self.graph_pool_layer[layer](h))
-            g_p = F.dropout(g_p, .1, self.training)
+            # g_p = F.dropout(g_p, .1, self.training)
             graph_pool = graph_pool.mul(g_p.transpose(0, 1))
             pooled_h = torch.spmm(graph_pool, h)
             if Cl is None:
@@ -297,6 +300,8 @@ class GNN(nn.Module):
                 # tmp = row_norm(tmp)
                 # tmp = (self.beta + self.w1[layer]) * tmp
                 # tmp = pooled_h + tmp
+                # c_c = self.cluster_cat(torch.cat((pooled_h, tmp), dim=1))
+                # tmp2 = torch.cat((pooled_h, tmp * c_c), dim=1)
                 tmp2 = torch.cat((pooled_h, tmp), dim=1)
 
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
