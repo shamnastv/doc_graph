@@ -176,7 +176,8 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                         loss1_c += my_loss_1(model_c.centroids[layer], ge_tmp[layer], cl_new)
                     loss2_c = my_loss_2(alpha, cl_new, device)
 
-                    loss_c = loss1_c + loss2_c
+                    # loss_c = loss1_c + loss2_c
+                    loss_c = loss2_c
                     if optimizer_c is not None:
                         optimizer_c.zero_grad()
                         loss_c.backward()
