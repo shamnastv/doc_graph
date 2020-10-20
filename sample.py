@@ -4,18 +4,21 @@ import numpy as np
 import time
 import networkx as nx
 import torch
+import torch.nn.functional as F
 
 def test():
     import time
     print(time.time())
 
 
-X = torch.tensor([7, 4])
-y = torch.tensor([[3, 5], [5, 5], [1, 0]])
+# X = torch.tensor([7, 4])
+y = torch.FloatTensor([[3, 5], [5, 5], [1, 0]])
+cg = F.softmax(y, dim=-1)
+print(cg)
 
-print(X.shape)
-print(y.shape)
-print(X * y)
+# print(X.shape)
+# print(y.shape)
+# print(X * y)
 
 # n = 0
 # q = Queue()
