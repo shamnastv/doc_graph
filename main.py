@@ -342,7 +342,7 @@ def main():
                         help='alpha')
     parser.add_argument('--beta', type=float, default=10,
                         help='beta')
-    parser.add_argument('--init_itr', type=int, default=100,
+    parser.add_argument('--init_itr', type=int, default=5,
                         help='number of initial iterations')
     parser.add_argument('--n_fold', type=float, default=5,
                         help='n_fold')
