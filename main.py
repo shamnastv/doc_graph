@@ -372,13 +372,14 @@ def main():
 
         for epoch in range(1, args.epochs + 1):
             avg_loss, ge_new, cl_new = train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl)
-            acc_train, acc_test, ge_new, cl = test(args, model_e, device, graphs, train_size, epoch, ge, cl)
+            acc_train, acc_test, ge_new, cl_new = test(args, model_e, device, graphs, train_size, epoch, ge, cl)
             scheduler.step()
 
-            print_cluster(cl)
-            if epoch % args.iters_per_epoch == 0 or True:
+            print_cluster(cl_new)
+            if epoch % 5 == 0 :
                 # for i in range(len(ge)):
                 #     ge[i] = row_norm(ge_new[i])
+                cl = cl_new
                 ge = ge_new
 
             if not args.filename == "":
