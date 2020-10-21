@@ -375,6 +375,7 @@ def main():
             acc_train, acc_test, ge_new, cl = test(args, model_e, device, graphs, train_size, epoch, ge, cl)
             scheduler.step()
 
+            print_cluster(cl)
             if epoch % args.iters_per_epoch == 0 or True:
                 # for i in range(len(ge)):
                 #     ge[i] = row_norm(ge_new[i])
