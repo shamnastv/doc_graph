@@ -41,9 +41,10 @@ class ClusterNN(nn.Module):
 
     def forward(self, ge):
         cg = 0
+        score_of_layers = F.softmax(self.score_of_layers, dim=-1)
         for layer in range(0, self.num_layers):
             # cg += self.batch_norms_c[layer](self.mlp_cs[layer](ge[layer]))
-            cg += self.mlp_cs[layer](ge[layer])
+            cg += score_of_layers[layer] * self.mlp_cs[layer](ge[layer])
 
         # cg = self.batch_norm_c(cg)
         cg = F.softmax(cg, dim=-1)

@@ -130,6 +130,7 @@ def my_loss_2(cl, device):
 
 
 def print_cluster(cl):
+    print(cl[30:60])
     freq = [0 for i in range(cl.shape[1])]
     indices = cl.max(1)[1]
     for i in indices:
