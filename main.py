@@ -438,6 +438,7 @@ def main():
         #     ge[i] = row_norm(ge_new[i])
         ge = ge_new
 
+        print(ge[0].shape)
         model_c.init_centres(ge[:num_classes])
         model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
                       num_classes,

@@ -41,8 +41,8 @@ class ClusterNN(nn.Module):
 
     def init_centres(self, ges):
         for i, centre in enumerate(ges):
-            for layer, c in enumerate(centre):
-                self.centres[layer][i] = c
+            for layer in range(self.num_layers):
+                self.centres[layer][i] = centre[layer]
 
     def forward(self, ge):
         cg = 0
