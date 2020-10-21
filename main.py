@@ -360,7 +360,7 @@ def main():
                         help='configuration file')
     parser.add_argument('--filename', type=str, default="",
                         help='output file')
-    parser.add_argument('--alpha', type=float, default=1000000,
+    parser.add_argument('--alpha', type=float, default=1000,
                         help='alpha')
     parser.add_argument('--beta', type=float, default=1,
                         help='beta')
