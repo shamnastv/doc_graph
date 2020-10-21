@@ -143,10 +143,10 @@ class GNN(nn.Module):
         # pooled = pooled + (1 + self.eps) * h
         pooled = (1 + self.ws[0]) * pooled + (1 + self.eps) * h
         if Cl is not None:
-            mul_fact = self.beta / H.shape[0]
+            # mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, H)
-            pooled = pooled + mul_fact * (1 + self.ws[1]) * torch.spmm(graph_pool.transpose(0, 1), tmp)
+            pooled = pooled + (1 + self.ws[1]) * torch.spmm(graph_pool.transpose(0, 1), tmp)
             # pooled = pooled + mul_fact * torch.spmm(graph_pool.transpose(0, 1), tmp)
         pooled_rep = self.mlp_e(pooled)
         h = self.batch_norms_e(pooled_rep)

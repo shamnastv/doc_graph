@@ -281,8 +281,8 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, update_g
         max_acc_epoch = epoch
         test_accuracy = acc_test
 
-    print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
-    print('epsilon : ', model_e.eps)
+    print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch)
+    print('epsilon : ', model_e.eps.detach().cpu().numpy(), 'w : ', model_e.ws.detach().cpu().numpy(), flush=True)
 
     # if epoch == 800:
     #     for i in range(len(test_graphs)):
