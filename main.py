@@ -12,7 +12,6 @@ import time
 from sklearn.preprocessing import normalize
 
 import build_graph
-from cluster import ClusterNN
 from gnn import GNN
 from util import normalize_adj, row_norm
 
@@ -141,7 +140,7 @@ def print_cluster(cl):
     print('')
 
 
-def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, cl, initial=False):
+def train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl):
     total_size = len(graphs)
 
     val_size = train_size // args.k_fold
@@ -149,10 +148,6 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     test_size = total_size - train_size
 
     model_e.train()
-    model_c.train()
-
-    total_itr_c = args.iters_per_epoch
-    cl_batch_size = args.batch_size_cl
 
     ge_new = []
     for layer in range(args.num_layers):
@@ -161,56 +156,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         else:
             ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
 
-    if not initial:
-        if epoch % total_itr_c == 1:
-            divisor = math.log(args.alpha, total_itr_c)
-            alpha = args.alpha
-            for itr in range(total_itr_c):
-                if itr % 3 == 1:
-                    alpha = alpha / divisor
-                loss_c_accum = 0
-                loss1_accum = 0
-                loss2_accum = 0
-                full_idx = np.random.permutation(total_size)
-                for i in range(0, total_size, cl_batch_size):
-                    selected_idx = full_idx[i:i + cl_batch_size]
-                    ge_tmp = [ge_t[selected_idx] for ge_t in ge]
-                    cl_new = model_c(ge_tmp)
-                    loss1_c = 0
-
-                    score_of_layers = F.softmax(model_c.score_of_layers, dim=-1)
-                    for layer in range(0, args.num_layers):
-                        loss1_c += score_of_layers[layer] * my_loss_1(model_c.centres[layer], ge_tmp[layer], cl_new)
-                    loss2_c = alpha * my_loss_2(cl_new, device)
-
-                    loss_c = loss1_c + loss2_c
-                    if optimizer_c is not None:
-                        optimizer_c.zero_grad()
-                        loss_c.backward()
-                        optimizer_c.step()
-                    loss_c_accum += loss_c.detach().cpu().item()
-                    loss1_accum += loss1_c.detach().cpu().item()
-                    loss2_accum += loss2_c.detach().cpu().item()
-                    cl_new = cl_new.detach()
-
-                print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum, 'loss1 : ',
-                      loss1_accum, 'loss2 : ', loss2_accum)
-                with torch.no_grad():
-                    cl = model_c(ge)
-                print_cluster(cl)
-            model_c.eval()
-            with torch.no_grad():
-                cl = model_c(ge)
-            print_cluster(cl)
-            print(F.softmax(model_c.score_of_layers, dim=-1))
-            print('', flush=True)
-        # else:
-        #     with torch.no_grad():
-        #         cl = model_c(ge)
-
-    else:
-        cl = None
-
+    cl_new = torch.zeros(len(graphs), model_e.output_dim).to(device)
     idx_train = np.random.permutation(train_size)
     loss_accum = 0
     for i in range(0, train_size, args.batch_size):
@@ -231,6 +177,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             loss.backward()
             optimizer.step()
 
+        cl_new[selected_idx] = F.softmax(output.detach())
         loss = loss.detach().cpu().numpy()
         loss_accum += loss
         for layer in range(args.num_layers):
@@ -246,6 +193,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                 continue
             output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
 
+            cl_new[selected_idx] = F.softmax(output)
             for layer in range(args.num_layers):
                 ge_new[layer][selected_idx] = pooled_h[layer]
 
@@ -277,16 +225,15 @@ def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device)
     return torch.cat(outputs, 0), ge_new
 
 
-def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
+def test(args, model_e, device, graphs, train_size, epoch, ge, cl):
     # model_c.eval()
     model_e.eval()
 
     val_size = train_size // args.k_fold
     train_size = train_size - val_size
 
-    # cl = model_c(ge)
-
     output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 100, device)
+    cl_new = F.softmax(output)
 
     output_train, output_val, output_test = output[:train_size], output[train_size:train_size + val_size]\
         , output[train_size + val_size:]
@@ -325,7 +272,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
         #     for i in range(len(test_graphs)):
         #         print('label : ', labels_test[i].cpu().item(), ' pred : ', pred_test[i].cpu().item())
 
-    return acc_train, acc_test, ge_new
+    return acc_train, acc_test, ge_new, cl_new
 
 
 def main():
@@ -412,65 +359,26 @@ def main():
 
         ge = [None for i in range(args.num_layers)]
 
-        model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
-                            args.num_mlp_layers_c).to(device)
         model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
                       num_classes,
                       args.final_dropout,
                       args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
 
         optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-        optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-        # optimizer = optim.SGD(model_e.parameters(), lr=args.lr, momentum=0.9)
-        # optimizer_c = optim.SGD(model_c.parameters(), lr=args.lr_c, momentum=0.9)
-        # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5)
         cl = None
 
         print(time.time() - start_time, 's Training starts', flush=True)
-        for epoch in range(10):
-            avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -epoch,
-                                         train_size, ge, cl, initial=True)
-            acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, -epoch, ge, cl)
-
-        print('Embedding Initialized', flush=True)
-
-        # for i in range(len(ge)):
-        #     ge[i] = row_norm(ge_new[i])
-        ge = ge_new
-
-        idx = np.random.permutation(len(ge[0]))[:num_classes]
-        ge_tmp = [ge_t[idx] for ge_t in ge]
-        model_c.init_centres(ge_tmp)
-
-        model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
-                      num_classes,
-                      args.final_dropout,
-                      args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
-
-        optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5)
 
         for epoch in range(1, args.epochs + 1):
-            avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer,
-                                         optimizer_c, epoch, train_size, ge, cl)
-            acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
+            avg_loss, ge_new, cl_new = train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl)
+            acc_train, acc_test, ge_new, cl = test(args, model_e, device, graphs, train_size, epoch, ge, cl)
             scheduler.step()
 
             if epoch % args.iters_per_epoch == 0 or True:
                 # for i in range(len(ge)):
                 #     ge[i] = row_norm(ge_new[i])
                 ge = ge_new
-
-                # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
-                #                     args.num_mlp_layers_c).to(device)
-                # model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
-                #               num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type,
-                #               args.neighbor_pooling_type, device, args.beta).to(device)
-                #
-                # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-                # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-                # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
-                # print(time.time() - start_time, 'embeddings updated.', flush=True)
 
             if not args.filename == "":
                 with open(args.filename, 'w') as f:
