@@ -40,9 +40,8 @@ class ClusterNN(nn.Module):
         nn.init.uniform_(self.score_of_layers)
 
     def init_centres(self, ges):
-        for i, centre in enumerate(ges):
-            for layer in range(self.num_layers):
-                self.centres[layer][i] = centre[layer]
+        for i in range(self.num_layers):
+            self.centres[i] = ges[i]
 
     def forward(self, ge):
         cg = 0
