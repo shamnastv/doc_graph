@@ -177,7 +177,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl):
             loss.backward()
             optimizer.step()
 
-        cl_new[selected_idx] = F.softmax(output.detach())
+        cl_new[selected_idx] = F.softmax(output.detach(), dim=-1)
         loss = loss.detach().cpu().numpy()
         loss_accum += loss
         for layer in range(args.num_layers):
@@ -193,7 +193,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl):
                 continue
             output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
 
-            cl_new[selected_idx] = F.softmax(output)
+            cl_new[selected_idx] = F.softmax(output, dim=-1)
             for layer in range(args.num_layers):
                 ge_new[layer][selected_idx] = pooled_h[layer]
 
@@ -233,7 +233,7 @@ def test(args, model_e, device, graphs, train_size, epoch, ge, cl):
     train_size = train_size - val_size
 
     output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 100, device)
-    cl_new = F.softmax(output)
+    cl_new = F.softmax(output, dim=-1)
 
     output_train, output_val, output_test = output[:train_size], output[train_size:train_size + val_size]\
         , output[train_size + val_size:]
