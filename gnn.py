@@ -69,11 +69,11 @@ class GNN(nn.Module):
         self.cluster_cat = torch.nn.ModuleList()
         for layer in range(num_layers):
             if layer == 0:
-                self.linears_prediction.append(nn.Linear(input_dim, output_dim))
+                self.linears_prediction.append(nn.Linear(input_dim * 2, output_dim))
                 self.graph_pool_layer.append(nn.Linear(input_dim, 1))
                 self.cluster_cat.append(nn.Linear(input_dim * 2, 1))
             else:
-                self.linears_prediction.append(nn.Linear(hidden_dim, output_dim))
+                self.linears_prediction.append(nn.Linear(hidden_dim * 2, output_dim))
                 self.graph_pool_layer.append(nn.Linear(hidden_dim, 1))
                 self.cluster_cat.append(nn.Linear(hidden_dim * 2, 1))
         self.reset_parameters()
@@ -209,7 +209,7 @@ class GNN(nn.Module):
 
         # Re-weights the center node representation when aggregating it with its neighbors
         # pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
-        if Cl is not None:
+        if Cl is not None and False:
             # mul_fact = self.beta / H.shape[0]
             tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
             tmp = torch.spmm(tmp, ge)
@@ -293,24 +293,24 @@ class GNN(nn.Module):
             # g_p = F.dropout(g_p, .1, self.training)
             graph_pool = graph_pool.mul(g_p.transpose(0, 1))
             pooled_h = torch.spmm(graph_pool, h)
-            # if Cl is None:
-            #     tmp2 = torch.cat((pooled_h, pooled_h.new_zeros(pooled_h.shape)), dim=1)
-            # else:
-            #     tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-            #     tmp = torch.spmm(tmp, ge[layer])
-            #     # tmp = row_norm(tmp)
-            #     # tmp = (self.beta + self.w1[layer]) * tmp
-            #     # tmp = pooled_h + tmp
-            #     c_c = F.sigmoid(self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1)))
-            #     # c_c = self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1))
-            #     tmp2 = torch.cat((pooled_h, tmp * c_c), dim=1)
-            #     # tmp2 = torch.cat((pooled_h, tmp), dim=1)
+            if Cl is None:
+                tmp2 = torch.cat((pooled_h, pooled_h.new_zeros(pooled_h.shape)), dim=1)
+            else:
+                tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
+                tmp = torch.spmm(tmp, ge[layer])
+                # tmp = row_norm(tmp)
+                # tmp = (self.beta + self.w1[layer]) * tmp
+                # tmp = pooled_h + tmp
+                c_c = F.sigmoid(self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1)))
+                # c_c = self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1))
+                tmp2 = torch.cat((pooled_h, tmp * c_c), dim=1)
+                # tmp2 = torch.cat((pooled_h, tmp), dim=1)
 
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
             #                               training=self.training)
             # if layer == self.num_layers - 1:
             #     score_over_layer += self.linears_prediction[layer](pooled_h)
-            score_over_layer += self.linears_prediction[layer](pooled_h)
+            score_over_layer += self.linears_prediction[layer](tmp2)
             pooled_h_ls.append(pooled_h)
 
         return score_over_layer, pooled_h_ls
