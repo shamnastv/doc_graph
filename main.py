@@ -130,7 +130,7 @@ def my_loss_2(cl, device):
 
 
 def print_cluster(cl):
-    print(cl[30:40])
+    # print(cl[30:40])
     freq = [0 for i in range(cl.shape[1])]
     indices = cl.max(1)[1]
     for i in indices:
@@ -161,6 +161,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     if not initial:
         if epoch % total_itr_c == 1:
             for itr in range(total_itr_c):
+                alpha = args.alpha ** ((total_itr_c - itr - 1) / total_itr_c)
                 loss_c_accum = 0
                 loss1_accum = 0
                 loss2_accum = 0
@@ -170,13 +171,13 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     ge_tmp = [ge_t[selected_idx] for ge_t in ge]
                     cl_new = model_c(ge_tmp)
                     loss1_c = 0
-                    # alpha = args.alpha * len(selected_idx) / total_size
+
                     score_of_layers = F.softmax(model_c.score_of_layers, dim=-1)
                     for layer in range(0, args.num_layers):
                         loss1_c += score_of_layers[layer] * my_loss_1(model_c.centroids[layer], ge_tmp[layer], cl_new)
                     loss2_c = my_loss_2(cl_new, device)
 
-                    loss_c = loss1_c + args.alpha * loss2_c
+                    loss_c = loss1_c + alpha * loss2_c
                     if optimizer_c is not None:
                         optimizer_c.zero_grad()
                         loss_c.backward()
@@ -188,6 +189,9 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
                 print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum, 'loss1 : ',
                       loss1_accum, 'loss2 : ', loss2_accum)
+                with torch.no_grad():
+                    cl = model_c(ge)
+                print_cluster(cl)
             model_c.eval()
             with torch.no_grad():
                 cl = model_c(ge)
