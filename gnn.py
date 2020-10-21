@@ -28,6 +28,7 @@ class GNN(nn.Module):
 
         self.final_dropout = final_dropout
         self.device = device
+        self.output_dim = output_dim
         self.num_layers = num_layers
         self.graph_pooling_type = graph_pooling_type
         self.neighbor_pooling_type = neighbor_pooling_type
