@@ -1,3 +1,5 @@
+import math
+
 import networkx as nx
 import numpy as np
 import random
@@ -136,6 +138,7 @@ def print_cluster(cl):
     for i in indices:
         freq[i] += 1
     print(freq)
+    print('')
 
 
 def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, cl, initial=False):
@@ -160,8 +163,11 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
     if not initial:
         if epoch % total_itr_c == 1:
+            divisor = math.log(args.alpha, total_itr_c)
+            alpha = args.alpha
             for itr in range(total_itr_c):
-                alpha = args.alpha ** ((total_itr_c - itr - 1) / total_itr_c)
+                if itr % 3 == 1:
+                    alpha = alpha / divisor
                 loss_c_accum = 0
                 loss1_accum = 0
                 loss2_accum = 0
