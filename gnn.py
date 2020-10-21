@@ -303,10 +303,9 @@ class GNN(nn.Module):
                 # tmp = pooled_h + tmp
                 # c_c = torch.tanh(self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1)))
                 # c_c = self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1))
-                # tmp = tmp
+                tmp = F.dropout(tmp, .5, self.training)
                 tmp2 = torch.cat((pooled_h + tmp, tmp), dim=1)
                 # tmp2 = torch.cat((pooled_h, tmp), dim=1)
-
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
             #                               training=self.training)
             # if layer == self.num_layers - 1:

@@ -370,13 +370,15 @@ def main():
         print(time.time() - start_time, 's Training starts', flush=True)
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5)
 
+        x = 30
         for epoch in range(1, args.epochs + 1):
             avg_loss, ge_new, cl_new = train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl)
             acc_train, acc_test, ge_new, cl_new = test(args, model_e, device, graphs, train_size, epoch, ge, cl)
             scheduler.step()
 
             print_cluster(cl_new)
-            if epoch % 50 == 0:
+            if epoch % x == 0:
+                x = 100
                 # for i in range(len(ge)):
                 #     ge[i] = row_norm(ge_new[i])
                 cl = cl_new
