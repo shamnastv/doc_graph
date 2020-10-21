@@ -10,12 +10,12 @@ class ClusterNN(nn.Module):
         super(ClusterNN, self).__init__()
         self.num_layers = num_layers
         self.score_of_layers = nn.Parameter(torch.zeros(self.num_layers))
-        self.centroids = nn.ParameterList()
+        self.centres = nn.ParameterList()
         for layer in range(num_layers):
             if layer == 0:
-                self.centroids.append(nn.Parameter(torch.zeros(num_class, input_dim)))
+                self.centres.append(nn.Parameter(torch.zeros(num_class, input_dim)))
             else:
-                self.centroids.append(nn.Parameter(torch.zeros(num_class, hidden_dim)))
+                self.centres.append(nn.Parameter(torch.zeros(num_class, hidden_dim)))
 
         self.mlp_cs = torch.nn.ModuleList()
         self.batch_norms_c = torch.nn.ModuleList()
@@ -35,9 +35,14 @@ class ClusterNN(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        for centroid in self.centroids:
-            nn.init.uniform_(centroid)
+        for centre in self.centres:
+            nn.init.uniform_(centre)
         nn.init.uniform_(self.score_of_layers)
+
+    def init_centres(self, ges):
+        for i, centre in enumerate(ges):
+            for layer, c in enumerate(centre):
+                self.centres[layer][i] = c
 
     def forward(self, ge):
         cg = 0

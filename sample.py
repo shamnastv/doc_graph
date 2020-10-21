@@ -12,9 +12,11 @@ def test():
 
 
 # X = torch.tensor([7, 4])
-y = torch.FloatTensor([[3, 5], [5, 5], [1, 0]])
-cg = F.softmax(y, dim=-1)
-print(cg)
+centroids = torch.FloatTensor([[3, 5], [5, 5], [1, 0]])
+emb = torch.FloatTensor([1, 2])
+tmp = torch.sum(torch.sub(centroids, emb) ** 2, dim=1, keepdim=True)
+# cg = F.softmax(y, dim=-1)
+print(tmp)
 
 # print(X.shape)
 # print(y.shape)

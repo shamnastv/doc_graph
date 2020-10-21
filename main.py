@@ -111,11 +111,11 @@ def create_gaph(args):
     return g_list, len(set(y)), train_size
 
 
-def my_loss_1(centroids, embeddings, cl):
+def my_loss_1(centres, embeddings, cl):
     # dm = len(cl[0])
     loss1 = 0
     for i, emb in enumerate(embeddings):
-        tmp = torch.sum(torch.sub(centroids, emb) ** 2, dim=1, keepdim=True)
+        tmp = torch.sum(torch.sub(centres, emb) ** 2, dim=1, keepdim=True)
         # tmp = torch.sub(centroids, emb)
         # loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
         loss1 += torch.mm(cl[i].reshape(1, -1), tmp)
@@ -180,10 +180,10 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
                     score_of_layers = F.softmax(model_c.score_of_layers, dim=-1)
                     for layer in range(0, args.num_layers):
-                        loss1_c += score_of_layers[layer] * my_loss_1(model_c.centroids[layer], ge_tmp[layer], cl_new)
-                    loss2_c = my_loss_2(cl_new, device)
+                        loss1_c += score_of_layers[layer] * my_loss_1(model_c.centres[layer], ge_tmp[layer], cl_new)
+                    loss2_c = alpha * my_loss_2(cl_new, device)
 
-                    loss_c = loss1_c + alpha * loss2_c
+                    loss_c = loss1_c + loss2_c
                     if optimizer_c is not None:
                         optimizer_c.zero_grad()
                         loss_c.backward()
@@ -438,6 +438,7 @@ def main():
         #     ge[i] = row_norm(ge_new[i])
         ge = ge_new
 
+        model_c.init_centres(ge[:num_classes])
         model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
                       num_classes,
                       args.final_dropout,
