@@ -388,7 +388,7 @@ def main():
                     f.write("\n")
             print("")
             if epoch > max_acc_epoch + args.early_stop \
-                    and epoch > args.early_stop \
+                    and epoch > 3 * args.early_stop \
                     and (epoch % args.iters_per_epoch > args.early_stop // 2
                          or epoch % args.iters_per_epoch > args.iters_per_epoch // 2):
                 break
