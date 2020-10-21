@@ -378,7 +378,7 @@ def main():
 
             print_cluster(cl_new)
             if epoch % x == 0:
-                x = 100
+                x = 130
                 # for i in range(len(ge)):
                 #     ge[i] = row_norm(ge_new[i])
                 cl = cl_new
