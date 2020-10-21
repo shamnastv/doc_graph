@@ -438,7 +438,7 @@ def main():
         #     ge[i] = row_norm(ge_new[i])
         ge = ge_new
 
-        idx = np.random.permutation(len(ge))[:num_classes]
+        idx = np.random.permutation(len(ge[0]))[:num_classes]
         ge_tmp = [ge_t[idx] for ge_t in ge]
         model_c.init_centres(ge_tmp)
 
