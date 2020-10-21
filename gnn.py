@@ -303,7 +303,7 @@ class GNN(nn.Module):
                 # tmp = pooled_h + tmp
                 c_c = F.sigmoid(self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1)))
                 # c_c = self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1))
-                tmp2 = torch.cat((pooled_h, tmp * c_c), dim=1)
+                tmp2 = torch.cat((pooled_h + tmp * c_c, tmp * c_c), dim=1)
                 # tmp2 = torch.cat((pooled_h, tmp), dim=1)
 
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
