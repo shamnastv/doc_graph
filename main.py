@@ -381,6 +381,14 @@ def main():
                 #     ge[i] = row_norm(ge_new[i])
                 cl = cl_new
                 ge = ge_new
+                model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
+                              num_classes,
+                              args.final_dropout,
+                              args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device,
+                              args.beta).to(device)
+
+                optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+                scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5)
 
             if not args.filename == "":
                 with open(args.filename, 'w') as f:
