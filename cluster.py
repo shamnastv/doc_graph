@@ -15,5 +15,5 @@ class ClusterNN(nn.Module):
     def forward(self, ge):
         cg = self.mlp_c(ge)
         cg = self.batch_norm_c(cg)
-        cg = F.softmax(cg, dim=0)
+        cg = F.softmax(cg, dim=1)
         return cg
