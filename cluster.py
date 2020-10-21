@@ -40,8 +40,9 @@ class ClusterNN(nn.Module):
         nn.init.uniform_(self.score_of_layers)
 
     def init_centres(self, ges):
-        for i in range(self.num_layers):
-            self.centres[i] = nn.Parameter(ges[i])
+        with torch.no_grad():
+            for i in range(self.num_layers):
+                self.centres[i] = nn.Parameter(ges[i])
 
     def forward(self, ge):
         cg = 0
