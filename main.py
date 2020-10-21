@@ -170,13 +170,12 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                     cl_new = model_c(ge_tmp)
                     loss1_c = 0
                     # alpha = args.alpha * len(selected_idx) / total_size
-                    layers = 0
+                    score_of_layers = F.softmax(model_c.score_of_layers, dim=-1)
                     for layer in range(0, args.num_layers):
-                        loss1_c += my_loss_1(model_c.centroids[layer], ge_tmp[layer], cl_new)
-                        layers += 1
+                        loss1_c += score_of_layers[layer] * my_loss_1(model_c.centroids[layer], ge_tmp[layer], cl_new)
                     loss2_c = my_loss_2(cl_new, device)
 
-                    loss_c = loss1_c + layers * args.alpha * loss2_c
+                    loss_c = loss1_c + args.alpha * loss2_c
                     if optimizer_c is not None:
                         optimizer_c.zero_grad()
                         loss_c.backward()
@@ -192,6 +191,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
             with torch.no_grad():
                 cl = model_c(ge)
             print_cluster(cl)
+            print(F.softmax(model_c.score_of_layers, dim=-1))
             print('', flush=True)
         # else:
         #     with torch.no_grad():

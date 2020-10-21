@@ -9,6 +9,7 @@ class ClusterNN(nn.Module):
     def __init__(self, num_class, input_dim, hidden_dim, num_layers, num_mlp_layers):
         super(ClusterNN, self).__init__()
         self.num_layers = num_layers
+        self.score_of_layers = nn.Parameter(torch.zeros(self.num_layers))
         self.centroids = nn.ParameterList()
         for layer in range(num_layers):
             if layer == 0:
@@ -36,6 +37,7 @@ class ClusterNN(nn.Module):
     def reset_parameters(self) -> None:
         for centroid in self.centroids:
             nn.init.uniform_(centroid)
+        nn.init.uniform_(self.score_of_layers)
 
     def forward(self, ge):
         cg = 0
