@@ -137,7 +137,7 @@ def print_cluster(cl):
     for i in indices:
         freq[i] += 1
     print(freq)
-    print('')
+    print('', flush=True)
 
 
 def train(args, model_e, device, graphs, optimizer, epoch, train_size, ge, cl):
@@ -376,7 +376,7 @@ def main():
             scheduler.step()
 
             print_cluster(cl_new)
-            if epoch % 5 == 0 :
+            if epoch % 50 == 0:
                 # for i in range(len(ge)):
                 #     ge[i] = row_norm(ge_new[i])
                 cl = cl_new
@@ -388,7 +388,7 @@ def main():
                     f.write("\n")
             print("")
             if epoch > max_acc_epoch + args.early_stop \
-                    and epoch > 3 * args.early_stop \
+                    and epoch > 4 * args.early_stop \
                     and (epoch % args.iters_per_epoch > args.early_stop // 2
                          or epoch % args.iters_per_epoch > args.iters_per_epoch // 2):
                 break
