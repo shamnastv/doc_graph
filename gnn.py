@@ -71,11 +71,11 @@ class GNN(nn.Module):
             if layer == 0:
                 self.linears_prediction.append(nn.Linear(input_dim * 2, output_dim))
                 self.graph_pool_layer.append(nn.Linear(input_dim, 1))
-                self.cluster_cat.append(nn.Linear(input_dim * 2, 1))
+                self.cluster_cat.append(nn.Linear(input_dim * 2, input_dim))
             else:
                 self.linears_prediction.append(nn.Linear(hidden_dim * 2, output_dim))
                 self.graph_pool_layer.append(nn.Linear(hidden_dim, 1))
-                self.cluster_cat.append(nn.Linear(hidden_dim * 2, 1))
+                self.cluster_cat.append(nn.Linear(hidden_dim * 2, hidden_dim))
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
@@ -301,9 +301,10 @@ class GNN(nn.Module):
                 # tmp = row_norm(tmp)
                 # tmp = (self.beta + self.w1[layer]) * tmp
                 # tmp = pooled_h + tmp
-                # c_c = torch.tanh(self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1)))
+                c_c = torch.tanh(self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1)))
                 # c_c = self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1))
-                tmp = F.dropout(tmp, .5, self.training)
+                # tmp = F.dropout(tmp, .5, self.training)
+                tmp = c_c * tmp
                 tmp2 = torch.cat((pooled_h + tmp, tmp), dim=1)
                 # tmp2 = torch.cat((pooled_h, tmp), dim=1)
             # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
