@@ -67,16 +67,16 @@ class GNN(nn.Module):
         # Linear function that maps the hidden representation at dofferemt layers into a prediction score
         self.linears_prediction = torch.nn.ModuleList()
         self.graph_pool_layer = torch.nn.ModuleList()
-        self.cluster_cat = torch.nn.ModuleList()
+        # self.cluster_cat = torch.nn.ModuleList()
         for layer in range(num_layers):
             if layer == 0:
                 self.linears_prediction.append(nn.Linear(input_dim, output_dim))
                 self.graph_pool_layer.append(Attention(input_dim + 1))
-                self.cluster_cat.append(nn.Linear(input_dim * 2, 1))
+                # self.cluster_cat.append(nn.Linear(input_dim * 2, 1))
             else:
                 self.linears_prediction.append(nn.Linear(hidden_dim, output_dim))
                 self.graph_pool_layer.append(Attention(hidden_dim + 1))
-                self.cluster_cat.append(nn.Linear(hidden_dim * 2, 1))
+                # self.cluster_cat.append(nn.Linear(hidden_dim * 2, 1))
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
@@ -210,19 +210,19 @@ class GNN(nn.Module):
 
         # Re-weights the center node representation when aggregating it with its neighbors
         # pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
-        if Cl is not None:
-            # mul_fact = self.beta / H.shape[0]
-            tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-            tmp = torch.spmm(tmp, ge)
-            tmp = row_norm(tmp)
-            tmp = (self.beta + self.w1[layer]) * tmp
-            # tmp = self.beta * tmp
-            # if self.training:
-            #     if bool(random.getrandbits(1)):
-            #         tmp = 0 * tmp
-            # else:
-            #     tmp = .5 * tmp
-            pooled = pooled + torch.spmm(graph_pool_n, tmp)
+        # if Cl is not None:
+        #     # mul_fact = self.beta / H.shape[0]
+        #     tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
+        #     tmp = torch.spmm(tmp, ge)
+        #     tmp = row_norm(tmp)
+        #     tmp = (self.beta + self.w1[layer]) * tmp
+        #     # tmp = self.beta * tmp
+        #     # if self.training:
+        #     #     if bool(random.getrandbits(1)):
+        #     #         tmp = 0 * tmp
+        #     # else:
+        #     #     tmp = .5 * tmp
+        #     pooled = pooled + torch.spmm(graph_pool_n, tmp)
         pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](h)

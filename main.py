@@ -154,12 +154,12 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     total_itr_c = args.iters_per_epoch
     cl_batch_size = args.batch_size_cl
 
-    ge_new = []
-    for layer in range(args.num_layers):
-        if layer == 0:
-            ge_new.append(torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device))
-        else:
-            ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
+    # ge_new = []
+    # for layer in range(args.num_layers):
+    #     if layer == 0:
+    #         ge_new.append(torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device))
+    #     else:
+    #         ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
 
     # if not initial:
     #     if epoch % total_itr_c == 1:
@@ -250,18 +250,18 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     #             ge_new[layer][selected_idx] = pooled_h[layer]
 
     print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', abs(time.time() - start_time))
-    return loss_accum, ge_new, cl
+    return loss_accum, ge, cl
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
 def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device):
     outputs = []
     ge_new = []
-    for layer in range(args.num_layers):
-        if layer == 0:
-            ge_new.append(torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device))
-        else:
-            ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
+    # for layer in range(args.num_layers):
+    #     if layer == 0:
+    #         ge_new.append(torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device))
+    #     else:
+    #         ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
 
     full_idx = np.arange(len(graphs))
     for i in range(0, len(graphs), minibatch_size):
@@ -274,7 +274,7 @@ def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device)
         # for layer in range(args.num_layers):
         #     ge_new[layer][sampled_idx] = pooled_h[layer]
 
-    return torch.cat(outputs, 0), ge_new
+    return torch.cat(outputs, 0), ge
 
 
 def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
