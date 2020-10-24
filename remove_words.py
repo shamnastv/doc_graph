@@ -89,7 +89,7 @@ for doc_content in doc_content_list:
             elif word not in stop_words:
                 removed_words_ls.append(word)
 
-    if len(doc_words) == 0:
+    if len(doc_words) == 1:
         print(doc_words)
 
     removed_words.update(removed_words_ls)
