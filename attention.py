@@ -43,5 +43,5 @@ class Attention(nn.Module):
             h = self.linears[layer](h)
             h = self.batch_norms[layer](h)
             h = self.activation(h)
-            h = F.dropout(h, self.dropout, self.training)
+
         return self.linears[self.num_layers - 1](h)
