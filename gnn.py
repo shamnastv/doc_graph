@@ -70,11 +70,11 @@ class GNN(nn.Module):
         for layer in range(num_layers):
             if layer == 0:
                 self.linears_prediction.append(nn.Linear(input_dim, output_dim))
-                self.graph_pool_layer.append(Attention(input_dim))
+                self.graph_pool_layer.append(Attention(input_dim + 1))
                 self.cluster_cat.append(nn.Linear(input_dim * 2, 1))
             else:
                 self.linears_prediction.append(nn.Linear(hidden_dim, output_dim))
-                self.graph_pool_layer.append(Attention(hidden_dim))
+                self.graph_pool_layer.append(Attention(hidden_dim + 1))
                 self.cluster_cat.append(nn.Linear(hidden_dim * 2, 1))
         self.reset_parameters()
 
@@ -183,7 +183,7 @@ class GNN(nn.Module):
         idx = torch.LongTensor(idx).transpose(0, 1)
         graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([len(batch_graph), start_idx[-1]]))
 
-        return graph_pool.to(self.device)
+        return graph_pool.to(self.device), elem.reshape(-1, 1)
 
     def maxpool(self, h, padded_neighbor_list):
         # Element-wise minimum will never affect max-pooling
@@ -259,7 +259,7 @@ class GNN(nn.Module):
 
     def forward(self, batch_graph, Cl, ge, idx):
         X_concat = torch.cat([graph.node_features for graph in batch_graph], 0).to(self.device)
-        graph_pool = self.__preprocess_graphpool(batch_graph)
+        graph_pool, node_weights = self.__preprocess_graphpool(batch_graph)
         graph_pool_n = self.__preprocess_graphpool_n(batch_graph)
 
         if self.neighbor_pooling_type == "max":
@@ -287,9 +287,8 @@ class GNN(nn.Module):
         score_over_layer = 0
         pooled_h_ls = []
 
-        g_p = self.graph_pool_layer[0](hidden_rep[0])
-        graph_pool = F.softmax(graph_pool.mul(g_p.transpose(0, 1)))
-
+        g_p = self.graph_pool_layer[0](torch.cat((hidden_rep[0], node_weights), dim=1))
+        graph_pool = F.softmax(graph_pool.mul(g_p.transpose(0, 1)), dim=1)
 
         # perform pooling over all nodes in each graph in every layer
         for layer, h in enumerate(hidden_rep):
