@@ -288,6 +288,7 @@ class GNN(nn.Module):
         pooled_h_ls = []
 
         g_p = self.graph_pool_layer[0](torch.cat((hidden_rep[0], node_weights), dim=1))
+        g_p = F.relu(g_p)
         graph_pool = F.softmax(graph_pool.mul(g_p.transpose(0, 1)), dim=1)
 
         # perform pooling over all nodes in each graph in every layer
