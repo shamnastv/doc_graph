@@ -51,9 +51,16 @@ for doc_content in doc_content_list:
             word_freq[word] = 1
 
 a1_sorted_keys = sorted(word_freq, key=word_freq.get, reverse=True)
+freq = {}
 for r in a1_sorted_keys:
-    print(r, word_freq[r])
+    if word_freq[r] in freq:
+        freq[word_freq[r]] += 1
+    else:
+        freq[word_freq[r]] = 1
+    if word_freq[r] > 2:
+        print(r, word_freq[r])
 
+print(freq)
 sys.exit()
 
 clean_docs = []
