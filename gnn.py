@@ -37,6 +37,7 @@ class GNN(nn.Module):
         self.w1 = nn.Parameter(torch.zeros(self.num_layers))
         # self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
         self.beta = beta
+        self.do_once = True
 
         # for layer in self.layers:
         #     if layer == 0:
@@ -296,7 +297,11 @@ class GNN(nn.Module):
             # g_p = F.dropout(g_p, .1, self.training)
             # graph_pool = graph_pool.mul(g_p.transpose(0, 1))
             g_p = F.relu(self.graph_pool_layer[layer](torch.cat((h, node_weights), dim=1)))
-            graph_pool = F.softmax(graph_pool.mul(g_p.transpose(0, 1)), dim=1)
+            graph_pool = F.softmax(graph_pool * g_p.transpose(0, 1), dim=1)
+
+            if self.do_once:
+                print(graph_pool)
+                self.do_once = False
 
             pooled_h = torch.spmm(graph_pool, h)
             # if Cl is None:
