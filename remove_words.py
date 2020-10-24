@@ -71,7 +71,7 @@ for doc_content in doc_content_list:
     doc_words = []
     for word in words:
         # word not in stop_words and word_freq[word] >= 5
-        if dataset == 'mr' and word_freq[word] >= 2:
+        if dataset == 'mr' and word_freq[word] >= min_freq:
             doc_words.append(word)
         elif word not in stop_words and word_freq[word] >= min_freq:
             doc_words.append(word)
