@@ -183,7 +183,7 @@ class GNN(nn.Module):
         idx = torch.LongTensor(idx).transpose(0, 1)
         graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([len(batch_graph), start_idx[-1]]))
 
-        return graph_pool.to(self.device), elem.reshape(-1, 1)
+        return graph_pool.to(self.device), elem.reshape(-1, 1).to(self.device)
 
     def maxpool(self, h, padded_neighbor_list):
         # Element-wise minimum will never affect max-pooling
