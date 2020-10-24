@@ -83,6 +83,8 @@ for doc_content in doc_content_list:
         print(doc_content)
         removed_words_ls = []
         for word in words:
+            if dataset == 'mr':
+                doc_words.append(word)
             # word not in stop_words and word_freq[word] >= 5
             if word not in stop_words and word_freq[word] >= 5:
                 doc_words.append(word)
