@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from attention import Attention
 from mlp import MLP
 from util import row_norm
 
@@ -69,11 +70,11 @@ class GNN(nn.Module):
         for layer in range(num_layers):
             if layer == 0:
                 self.linears_prediction.append(nn.Linear(input_dim, output_dim))
-                self.graph_pool_layer.append(nn.Linear(input_dim, 1))
+                self.graph_pool_layer.append(Attention(input_dim))
                 self.cluster_cat.append(nn.Linear(input_dim * 2, 1))
             else:
                 self.linears_prediction.append(nn.Linear(hidden_dim, output_dim))
-                self.graph_pool_layer.append(nn.Linear(hidden_dim, 1))
+                self.graph_pool_layer.append(Attention(hidden_dim))
                 self.cluster_cat.append(nn.Linear(hidden_dim * 2, 1))
         self.reset_parameters()
 
