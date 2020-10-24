@@ -70,6 +70,8 @@ for doc_content in doc_content_list:
     words = temp.split()
     doc_words = []
     for word in words:
+        if word == ',':
+            continue
         # word not in stop_words and word_freq[word] >= 5
         if dataset == 'mr' and word_freq[word] >= min_freq:
             doc_words.append(word)
@@ -83,8 +85,6 @@ for doc_content in doc_content_list:
         print(doc_content)
         removed_words_ls = []
         for word in words:
-            if word == ',':
-                continue
             if dataset == 'mr':
                 doc_words.append(word)
             # word not in stop_words and word_freq[word] >= 5
