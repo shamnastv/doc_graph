@@ -57,8 +57,8 @@ for r in a1_sorted_keys:
         freq[word_freq[r]] += 1
     else:
         freq[word_freq[r]] = 1
-    if word_freq[r] > 2:
-        print(r, word_freq[r])
+    # if word_freq[r] > 2:
+    #     print(r, word_freq[r])
 
 print(freq)
 
@@ -83,6 +83,8 @@ for doc_content in doc_content_list:
         print(doc_content)
         removed_words_ls = []
         for word in words:
+            if word == ',':
+                continue
             if dataset == 'mr':
                 doc_words.append(word)
             # word not in stop_words and word_freq[word] >= 5
