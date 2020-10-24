@@ -17,6 +17,8 @@ class Attention(nn.Module):
 
         self.num_layers = num_layers
         self.activation = activation
+        self.linears = torch.nn.ModuleList()
+        self.batch_norms = torch.nn.ModuleList()
 
         if hidden_dim is None:
             hidden_dim = input_dim
