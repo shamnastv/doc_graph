@@ -427,61 +427,66 @@ def main():
         cl = None
 
         print(time.time() - start_time, 's Training starts', flush=True)
-        for epoch in range(10):
-            avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, -epoch,
+        for epoch in range(args.epochs + 1):
+            avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
                                          train_size, ge, cl, initial=True)
-            acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, -epoch, ge, cl)
+            acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
+            print("")
+
+            if epoch > max_acc_epoch + args.early_stop \
+                    and epoch > args.early_stop:
+                break
 
         print('Embedding Initialized', flush=True)
 
         # for i in range(len(ge)):
         #     ge[i] = row_norm(ge_new[i])
-        ge = ge_new
-
-        idx = np.random.permutation(len(ge[0]))[:num_classes]
-        ge_tmp = [ge_t[idx] for ge_t in ge]
-        model_c.init_centres(ge_tmp)
-
-        model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
-                      num_classes,
-                      args.final_dropout,
-                      args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
-
-        optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5)
-
-        for epoch in range(1, args.epochs + 1):
-            avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer,
-                                         optimizer_c, epoch, train_size, ge, cl)
-            acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
-            scheduler.step()
-
-            if epoch % args.iters_per_epoch == 0 or True:
-                # for i in range(len(ge)):
-                #     ge[i] = row_norm(ge_new[i])
-                ge = ge_new
-
-                # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
-                #                     args.num_mlp_layers_c).to(device)
-                # model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
-                #               num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type,
-                #               args.neighbor_pooling_type, device, args.beta).to(device)
-                #
-                # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-                # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-                # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
-                # print(time.time() - start_time, 'embeddings updated.', flush=True)
-
-            if not args.filename == "":
-                with open(args.filename, 'w') as f:
-                    f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
-                    f.write("\n")
-            print("")
-            if epoch > max_acc_epoch + args.early_stop \
-                    and epoch > args.early_stop \
-                    and (epoch % args.iters_per_epoch > args.early_stop // 2
-                         or epoch % args.iters_per_epoch > args.iters_per_epoch // 2):
-                break
+        # ge = ge_new
+        #
+        # idx = np.random.permutation(len(ge[0]))[:num_classes]
+        # ge_tmp = [ge_t[idx] for ge_t in ge]
+        # model_c.init_centres(ge_tmp)
+        #
+        # model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
+        #               num_classes,
+        #               args.final_dropout,
+        #               args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
+        #
+        # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+        # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5)
+        #
+        # for epoch in range(1, args.epochs + 1):
+        #     avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer,
+        #                                  optimizer_c, epoch, train_size, ge, cl)
+        #     acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
+        #     scheduler.step()
+        #
+        #     if epoch % args.iters_per_epoch == 0 or True:
+        #         # for i in range(len(ge)):
+        #         #     ge[i] = row_norm(ge_new[i])
+        #         ge = ge_new
+        #
+        #         # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
+        #         #                     args.num_mlp_layers_c).to(device)
+        #         # model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
+        #         #               num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type,
+        #         #               args.neighbor_pooling_type, device, args.beta).to(device)
+        #         #
+        #         # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+        #         # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
+        #         # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+        #         # print(time.time() - start_time, 'embeddings updated.', flush=True)
+        #
+        #     if not args.filename == "":
+        #         with open(args.filename, 'w') as f:
+        #             f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
+        #             f.write("\n")
+        #     print("")
+        #     if epoch > max_acc_epoch + args.early_stop \
+        #             and epoch > args.early_stop \
+        #             and (epoch % args.iters_per_epoch > args.early_stop // 2
+        #                  or epoch % args.iters_per_epoch > args.iters_per_epoch // 2):
+        #         break
 
         print('=' * 200)
         print('K : ', k, 'Time : ', abs(time.time() - start_time))
