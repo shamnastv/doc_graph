@@ -71,7 +71,7 @@ for doc_content in doc_content_list:
     doc_words = []
     for word in words:
         # word not in stop_words and word_freq[word] >= 5
-        if dataset == 'mr':
+        if dataset == 'mr' and word_freq[word] >= 2:
             doc_words.append(word)
         elif word not in stop_words and word_freq[word] >= min_freq:
             doc_words.append(word)
@@ -89,8 +89,8 @@ for doc_content in doc_content_list:
             elif word not in stop_words:
                 removed_words_ls.append(word)
 
-    if len(doc_words) == 1:
-        print(doc_words)
+    if len(doc_words) == 0:
+        print(doc_content)
 
     removed_words.update(removed_words_ls)
 
