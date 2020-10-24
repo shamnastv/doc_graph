@@ -302,7 +302,7 @@ class GNN(nn.Module):
             if self.do_once:
                 print(g_p)
             graph_pool = graph_pool * g_p.transpose(0, 1)
-            graph_pool = row_norm(graph_pool, p=1)
+            # graph_pool = row_norm(graph_pool, p=1)
 
             if self.do_once:
                 print(graph_pool)
