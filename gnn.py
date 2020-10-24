@@ -287,13 +287,15 @@ class GNN(nn.Module):
         score_over_layer = 0
         pooled_h_ls = []
 
-        g_p = F.sigmoid(self.graph_pool_layer[0](hidden_rep[0]))
+        g_p = self.graph_pool_layer[0](hidden_rep[0])
+        graph_pool = F.softmax(graph_pool.mul(g_p.transpose(0, 1)))
+
 
         # perform pooling over all nodes in each graph in every layer
         for layer, h in enumerate(hidden_rep):
             # g_p = F.sigmoid(self.graph_pool_layer[layer](h))
             # g_p = F.dropout(g_p, .1, self.training)
-            graph_pool = graph_pool.mul(g_p.transpose(0, 1))
+            # graph_pool = graph_pool.mul(g_p.transpose(0, 1))
             pooled_h = torch.spmm(graph_pool, h)
             # if Cl is None:
             #     tmp2 = torch.cat((pooled_h, pooled_h.new_zeros(pooled_h.shape)), dim=1)
