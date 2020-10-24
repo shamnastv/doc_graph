@@ -61,7 +61,6 @@ for r in a1_sorted_keys:
         print(r, word_freq[r])
 
 print(freq)
-sys.exit()
 
 clean_docs = []
 removed_words = set()
@@ -89,6 +88,9 @@ for doc_content in doc_content_list:
                 doc_words.append(word)
             elif word not in stop_words:
                 removed_words_ls.append(word)
+
+    if len(doc_words) == 0:
+        print(doc_words)
 
     removed_words.update(removed_words_ls)
 
