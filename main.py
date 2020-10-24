@@ -161,55 +161,55 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         else:
             ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
 
-    if not initial:
-        if epoch % total_itr_c == 1:
-            divisor = math.log(args.alpha, total_itr_c)
-            alpha = args.alpha
-            for itr in range(total_itr_c):
-                if itr % 3 == 1:
-                    alpha = alpha / divisor
-                loss_c_accum = 0
-                loss1_accum = 0
-                loss2_accum = 0
-                full_idx = np.random.permutation(total_size)
-                for i in range(0, total_size, cl_batch_size):
-                    selected_idx = full_idx[i:i + cl_batch_size]
-                    ge_tmp = [ge_t[selected_idx] for ge_t in ge]
-                    cl_new = model_c(ge_tmp)
-                    loss1_c = 0
-
-                    score_of_layers = F.softmax(model_c.score_of_layers, dim=-1)
-                    for layer in range(0, args.num_layers):
-                        loss1_c += score_of_layers[layer] * my_loss_1(model_c.centres[layer], ge_tmp[layer], cl_new)
-                    loss2_c = alpha * my_loss_2(cl_new, device)
-
-                    loss_c = loss1_c + loss2_c
-                    if optimizer_c is not None:
-                        optimizer_c.zero_grad()
-                        loss_c.backward()
-                        optimizer_c.step()
-                    loss_c_accum += loss_c.detach().cpu().item()
-                    loss1_accum += loss1_c.detach().cpu().item()
-                    loss2_accum += loss2_c.detach().cpu().item()
-                    cl_new = cl_new.detach()
-
-                print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum, 'loss1 : ',
-                      loss1_accum, 'loss2 : ', loss2_accum)
-                with torch.no_grad():
-                    cl = model_c(ge)
-                print_cluster(cl)
-            model_c.eval()
-            with torch.no_grad():
-                cl = model_c(ge)
-            print_cluster(cl)
-            print(F.softmax(model_c.score_of_layers, dim=-1))
-            print('', flush=True)
-        # else:
-        #     with torch.no_grad():
-        #         cl = model_c(ge)
-
-    else:
-        cl = None
+    # if not initial:
+    #     if epoch % total_itr_c == 1:
+    #         divisor = math.log(args.alpha, total_itr_c)
+    #         alpha = args.alpha
+    #         for itr in range(total_itr_c):
+    #             if itr % 3 == 1:
+    #                 alpha = alpha / divisor
+    #             loss_c_accum = 0
+    #             loss1_accum = 0
+    #             loss2_accum = 0
+    #             full_idx = np.random.permutation(total_size)
+    #             for i in range(0, total_size, cl_batch_size):
+    #                 selected_idx = full_idx[i:i + cl_batch_size]
+    #                 ge_tmp = [ge_t[selected_idx] for ge_t in ge]
+    #                 cl_new = model_c(ge_tmp)
+    #                 loss1_c = 0
+    #
+    #                 score_of_layers = F.softmax(model_c.score_of_layers, dim=-1)
+    #                 for layer in range(0, args.num_layers):
+    #                     loss1_c += score_of_layers[layer] * my_loss_1(model_c.centres[layer], ge_tmp[layer], cl_new)
+    #                 loss2_c = alpha * my_loss_2(cl_new, device)
+    #
+    #                 loss_c = loss1_c + loss2_c
+    #                 if optimizer_c is not None:
+    #                     optimizer_c.zero_grad()
+    #                     loss_c.backward()
+    #                     optimizer_c.step()
+    #                 loss_c_accum += loss_c.detach().cpu().item()
+    #                 loss1_accum += loss1_c.detach().cpu().item()
+    #                 loss2_accum += loss2_c.detach().cpu().item()
+    #                 cl_new = cl_new.detach()
+    #
+    #             print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum, 'loss1 : ',
+    #                   loss1_accum, 'loss2 : ', loss2_accum)
+    #             with torch.no_grad():
+    #                 cl = model_c(ge)
+    #             print_cluster(cl)
+    #         model_c.eval()
+    #         with torch.no_grad():
+    #             cl = model_c(ge)
+    #         print_cluster(cl)
+    #         print(F.softmax(model_c.score_of_layers, dim=-1))
+    #         print('', flush=True)
+    #     # else:
+    #     #     with torch.no_grad():
+    #     #         cl = model_c(ge)
+    #
+    # else:
+    #     cl = None
 
     idx_train = np.random.permutation(train_size)
     loss_accum = 0
@@ -233,21 +233,21 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
 
         loss = loss.detach().cpu().numpy()
         loss_accum += loss
-        for layer in range(args.num_layers):
-            ge_new[layer][selected_idx] = pooled_h[layer].detach()
+        # for layer in range(args.num_layers):
+        #     ge_new[layer][selected_idx] = pooled_h[layer].detach()
 
-    with torch.no_grad():
-        # model_e.eval()
-        idx_test = np.arange(train_size, total_size)
-        for i in range(0, test_size, args.batch_size):
-            selected_idx = idx_test[i:i + args.batch_size]
-            batch_graph = [graphs[idx] for idx in selected_idx]
-            if len(selected_idx) == 0:
-                continue
-            output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
-
-            for layer in range(args.num_layers):
-                ge_new[layer][selected_idx] = pooled_h[layer]
+    # with torch.no_grad():
+    #     # model_e.eval()
+    #     idx_test = np.arange(train_size, total_size)
+    #     for i in range(0, test_size, args.batch_size):
+    #         selected_idx = idx_test[i:i + args.batch_size]
+    #         batch_graph = [graphs[idx] for idx in selected_idx]
+    #         if len(selected_idx) == 0:
+    #             continue
+    #         output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
+    #
+    #         for layer in range(args.num_layers):
+    #             ge_new[layer][selected_idx] = pooled_h[layer]
 
     print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', abs(time.time() - start_time))
     return loss_accum, ge_new, cl
@@ -271,8 +271,8 @@ def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device)
         with torch.no_grad():
             output, pooled_h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
         outputs.append(output)
-        for layer in range(args.num_layers):
-            ge_new[layer][sampled_idx] = pooled_h[layer]
+        # for layer in range(args.num_layers):
+        #     ge_new[layer][sampled_idx] = pooled_h[layer]
 
     return torch.cat(outputs, 0), ge_new
 

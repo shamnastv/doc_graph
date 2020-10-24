@@ -296,17 +296,19 @@ class GNN(nn.Module):
             # g_p = F.sigmoid(self.graph_pool_layer[layer](h))
             # g_p = F.dropout(g_p, .1, self.training)
             # graph_pool = graph_pool.mul(g_p.transpose(0, 1))
-            if self.do_once:
-                print(graph_pool)
+            # if self.do_once:
+            #     print(graph_pool)
+            #
             g_p = torch.sigmoid(self.graph_pool_layer[layer](torch.cat((h, node_weights), dim=1)))
-            if self.do_once:
-                print(g_p)
+
+            # if self.do_once:
+            #     print(g_p)
             graph_pool = graph_pool * g_p.transpose(0, 1)
             graph_pool = graph_pool / torch.mm(graph_pool, torch.ones((graph_pool.shape[1], 1)).to(self.device))
 
-            if self.do_once:
-                print(graph_pool)
-                self.do_once = False
+            # if self.do_once:
+            #     print(graph_pool)
+            #     self.do_once = False
 
             pooled_h = torch.spmm(graph_pool, h)
             # if Cl is None:
@@ -327,6 +329,6 @@ class GNN(nn.Module):
             # if layer == self.num_layers - 1:
             #     score_over_layer += self.linears_prediction[layer](pooled_h)
             score_over_layer += self.linears_prediction[layer](pooled_h)
-            pooled_h_ls.append(pooled_h)
+            # pooled_h_ls.append(pooled_h)
 
         return score_over_layer, pooled_h_ls
