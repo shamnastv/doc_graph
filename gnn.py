@@ -300,11 +300,10 @@ class GNN(nn.Module):
                 print(graph_pool)
             g_p = F.relu(self.graph_pool_layer[layer](torch.cat((h, node_weights), dim=1)))
             if self.do_once:
-                print(graph_pool)
+                print(g_p)
             graph_pool = graph_pool * g_p.transpose(0, 1)
             if self.do_once:
                 print(graph_pool)
-
             graph_pool = F.softmax(graph_pool, dim=1)
 
             if self.do_once:
