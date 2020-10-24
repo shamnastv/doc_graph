@@ -22,8 +22,8 @@ def normalize_adj(adj):
     return adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
 
 
-def row_norm(x):
-    norm = torch.norm(x, p=2, dim=1, keepdim=True)
+def row_norm(x, p=2):
+    norm = torch.norm(x, p=p, dim=1, keepdim=True)
     norm[norm < .00001] = .00001
     return x.div(norm)
 

@@ -298,13 +298,11 @@ class GNN(nn.Module):
             # graph_pool = graph_pool.mul(g_p.transpose(0, 1))
             if self.do_once:
                 print(graph_pool)
-            g_p = F.relu(self.graph_pool_layer[layer](torch.cat((h, node_weights), dim=1)))
+            g_p = torch.sigmoid(self.graph_pool_layer[layer](torch.cat((h, node_weights), dim=1)))
             if self.do_once:
                 print(g_p)
             graph_pool = graph_pool * g_p.transpose(0, 1)
-            if self.do_once:
-                print(graph_pool)
-            graph_pool = F.softmax(graph_pool, dim=1)
+            graph_pool = row_norm(graph_pool, p=1)
 
             if self.do_once:
                 print(graph_pool)
