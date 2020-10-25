@@ -1,4 +1,7 @@
+from math import log
 from queue import Queue
+import matplotlib.pyplot as plt
+
 
 import numpy as np
 import time
@@ -11,12 +14,17 @@ def test():
     print(time.time())
 
 
+for i in range(1, 10000, 10):
+    print(i, log(i/(i+1)))
+
+
+
 # X = torch.tensor([7, 4])
-centroids = torch.FloatTensor([[3, 5], [5, 5], [1, 0]])
-emb = torch.FloatTensor([1, 2])
-tmp = torch.sum(torch.sub(centroids, emb) ** 2, dim=1, keepdim=True)
-# cg = F.softmax(y, dim=-1)
-print(tmp)
+# centroids = torch.FloatTensor([[3, 5], [5, 5], [1, 0]])
+# emb = torch.FloatTensor([1, 2])
+# tmp = torch.sum(torch.sub(centroids, emb) ** 2, dim=1, keepdim=True)
+# # cg = F.softmax(y, dim=-1)
+# print(tmp)
 
 # print(X.shape)
 # print(y.shape)

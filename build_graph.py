@@ -135,7 +135,7 @@ def build_graph(config='param'):
                 tmp_word_set.add(word)
 
     for word in idf:
-        idf[word] = log(total_size/idf[word])
+        idf[word] = log(total_size/(1 + idf[word])) + 1
 
     doc_vocab = list(doc_word_set)
     doc_vocab_size = len(doc_vocab)
