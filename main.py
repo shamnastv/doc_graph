@@ -400,12 +400,11 @@ def main():
     global d
     d = device
     all_graphs, num_classes, train_size, word_vectors, adj_g = create_gaph(args)
-    # graphs = all_graphs
+
     adj_g = normalize_adj(adj_g)
     i = torch.LongTensor((adj_g.row, adj_g.col))
     v = torch.FloatTensor(adj_g.data)
-    shape = adj_g.shape
-    adj_g = torch.sparse.FloatTensor(i, v, torch.Size(shape)).to(device)
+    adj_g = torch.sparse.FloatTensor(i, v, torch.Size(adj_g.shape)).to(device)
     word_vectors = word_vectors.to(device)
 
     acc_detais = []

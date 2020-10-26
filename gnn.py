@@ -207,56 +207,24 @@ class GNN(nn.Module):
                 # If average pooling
                 degree = torch.spmm(Adj_block, torch.ones((Adj_block.shape[0], 1)).to(self.device))
                 pooled = pooled / degree
-
-        # Re-weights the center node representation when aggregating it with its neighbors
-        # pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
-        # if Cl is not None:
-        #     # mul_fact = self.beta / H.shape[0]
-        #     tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-        #     tmp = torch.spmm(tmp, ge)
-        #     tmp = row_norm(tmp)
-        #     tmp = (self.beta + self.w1[layer]) * tmp
-        #     # tmp = self.beta * tmp
-        #     # if self.training:
-        #     #     if bool(random.getrandbits(1)):
-        #     #         tmp = 0 * tmp
-        #     # else:
-        #     #     tmp = .5 * tmp
-        #     pooled = pooled + torch.spmm(graph_pool_n, tmp)
         pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](h)
         h = F.relu(h)
         # h = F.leaky_relu(h)
-        # h = F.tanh(h)
         h = F.dropout(h, self.final_dropout, training=self.training)
         return h
 
-    def first_layer_eps(self, h, adj):
+    def first_layer_eps(self, h, adj, node_features):
         # pooling neighboring nodes and center nodes separately by epsilon reweighting.
 
         pooled = torch.spmm(adj, h)
-        # Re-weights the center node representation when aggregating it with its neighbors
-        # pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
-        # if Cl is not None:
-        #     # mul_fact = self.beta / H.shape[0]
-        #     tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-        #     tmp = torch.spmm(tmp, ge)
-        #     tmp = row_norm(tmp)
-        #     tmp = (self.beta + self.w1[layer]) * tmp
-        #     # tmp = self.beta * tmp
-        #     # if self.training:
-        #     #     if bool(random.getrandbits(1)):
-        #     #         tmp = 0 * tmp
-        #     # else:
-        #     #     tmp = .5 * tmp
-        #     pooled = pooled + torch.spmm(graph_pool_n, tmp)
-        pooled = pooled + (1 + self.eps[0]) * h
+        # pooled = pooled + (1 + self.eps[0]) * h
+        pooled = pooled[node_features]
         h = self.mlp_es[0](pooled)
-        h = self.batch_norms[0](h)
+        # h = self.batch_norms[0](h)
         h = F.relu(h)
         # h = F.leaky_relu(h)
-        # h = F.tanh(h)
         h = F.dropout(h, self.final_dropout, training=self.training)
         return h
 
@@ -296,10 +264,10 @@ class GNN(nn.Module):
             Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
 
         # list of hidden representation at each layer (including input)
-        X_concat = torch.cat([word_vectors[graph.node_features] for graph in batch_graph], 0).to(self.device)
+        node_features = [graph.node_features for graph in batch_graph]
+        X_concat = torch.cat(word_vectors[node_features], 0).to(self.device)
         hidden_rep = [X_concat]
-        h = self.first_layer_eps(word_vectors, adj_g)
-        h = torch.cat([h[graph.node_features] for graph in batch_graph], 0).to(self.device)
+        h = self.first_layer_eps(word_vectors, adj_g, node_features)
         hidden_rep.append(h)
 
         for layer in range(1, self.num_layers - 1):
