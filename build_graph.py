@@ -123,7 +123,7 @@ def build_graph(config='param'):
     print(label_list)
 
     # Creating word embeddding
-    word_to_vec = {}
+    word_to_id = {}
     doc_word_set = set()
     idf = {}
     for doc_words in shuffle_doc_words_list:
@@ -170,7 +170,7 @@ def build_graph(config='param'):
         sys.exit()
 
     for i in range(doc_vocab_size):
-        word_to_vec[doc_vocab[i]] = i
+        word_to_id[doc_vocab[i]] = i
 
     feature_list = []
     word_freq_list = []
@@ -204,7 +204,7 @@ def build_graph(config='param'):
         features = []
         wf = []
         for i in range(vocab_size):
-            features.append(word_to_vec[vocab[i]])
+            features.append(word_to_id[vocab[i]])
             wf.append(word_freq[vocab[i]] * idf[word])
 
         features = np.array(features)
