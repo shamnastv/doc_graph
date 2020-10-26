@@ -68,7 +68,7 @@ class GNN(nn.Module):
         self.linears_prediction = torch.nn.ModuleList()
         self.graph_pool_layer = torch.nn.ModuleList()
         # self.cluster_cat = torch.nn.ModuleList()
-        for layer in range(num_layers + 1):
+        for layer in range(num_layers):
             if layer == 0:
                 self.linears_prediction.append(nn.Linear(input_dim, output_dim))
                 self.graph_pool_layer.append(Attention(input_dim + 1))
@@ -302,7 +302,7 @@ class GNN(nn.Module):
         h = torch.cat([h[graph.node_features] for graph in batch_graph], 0).to(self.device)
         hidden_rep.append(h)
 
-        for layer in range(self.num_layers - 1):
+        for layer in range(1, self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
                 h = self.next_layer_eps(h, layer, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and self.learn_eps:
