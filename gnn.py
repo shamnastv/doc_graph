@@ -217,7 +217,8 @@ class GNN(nn.Module):
 
     def first_layer_eps(self, h, adj):
         # pooling neighboring nodes and center nodes separately by epsilon reweighting.
-
+        print(h.shape)
+        print(adj.shape)
         pooled = torch.mm(adj, h)
         # pooled = pooled + (1 + self.eps[0]) * h
         h = self.mlp_es[0](pooled)
