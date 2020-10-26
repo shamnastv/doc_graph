@@ -330,7 +330,7 @@ class GNN(nn.Module):
             #     print(graph_pool)
             #
             g_p = torch.sigmoid(self.graph_pool_layer[layer](torch.cat((h, node_weights), dim=1)))
-            g_p = F.dropout(g_p, p=.2, training=self.training)
+            # g_p = F.dropout(g_p, p=.2, training=self.training)
             e = .0000001
 
             # if self.do_once:
