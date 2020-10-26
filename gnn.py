@@ -68,7 +68,7 @@ class GNN(nn.Module):
         self.linears_prediction = torch.nn.ModuleList()
         self.graph_pool_layer = torch.nn.ModuleList()
         # self.cluster_cat = torch.nn.ModuleList()
-        for layer in range(num_layers):
+        for layer in range(num_layers + 1):
             if layer == 0:
                 self.linears_prediction.append(nn.Linear(input_dim, output_dim))
                 self.graph_pool_layer.append(Attention(input_dim + 1))
@@ -232,6 +232,34 @@ class GNN(nn.Module):
         h = F.dropout(h, self.final_dropout, training=self.training)
         return h
 
+    def first_layer_eps(self, h, adj):
+        # pooling neighboring nodes and center nodes separately by epsilon reweighting.
+
+        pooled = torch.spmm(adj, h)
+        # Re-weights the center node representation when aggregating it with its neighbors
+        # pooled = (1 + self.w1[layer]) * pooled + (1 + self.eps[layer]) * h
+        # if Cl is not None:
+        #     # mul_fact = self.beta / H.shape[0]
+        #     tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
+        #     tmp = torch.spmm(tmp, ge)
+        #     tmp = row_norm(tmp)
+        #     tmp = (self.beta + self.w1[layer]) * tmp
+        #     # tmp = self.beta * tmp
+        #     # if self.training:
+        #     #     if bool(random.getrandbits(1)):
+        #     #         tmp = 0 * tmp
+        #     # else:
+        #     #     tmp = .5 * tmp
+        #     pooled = pooled + torch.spmm(graph_pool_n, tmp)
+        pooled = pooled + (1 + self.eps[0]) * h
+        h = self.mlp_es[0](pooled)
+        h = self.batch_norms[0](h)
+        h = F.relu(h)
+        # h = F.leaky_relu(h)
+        # h = F.tanh(h)
+        h = F.dropout(h, self.final_dropout, training=self.training)
+        return h
+
     def next_layer(self, h, layer, padded_neighbor_list=None, Adj_block=None):
         # pooling neighboring nodes and center nodes  altogether
 
@@ -258,8 +286,7 @@ class GNN(nn.Module):
         h = F.relu(h)
         return h
 
-    def forward(self, batch_graph, word_vectors):
-        X_concat = torch.cat([word_vectors[graph.node_features] for graph in batch_graph], 0).to(self.device)
+    def forward(self, batch_graph, word_vectors, adj_g):
         graph_pool, node_weights = self.__preprocess_graphpool(batch_graph)
         # graph_pool_n = self.__preprocess_graphpool_n(batch_graph)
 
@@ -269,8 +296,11 @@ class GNN(nn.Module):
             Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
 
         # list of hidden representation at each layer (including input)
+        X_concat = torch.cat([word_vectors[graph.node_features] for graph in batch_graph], 0).to(self.device)
         hidden_rep = [X_concat]
-        h = X_concat
+        h = self.first_layer_eps(word_vectors, adj_g)
+        h = torch.cat([h[graph.node_features] for graph in batch_graph], 0).to(self.device)
+        hidden_rep.append(h)
 
         for layer in range(self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:

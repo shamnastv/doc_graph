@@ -1,5 +1,6 @@
 dataset: 20ng
 window_size: 5
+window_size_g: 10
 save_graph: False
 retrieve_graph: False
 embed_type: fast

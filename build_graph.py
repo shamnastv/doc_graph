@@ -14,7 +14,7 @@ def dump_data(config, data_name, data):
         pickle.dump(data, f)
 
 
-def save_graph(config, ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors):
+def save_graph(config, ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, adj_g):
     dump_data(config, 'ls_adj', ls_adj)
     dump_data(config, 'feature_list', feature_list)
     dump_data(config, 'word_freq_list', word_freq_list)
@@ -22,6 +22,7 @@ def save_graph(config, ls_adj, feature_list, word_freq_list, y, y_hot, train_siz
     dump_data(config, 'y_hot', y_hot)
     dump_data(config, 'train_size', train_size)
     dump_data(config, 'word_vectors', word_vectors)
+    dump_data(config, 'adj_g', adj_g)
 
 
 def read_data(config, dataname):
@@ -37,7 +38,8 @@ def retrieve_graph(config):
     y_hot = read_data(config, 'y_hot')
     train_size = read_data(config, 'train_size')
     word_vectors = read_data(config, 'word_vectors')
-    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors
+    adj_g = read_data(config, 'adj_g')
+    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, adj_g
 
 
 def build_graph(config='param'):
@@ -332,6 +334,85 @@ def build_graph(config='param'):
         #     print(adj)
         index += 1
 
+    # Create global adj matrix
+    windows_g = []
+    window_size_g = param['window_size_g']
+
+    for doc_words in shuffle_doc_words_list:
+        words = doc_words.split()
+        length = len(words)
+        if length <= 1:
+            windows_g.append(words)
+        else:
+            for j in range(2 - window_size_g, length - 1):
+                start = j
+                end = j + window_size_g
+                if start < 0:
+                    start = 0
+                if end > length:
+                    end = length
+                window = words[start: end]
+                windows_g.append(window)
+
+    word_window_freq = {}
+    for window in windows_g:
+        appeared = set()
+        for i in range(len(window)):
+            if window[i] in appeared:
+                continue
+            if window[i] in word_window_freq:
+                word_window_freq[window[i]] += 1
+            else:
+                word_window_freq[window[i]] = 1
+            appeared.add(window[i])
+
+    word_pair_count = {}
+    for window in windows_g:
+        for i in range(1, len(window)):
+            for j in range(0, i):
+                word_i = window[i]
+                word_i_id = word_id_map[word_i]
+                word_j = window[j]
+                word_j_id = word_id_map[word_j]
+                if word_i_id == word_j_id:
+                    continue
+                word_pair_str = str(word_i_id) + ',' + str(word_j_id)
+                if word_pair_str in word_pair_count:
+                    word_pair_count[word_pair_str] += 1
+                else:
+                    word_pair_count[word_pair_str] = 1
+                # two orders
+                word_pair_str = str(word_j_id) + ',' + str(word_i_id)
+                if word_pair_str in word_pair_count:
+                    word_pair_count[word_pair_str] += 1
+                else:
+                    word_pair_count[word_pair_str] = 1
+
+    row = []
+    col = []
+    weight = []
+
+    # pmi as weights
+    num_window = len(windows)
+
+    for key in word_pair_count:
+        temp = key.split(',')
+        i = int(temp[0])
+        j = int(temp[1])
+        count = word_pair_count[key]
+        word_freq_i = word_window_freq[doc_vocab[i]]
+        word_freq_j = word_window_freq[doc_vocab[j]]
+        pmi = log((1.0 * count / num_window) /
+                  (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
+        if pmi <= 0:
+            continue
+        row.append(i)
+        col.append(j)
+        weight.append(pmi)
+
+    adj_g = sp.csr_matrix(
+        (weight, (row, col)), shape=(doc_vocab_size, doc_vocab_size))
+
     print('total docs : ', len(ls_adj))
     print('total edges : ', total_edges)
     print('total_possible_edges : ', total_possible_edges)
@@ -339,9 +420,9 @@ def build_graph(config='param'):
 
     if param['save_graph']:
         save_graph('saved_graphs/data_' + config, ls_adj, feature_list, word_freq_list, y,
-                   y_hot, train_size, word_vectors)
+                   y_hot, train_size, word_vectors, adj_g)
         
-    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors
+    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, adj_g
 
 
 def main():
