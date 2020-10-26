@@ -258,8 +258,8 @@ class GNN(nn.Module):
         h = F.relu(h)
         return h
 
-    def forward(self, batch_graph):
-        X_concat = torch.cat([graph.node_features for graph in batch_graph], 0).to(self.device)
+    def forward(self, batch_graph, word_vectors):
+        X_concat = torch.cat([word_vectors[graph.node_features] for graph in batch_graph], 0).to(self.device)
         graph_pool, node_weights = self.__preprocess_graphpool(batch_graph)
         # graph_pool_n = self.__preprocess_graphpool_n(batch_graph)
 

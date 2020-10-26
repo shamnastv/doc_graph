@@ -14,13 +14,14 @@ def dump_data(config, data_name, data):
         pickle.dump(data, f)
 
 
-def save_graph(config, ls_adj, feature_list, word_freq_list, y, y_hot, train_size):
+def save_graph(config, ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors):
     dump_data(config, 'ls_adj', ls_adj)
     dump_data(config, 'feature_list', feature_list)
     dump_data(config, 'word_freq_list', word_freq_list)
     dump_data(config, 'y', y)
     dump_data(config, 'y_hot', y_hot)
     dump_data(config, 'train_size', train_size)
+    dump_data(config, 'word_vectors', word_vectors)
 
 
 def read_data(config, dataname):
@@ -35,7 +36,8 @@ def retrieve_graph(config):
     y = read_data(config, 'y')
     y_hot = read_data(config, 'y_hot')
     train_size = read_data(config, 'train_size')
-    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size
+    word_vectors = read_data(config, 'word_vectors')
+    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors
 
 
 def build_graph(config='param'):
@@ -143,25 +145,25 @@ def build_graph(config='param'):
     doc_vocab_size = len(doc_vocab)
 
     if param['embed_type'] == 'identity':
-        result = np.identity(doc_vocab_size)
+        word_vectors = np.identity(doc_vocab_size)
 
     elif param['embed_type'] == 'bert':
         # bert_embedding = BertEmbedding(model='bert_24_1024_16')
         bert_embedding = BertEmbedding()
         result_tmp = bert_embedding(doc_vocab)
-        result = []
+        word_vectors = []
         for i in range(doc_vocab_size):
-            result.append(result_tmp[i][1][0])
-        result = np.array(result)
+            word_vectors.append(result_tmp[i][1][0])
+        word_vectors = np.array(word_vectors)
 
     elif param['embed_type'] == 'fast':
         # model = fasttext.train_unsupervised('data/corpus/' + dataset + '.clean.txt', dim=400)
         model = fasttext.load_model('model')
-        result = []
+        word_vectors = []
         for i in range(doc_vocab_size):
-            result.append(model.get_word_vector(doc_vocab[i]))
+            word_vectors.append(model.get_word_vector(doc_vocab[i]))
         model = None
-        result = np.array(result)
+        word_vectors = np.array(word_vectors)
 
     else:
         print('Invalid word embd type')
@@ -202,7 +204,7 @@ def build_graph(config='param'):
         features = []
         wf = []
         for i in range(vocab_size):
-            features.append(result[word_to_vec[vocab[i]]])
+            features.append(word_to_vec[vocab[i]])
             wf.append(word_freq[vocab[i]] * idf[word])
 
         features = np.array(features)
@@ -336,9 +338,10 @@ def build_graph(config='param'):
     print('total dropped edges : ', n_dropped_edges)
 
     if param['save_graph']:
-        save_graph('saved_graphs/data_' + config, ls_adj, feature_list, word_freq_list, y, y_hot, train_size)
+        save_graph('saved_graphs/data_' + config, ls_adj, feature_list, word_freq_list, y,
+                   y_hot, train_size, word_vectors)
         
-    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size
+    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors
 
 
 def main():
