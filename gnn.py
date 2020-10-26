@@ -266,7 +266,7 @@ class GNN(nn.Module):
         # list of hidden representation at each layer (including input)
         node_features = []
         for graph in batch_graph:
-            node_features.append(graph.node_features)
+            node_features.extend(graph.node_features)
         # X_concat = torch.cat([word_vectors[nf] for nf in node_features], 0).to(self.device)
         X_concat = word_vectors[node_features]
         hidden_rep = [X_concat]
