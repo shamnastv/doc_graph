@@ -1,5 +1,7 @@
 import pickle
 import random
+import sys
+
 import numpy as np
 import scipy.sparse as sp
 from math import log, exp
@@ -142,22 +144,31 @@ def build_graph(config='param'):
 
     if param['embed_type'] == 'identity':
         result = np.identity(doc_vocab_size)
-        for i in range(doc_vocab_size):
-            word_to_vec[doc_vocab[i]] = result[i]
 
     elif param['embed_type'] == 'bert':
         # bert_embedding = BertEmbedding(model='bert_24_1024_16')
         bert_embedding = BertEmbedding()
-        result = bert_embedding(doc_vocab)
+        result_tmp = bert_embedding(doc_vocab)
+        result = []
         for i in range(doc_vocab_size):
-            word_to_vec[doc_vocab[i]] = result[i][1][0]
+            result.append(result_tmp[i][1][0])
+        result = np.array(result)
 
     elif param['embed_type'] == 'fast':
         # model = fasttext.train_unsupervised('data/corpus/' + dataset + '.clean.txt', dim=400)
         model = fasttext.load_model('model')
+        result = []
         for i in range(doc_vocab_size):
-            word_to_vec[doc_vocab[i]] = model.get_word_vector(doc_vocab[i])
+            result.append(model.get_word_vector(doc_vocab[i]))
         model = None
+        result = np.array(result)
+
+    else:
+        print('Invalid word embd type')
+        sys.exit()
+
+    for i in range(doc_vocab_size):
+        word_to_vec[doc_vocab[i]] = i
 
     feature_list = []
     word_freq_list = []
@@ -191,7 +202,7 @@ def build_graph(config='param'):
         features = []
         wf = []
         for i in range(vocab_size):
-            features.append(word_to_vec[vocab[i]])
+            features.append(result[word_to_vec[vocab[i]]])
             wf.append(word_freq[vocab[i]] * idf[word])
 
         features = np.array(features)
