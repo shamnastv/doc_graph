@@ -57,7 +57,7 @@ def build_graph(config='param'):
     lines = f.readlines()
     for line in lines:
         doc_name_list.append(line.strip())
-        temp = line.split("\t")
+        temp = line.split('\t')
         if temp[1].find('test') != -1:
             doc_test_list.append(line.strip())
         elif temp[1].find('train') != -1:
@@ -151,6 +151,7 @@ def build_graph(config='param'):
         result = bert_embedding(doc_vocab)
         for i in range(doc_vocab_size):
             word_to_vec[doc_vocab[i]] = result[i][1][0]
+
     elif param['embed_type'] == 'fast':
         # model = fasttext.train_unsupervised('data/corpus/' + dataset + '.clean.txt', dim=400)
         model = fasttext.load_model('model')
@@ -264,10 +265,12 @@ def build_graph(config='param'):
                     if word_i_id == word_j_id:
                         continue
                     word_pair_str = str(word_i_id) + ',' + str(word_j_id)
+
                     if word_pair_str in word_pair_count:
                         word_pair_count[word_pair_str] += 1
                     else:
                         word_pair_count[word_pair_str] = 1
+
                     # two orders
                     word_pair_str = str(word_j_id) + ',' + str(word_i_id)
                     if word_pair_str in word_pair_count:
@@ -301,8 +304,7 @@ def build_graph(config='param'):
             total_edges += 1
 
         node_size = vocab_size
-        adj = sp.csr_matrix(
-            (weight, (row, col)), shape=(node_size, node_size))
+        adj = sp.csr_matrix((weight, (row, col)), shape=(node_size, node_size))
 
         ls_adj.append(adj)
 
@@ -316,10 +318,12 @@ def build_graph(config='param'):
         #     print(feat)
         #     print(adj)
         index += 1
+
     print('total docs : ', len(ls_adj))
     print('total edges : ', total_edges)
     print('total_possible_edges : ', total_possible_edges)
     print('total dropped edges : ', n_dropped_edges)
+
     if param['save_graph']:
         save_graph('saved_graphs/data_' + config, ls_adj, feature_list, word_freq_list, y, y_hot, train_size)
         

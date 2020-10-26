@@ -141,7 +141,7 @@ def print_cluster(cl):
     print('')
 
 
-def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch, train_size, ge, cl, initial=False):
+def train(args, model_e, device, graphs, optimizer, epoch, train_size):
     total_size = len(graphs)
 
     val_size = train_size // args.k_fold
@@ -149,10 +149,10 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     test_size = total_size - train_size
 
     model_e.train()
-    model_c.train()
+    # model_c.train()
 
-    total_itr_c = args.iters_per_epoch
-    cl_batch_size = args.batch_size_cl
+    # total_itr_c = args.iters_per_epoch
+    # cl_batch_size = args.batch_size_cl
 
     # ge_new = []
     # for layer in range(args.num_layers):
@@ -218,7 +218,7 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
         batch_graph = [graphs[idx] for idx in selected_idx]
         if len(selected_idx) == 0:
             continue
-        output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
+        output, pooled_h = model_e(batch_graph, selected_idx)
 
         labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
 
@@ -250,11 +250,11 @@ def train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
     #             ge_new[layer][selected_idx] = pooled_h[layer]
 
     print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', abs(time.time() - start_time))
-    return loss_accum, ge, cl
+    return loss_accum
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
-def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device):
+def pass_data_iteratively(args, model_e, graphs, minibatch_size, device):
     outputs = []
     ge_new = []
     # for layer in range(args.num_layers):
@@ -269,24 +269,24 @@ def pass_data_iteratively(args, model_e, graphs, cl, ge, minibatch_size, device)
         if len(sampled_idx) == 0:
             continue
         with torch.no_grad():
-            output, pooled_h = model_e([graphs[j] for j in sampled_idx], cl, ge, sampled_idx)
+            output = model_e([graphs[j] for j in sampled_idx])
         outputs.append(output)
         # for layer in range(args.num_layers):
         #     ge_new[layer][sampled_idx] = pooled_h[layer]
 
-    return torch.cat(outputs, 0), ge
+    return torch.cat(outputs, 0)
 
 
-def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
+def test(args, model_e, device, graphs, train_size, epoch):
     # model_c.eval()
-    model_e.eval()
+    # model_e.eval()
 
     val_size = train_size // args.k_fold
     train_size = train_size - val_size
 
     # cl = model_c(ge)
 
-    output, ge_new = pass_data_iteratively(args, model_e, graphs, cl, ge, 100, device)
+    output = pass_data_iteratively(args, model_e, graphs, 100, device)
 
     output_train, output_val, output_test = output[:train_size], output[train_size:train_size + val_size]\
         , output[train_size + val_size:]
@@ -325,7 +325,7 @@ def test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl):
         #     for i in range(len(test_graphs)):
         #         print('label : ', labels_test[i].cpu().item(), ' pred : ', pred_test[i].cpu().item())
 
-    return acc_train, acc_test, ge_new
+    return acc_train, acc_test
 
 
 def main():
@@ -337,30 +337,30 @@ def main():
                         help='which gpu to use if any (default: 0)')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='input batch size for training (default: 64)')
-    parser.add_argument('--batch_size_cl', type=int, default=512,
-                        help='input batch size for clustering (default: 512)')
-    parser.add_argument('--iters_per_epoch', type=int, default=50,
-                        help='number of iterations per each epoch (default: 50)')
+    # parser.add_argument('--batch_size_cl', type=int, default=512,
+    #                     help='input batch size for clustering (default: 512)')
+    # parser.add_argument('--iters_per_epoch', type=int, default=50,
+    #                     help='number of iterations per each epoch (default: 50)')
     parser.add_argument('--epochs', type=int, default=350,
                         help='number of epochs to train (default: 350)')
     parser.add_argument('--lr', type=float, default=0.01,
                         help='learning rate (default: 0.01)')
-    parser.add_argument('--lr_c', type=float, default=0.01,
-                        help='learning rate for clustering (default: 0.01)')
+    # parser.add_argument('--lr_c', type=float, default=0.01,
+    #                     help='learning rate for clustering (default: 0.01)')
     parser.add_argument('--seed', type=int, default=0,
                         help='random seed for splitting the dataset into 10 (default: 0)')
     parser.add_argument('--num_layers', type=int, default=5,
                         help='number of layers INCLUDING the input one (default: 5)')
     parser.add_argument('--num_mlp_layers', type=int, default=2,
                         help='number of layers for MLP EXCLUDING the input one (default: 2). 1 means linear model.')
-    parser.add_argument('--num_mlp_layers_c', type=int, default=2,
-                        help='number of layers for MLP clustering EXCLUDING the input one (default: 2). 1 means '
-                             'linear model.')
+    # parser.add_argument('--num_mlp_layers_c', type=int, default=2,
+    #                     help='number of layers for MLP clustering EXCLUDING the input one (default: 2). 1 means '
+    #                          'linear model.')
     parser.add_argument('--hidden_dim', type=int, default=64,
                         help='number of hidden units (default: 64)')
     parser.add_argument('--final_dropout', type=float, default=0.5,
                         help='final layer dropout (default: 0.5)')
-    parser.add_argument('--graph_pooling_type', type=str, default="sum", choices=["sum", "average"],
+    parser.add_argument('--graph_pooling_type', type=str, default="average", choices=["sum", "average"],
                         help='Pooling for over nodes in a graph: sum or average')
     parser.add_argument('--neighbor_pooling_type', type=str, default="sum", choices=["sum", "average", "max"],
                         help='Pooling for over neighboring nodes: sum, average or max')
@@ -373,8 +373,8 @@ def main():
                         help='output file')
     parser.add_argument('--alpha', type=float, default=10000,
                         help='alpha')
-    parser.add_argument('--beta', type=float, default=1,
-                        help='beta')
+    # parser.add_argument('--beta', type=float, default=1,
+    #                     help='beta')
     parser.add_argument('--k_fold', type=int, default=5,
                         help='k_fold')
     parser.add_argument('--early_stop', type=int, default=30,
@@ -410,27 +410,26 @@ def main():
         end = start + val_size
         graphs = all_graphs[:start] + all_graphs[end: train_size] + all_graphs[start:end] + all_graphs[train_size:]
 
-        ge = [None for i in range(args.num_layers)]
+        # ge = [None for i in range(args.num_layers)]
 
-        model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
-                            args.num_mlp_layers_c).to(device)
+        # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
+        #                     args.num_mlp_layers_c).to(device)
         model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
                       num_classes,
                       args.final_dropout,
-                      args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
+                      args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
 
         optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-        optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
+        # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
         # optimizer = optim.SGD(model_e.parameters(), lr=args.lr, momentum=0.9)
         # optimizer_c = optim.SGD(model_c.parameters(), lr=args.lr_c, momentum=0.9)
         # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5)
-        cl = None
+        # cl = None
 
         print(time.time() - start_time, 's Training starts', flush=True)
         for epoch in range(args.epochs + 1):
-            avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer, optimizer_c, epoch,
-                                         train_size, ge, cl, initial=True)
-            acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
+            avg_loss = train(args, model_e, device, graphs, optimizer, epoch, train_size)
+            acc_train, acc_test = test(args, model_e, device, graphs, train_size, epoch)
             print("")
 
             if epoch > max_acc_epoch + args.early_stop \
