@@ -215,14 +215,13 @@ class GNN(nn.Module):
         h = F.dropout(h, self.final_dropout, training=self.training)
         return h
 
-    def first_layer_eps(self, h, adj, node_features):
+    def first_layer_eps(self, h, adj):
         # pooling neighboring nodes and center nodes separately by epsilon reweighting.
 
-        pooled = torch.spmm(adj, h)
+        pooled = torch.mm(adj, h)
         # pooled = pooled + (1 + self.eps[0]) * h
-        pooled = pooled[node_features]
         h = self.mlp_es[0](pooled)
-        # h = self.batch_norms[0](h)
+        h = self.batch_norms[0](h)
         h = F.relu(h)
         # h = F.leaky_relu(h)
         h = F.dropout(h, self.final_dropout, training=self.training)
@@ -264,13 +263,18 @@ class GNN(nn.Module):
             Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
 
         # list of hidden representation at each layer (including input)
-        node_features = []
+        node_ids = []
         for graph in batch_graph:
-            node_features.extend(graph.node_features)
+            node_ids.extend(graph.node_features)
+        unique_ids = list(set(node_ids))
+        h_t = [0] * len(word_vectors)
+
         # X_concat = torch.cat([word_vectors[nf] for nf in node_features], 0).to(self.device)
-        X_concat = word_vectors[node_features]
+        X_concat = word_vectors[node_ids].to(self.device)
         hidden_rep = [X_concat]
-        h = self.first_layer_eps(word_vectors, adj_g, node_features)
+        h_t[unique_ids] = self.first_layer_eps(word_vectors[unique_ids].to(self.device),
+                                               adj_g[unique_ids, unique_ids].to(self.device))
+        h = h_t[node_ids]
         hidden_rep.append(h)
 
         for layer in range(1, self.num_layers - 1):
