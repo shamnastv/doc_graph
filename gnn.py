@@ -264,8 +264,11 @@ class GNN(nn.Module):
             Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
 
         # list of hidden representation at each layer (including input)
-        node_features = [graph.node_features for graph in batch_graph]
-        X_concat = torch.cat(word_vectors[node_features], 0).to(self.device)
+        node_features = []
+        for graph in batch_graph:
+            node_features.append(graph.node_features)
+        # X_concat = torch.cat([word_vectors[nf] for nf in node_features], 0).to(self.device)
+        X_concat = word_vectors[node_features]
         hidden_rep = [X_concat]
         h = self.first_layer_eps(word_vectors, adj_g, node_features)
         hidden_rep.append(h)
