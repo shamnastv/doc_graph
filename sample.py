@@ -21,6 +21,9 @@ x = torch.FloatTensor([[1, 2, 3], [4, 5, 6], [7, 0.8, 9]])
 
 print(np.ix_([1, 2], [0, 2]))
 print(x[np.ix_([1, 2], [0, 2])])
+h_t = [0] * 100
+h_t[1, 4, 5] = [4, 6, 7]
+print(h_t)
 
 # X = torch.tensor([7, 4])
 # centroids = torch.FloatTensor([[3, 5], [5, 5], [1, 0]])

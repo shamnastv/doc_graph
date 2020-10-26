@@ -274,11 +274,12 @@ class GNN(nn.Module):
         # X_concat = torch.cat([word_vectors[nf] for nf in node_features], 0).to(self.device)
         X_concat = word_vectors[node_ids].to(self.device)
         hidden_rep = [X_concat]
-        print(unique_ids)
-        print(np.ix_(unique_ids, unique_ids))
-        h_t[unique_ids] = self.first_layer_eps(word_vectors[unique_ids].to(self.device),
+        h = self.first_layer_eps(word_vectors[unique_ids].to(self.device),
                                                adj_g[np.ix_(unique_ids, unique_ids)].to(self.device))
-        h = h_t[node_ids]
+        for i in len(unique_ids):
+            h_t[unique_ids[i]] = h[i]
+
+        h = torch.cat([h_t[i] for i in node_ids], 0).to(self.device)
         hidden_rep.append(h)
 
         for layer in range(1, self.num_layers - 1):
