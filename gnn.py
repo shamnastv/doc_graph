@@ -217,8 +217,8 @@ class GNN(nn.Module):
 
     def first_layer_eps(self, h, adj):
         # pooling neighboring nodes and center nodes separately by epsilon reweighting.
-        print(h.shape)
-        print(adj.shape)
+        # print(h.shape)
+        # print(adj.shape)
         pooled = torch.mm(adj, h)
         # pooled = pooled + (1 + self.eps[0]) * h
         h = self.mlp_es[0](pooled)
@@ -274,7 +274,7 @@ class GNN(nn.Module):
         X_concat = word_vectors[node_ids].to(self.device)
         hidden_rep = [X_concat]
         h_t[unique_ids] = self.first_layer_eps(word_vectors[unique_ids].to(self.device),
-                                               adj_g[unique_ids, unique_ids].to(self.device))
+                                               adj_g[np.ix_(unique_ids, unique_ids)].to(self.device))
         h = h_t[node_ids]
         hidden_rep.append(h)
 

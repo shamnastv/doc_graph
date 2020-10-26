@@ -14,10 +14,12 @@ def test():
     print(time.time())
 
 
-for i in range(1, 10000, 10):
-    print(i, log(i/(i+1)))
+# for i in range(1, 10000, 10):
+#     print(i, log(i/(i+1)))
 
+x = torch.FloatTensor([[1, 2, 3], [4, 5, 6], [7, 0.8, 9]])
 
+print(x[np.ix_([1, 2], [0, 2])])
 
 # X = torch.tensor([7, 4])
 # centroids = torch.FloatTensor([[3, 5], [5, 5], [1, 0]])
