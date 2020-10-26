@@ -19,6 +19,7 @@ def test():
 
 x = torch.FloatTensor([[1, 2, 3], [4, 5, 6], [7, 0.8, 9]])
 
+print(np.ix_([1, 2], [0, 2]))
 print(x[np.ix_([1, 2], [0, 2])])
 
 # X = torch.tensor([7, 4])
