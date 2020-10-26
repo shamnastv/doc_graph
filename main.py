@@ -218,7 +218,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size):
         batch_graph = [graphs[idx] for idx in selected_idx]
         if len(selected_idx) == 0:
             continue
-        output, pooled_h = model_e(batch_graph, selected_idx)
+        output, pooled_h = model_e(batch_graph)
 
         labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
 
