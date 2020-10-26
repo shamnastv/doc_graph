@@ -371,9 +371,9 @@ def build_graph(config='param'):
         for i in range(1, len(window)):
             for j in range(0, i):
                 word_i = window[i]
-                word_i_id = word_id_map[word_i]
+                word_i_id = word_to_id[word_i]
                 word_j = window[j]
-                word_j_id = word_id_map[word_j]
+                word_j_id = word_to_id[word_j]
                 if word_i_id == word_j_id:
                     continue
                 word_pair_str = str(word_i_id) + ',' + str(word_j_id)
@@ -393,7 +393,7 @@ def build_graph(config='param'):
     weight = []
 
     # pmi as weights
-    num_window = len(windows)
+    num_window = len(windows_g)
 
     for key in word_pair_count:
         temp = key.split(',')
