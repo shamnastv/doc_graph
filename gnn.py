@@ -11,7 +11,7 @@ from util import row_norm
 
 class GNN(nn.Module):
     def __init__(self, num_layers, num_mlp_layers, input_dim, hidden_dim, output_dim, final_dropout, learn_eps,
-                 graph_pooling_type, neighbor_pooling_type, device, beta):
+                 graph_pooling_type, neighbor_pooling_type, device):
         '''
             num_layers: number of layers in the neural networks (INCLUDING the input layer)
             num_mlp_layers: number of layers in mlps (EXCLUDING the input layer)
@@ -36,7 +36,7 @@ class GNN(nn.Module):
         self.eps = nn.Parameter(torch.zeros(self.num_layers - 1))
         self.w1 = nn.Parameter(torch.zeros(self.num_layers))
         # self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
-        self.beta = beta
+        # self.beta = beta
         self.do_once = True
 
         # for layer in self.layers:
