@@ -402,7 +402,7 @@ def main():
     all_graphs, num_classes, train_size, word_vectors, adj_g = create_gaph(args)
     # graphs = all_graphs
     adj_g = normalize_adj(adj_g)
-    i = torch.LongTensor((adj_g.data.row, adj_g.data.col))
+    i = torch.LongTensor((adj_g.row, adj_g.col))
     v = torch.FloatTensor(adj_g.data)
     shape = adj_g.shape
     adj_g = torch.sparse.FloatTensor(i, v, torch.Size(shape)).to(device)
