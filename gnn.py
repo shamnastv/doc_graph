@@ -279,7 +279,7 @@ class GNN(nn.Module):
         for i in range(len(unique_ids)):
             h_t[unique_ids[i]] = h[i]
 
-        h = torch.cat([h_t[i] for i in node_ids], 0).to(self.device)
+        h = torch.stack([h_t[i] for i in node_ids], 0).to(self.device)
         hidden_rep.append(h)
 
         for layer in range(1, self.num_layers - 1):
