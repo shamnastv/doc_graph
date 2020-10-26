@@ -425,7 +425,7 @@ def build_graph(config='param'):
                    y_hot, train_size, word_vectors, adj_g)
 
     if isinstance(word_vectors, int):
-        word_vectors = np.identity()
+        word_vectors = np.identity(word_vectors)
         
     return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, adj_g
 
