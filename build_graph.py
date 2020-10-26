@@ -38,6 +38,8 @@ def retrieve_graph(config):
     y_hot = read_data(config, 'y_hot')
     train_size = read_data(config, 'train_size')
     word_vectors = read_data(config, 'word_vectors')
+    if isinstance(word_vectors, int):
+        word_vectors = np.identity(word_vectors)
     adj_g = read_data(config, 'adj_g')
     return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, adj_g
 
@@ -147,7 +149,7 @@ def build_graph(config='param'):
     doc_vocab_size = len(doc_vocab)
 
     if param['embed_type'] == 'identity':
-        word_vectors = np.identity(doc_vocab_size)
+        word_vectors = doc_vocab_size
 
     elif param['embed_type'] == 'bert':
         # bert_embedding = BertEmbedding(model='bert_24_1024_16')
@@ -421,6 +423,9 @@ def build_graph(config='param'):
     if param['save_graph']:
         save_graph('saved_graphs/data_' + config, ls_adj, feature_list, word_freq_list, y,
                    y_hot, train_size, word_vectors, adj_g)
+
+    if isinstance(word_vectors, int):
+        word_vectors = np.identity()
         
     return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, adj_g
 
