@@ -1,5 +1,5 @@
 dataset: ohsumed
-window_size_g: 7
+window_size_g: 20
 window_size: 5
 save_graph: True
 retrieve_graph: False
