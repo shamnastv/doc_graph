@@ -1,10 +1,12 @@
 import pickle
 import random
 import sys
+import time
 
 import numpy as np
 import scipy.sparse as sp
 from math import log, exp
+from sklearn.decomposition import TruncatedSVD
 
 from util import read_param
 
@@ -45,6 +47,7 @@ def retrieve_graph(config):
 
 
 def build_graph(config='param'):
+    s_t = time.time()
     config_file = 'config/' + config + '.yaml'
     param = read_param(config_file)
     print(param, flush=True)
@@ -153,14 +156,17 @@ def build_graph(config='param'):
 
     elif param['embed_type'] == 'bert':
         # bert_embedding = BertEmbedding(model='bert_24_1024_16')
+        print('start bert ', int(time.time() - s_t))
         bert_embedding = BertEmbedding()
         result_tmp = bert_embedding(doc_vocab)
         word_vectors = []
         for i in range(doc_vocab_size):
             word_vectors.append(result_tmp[i][1][0])
         word_vectors = np.array(word_vectors)
+        print('end bert ', int(time.time() - s_t))
 
     elif param['embed_type'] == 'fast':
+        print('start fast ', int(time.time() - s_t))
         # model = fasttext.train_unsupervised('data/corpus/' + dataset + '.clean.txt', dim=400)
         model = fasttext.load_model('model')
         word_vectors = []
@@ -168,6 +174,7 @@ def build_graph(config='param'):
             word_vectors.append(model.get_word_vector(doc_vocab[i]))
         model = None
         word_vectors = np.array(word_vectors)
+        print('end fast ', int(time.time() - s_t))
 
     elif param['embed_type'] == 'global_pmi':
         pass
@@ -179,6 +186,7 @@ def build_graph(config='param'):
     for i in range(doc_vocab_size):
         word_to_id[doc_vocab[i]] = i
 
+    print('start adj creation ', int(time.time() - s_t))
     feature_list = []
     word_freq_list = []
     ls_adj = []
@@ -338,6 +346,9 @@ def build_graph(config='param'):
         #     print(feat)
         #     print(adj)
         index += 1
+    print('end adj creation ', int(time.time() - s_t))
+    print('start global adj creation ', int(time.time() - s_t))
+
 
     # Create global adj matrix
     windows_g = []
@@ -417,6 +428,7 @@ def build_graph(config='param'):
 
     adj_g = sp.csr_matrix(
         (weight, (row, col)), shape=(doc_vocab_size, doc_vocab_size))
+    print('end global adj creation ', int(time.time() - s_t))
 
     print('total docs : ', len(ls_adj))
     print('total edges : ', total_edges)
@@ -424,7 +436,11 @@ def build_graph(config='param'):
     print('total dropped edges : ', n_dropped_edges)
 
     if param['embed_type'] == 'global_pmi':
-        word_vectors = adj_g.todense()
+        print('start svd ', int(time.time() - s_t))
+        svd = TruncatedSVD(n_components=400, n_iter=7, random_state=42)
+        word_vectors = adj_g + sp.identity(adj_g.shape[0])
+        word_vectors = svd.fit(word_vectors).todense()
+        print('end svd ', int(time.time() - s_t))
 
     if param['save_graph']:
         save_graph('saved_graphs/data_' + config, ls_adj, feature_list, word_freq_list, y,
