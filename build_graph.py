@@ -52,7 +52,7 @@ def build_graph(config='param'):
     param = read_param(config_file)
     print(param, flush=True)
     dataset = param['dataset']
-    
+
     if param['retrieve_graph']:
         return retrieve_graph('saved_graphs/data_' + config)
 
@@ -146,7 +146,7 @@ def build_graph(config='param'):
                 tmp_word_set.add(word)
 
     for word in idf:
-        idf[word] = log(total_size/(1 + idf[word])) + 1
+        idf[word] = log(total_size / (1 + idf[word])) + 1
 
     doc_vocab = list(doc_word_set)
     doc_vocab_size = len(doc_vocab)
@@ -349,7 +349,6 @@ def build_graph(config='param'):
     print('end adj creation ', int(time.time() - s_t))
     print('start global adj creation ', int(time.time() - s_t))
 
-
     # Create global adj matrix
     windows_g = []
     window_size_g = param['window_size_g']
@@ -448,7 +447,7 @@ def build_graph(config='param'):
 
     if isinstance(word_vectors, int):
         word_vectors = np.identity(word_vectors)
-        
+
     return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, adj_g
 
 
