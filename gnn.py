@@ -221,7 +221,7 @@ class GNN(nn.Module):
         # print(h.shape)
         # print(adj.shape)
         pooled = torch.mm(adj, h)
-        # pooled = pooled + (1 + self.eps[0]) * h
+        pooled = pooled + (1 + self.eps[0]) * h
         h = self.mlp_es[0](pooled)
         h = self.batch_norms[0](h)
         h = F.relu(h)
