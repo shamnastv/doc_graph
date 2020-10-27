@@ -268,21 +268,22 @@ class GNN(nn.Module):
         node_ids = []
         for graph in batch_graph:
             node_ids.extend(graph.node_features)
-        unique_ids = list(set(node_ids))
-        h_t = [0] * len(word_vectors)
 
         # X_concat = torch.cat([word_vectors[nf] for nf in node_features], 0).to(self.device)
-        X_concat = word_vectors[node_ids].to(self.device)
-        hidden_rep = [X_concat]
-        h = self.first_layer_eps(word_vectors[unique_ids].to(self.device),
-                                               adj_g[np.ix_(unique_ids, unique_ids)].to(self.device))
-        for i in range(len(unique_ids)):
-            h_t[unique_ids[i]] = h[i]
+        h = word_vectors[node_ids].to(self.device)
+        hidden_rep = [h]
 
-        h = torch.stack([h_t[i] for i in node_ids], 0).to(self.device)
-        hidden_rep.append(h)
+        # unique_ids = list(set(node_ids))
+        # h_t = [0] * len(word_vectors)
+        # h = self.first_layer_eps(word_vectors[unique_ids].to(self.device),
+        #                                        adj_g[np.ix_(unique_ids, unique_ids)].to(self.device))
+        # for i in range(len(unique_ids)):
+        #     h_t[unique_ids[i]] = h[i]
+        #
+        # h = torch.stack([h_t[i] for i in node_ids], 0).to(self.device)
+        # hidden_rep.append(h)
 
-        for layer in range(1, self.num_layers - 1):
+        for layer in range(0, self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
                 h = self.next_layer_eps(h, layer, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and self.learn_eps:
@@ -323,24 +324,7 @@ class GNN(nn.Module):
             #     self.do_once = False
 
             pooled_h = torch.spmm(graph_pool, h)
-            # if Cl is None:
-            #     tmp2 = torch.cat((pooled_h, pooled_h.new_zeros(pooled_h.shape)), dim=1)
-            # else:
-            #     tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-            #     tmp = torch.spmm(tmp, ge[layer])
-            #     # tmp = row_norm(tmp)
-            #     # tmp = (self.beta + self.w1[layer]) * tmp
-            #     # tmp = pooled_h + tmp
-            #     c_c = F.sigmoid(self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1)))
-            #     # c_c = self.cluster_cat[layer](torch.cat((pooled_h, tmp), dim=1))
-            #     tmp2 = torch.cat((pooled_h, tmp * c_c), dim=1)
-            #     # tmp2 = torch.cat((pooled_h, tmp), dim=1)
-
-            # score_over_layer += F.dropout(self.linears_prediction[layer](pooled_h), .3,
-            #                               training=self.training)
-            # if layer == self.num_layers - 1:
-            #     score_over_layer += self.linears_prediction[layer](pooled_h)
             score_over_layer += self.linears_prediction[layer](pooled_h)
-            # pooled_h_ls.append(pooled_h)
+
 
         return score_over_layer

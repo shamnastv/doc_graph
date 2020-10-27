@@ -169,6 +169,9 @@ def build_graph(config='param'):
         model = None
         word_vectors = np.array(word_vectors)
 
+    elif param['embed_type'] == 'global_pmi':
+        pass
+
     else:
         print('Invalid word embd type')
         sys.exit()
@@ -419,6 +422,9 @@ def build_graph(config='param'):
     print('total edges : ', total_edges)
     print('total_possible_edges : ', total_possible_edges)
     print('total dropped edges : ', n_dropped_edges)
+
+    if param['embed_type'] == 'global_pmi':
+        word_vectors = adj_g.todense()
 
     if param['save_graph']:
         save_graph('saved_graphs/data_' + config, ls_adj, feature_list, word_freq_list, y,
