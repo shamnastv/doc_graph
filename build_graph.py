@@ -439,7 +439,7 @@ def build_graph(config='param'):
         print('start svd ', int(time.time() - s_t))
         svd = TruncatedSVD(n_components=400, n_iter=7, random_state=42)
         word_vectors = adj_g + sp.identity(adj_g.shape[0])
-        word_vectors = svd.fit(word_vectors).todense()
+        word_vectors = svd.fit_transform(word_vectors).todense()
         print('end svd ', int(time.time() - s_t))
 
     if param['save_graph']:
