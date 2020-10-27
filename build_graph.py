@@ -356,9 +356,10 @@ def build_graph(config='param'):
     for doc_words in shuffle_doc_words_list:
         words = doc_words.split()
         length = len(words)
-        if length <= 1:
-            windows_g.append(words)
-        else:
+        # if length <= 1:
+        #     continue
+        #     # windows_g.append(words)
+        if length > 1:
             for j in range(2 - window_size_g, length - 1):
                 start = j
                 end = j + window_size_g
@@ -437,8 +438,8 @@ def build_graph(config='param'):
     if param['embed_type'] == 'global_pmi':
         print('start svd ', int(time.time() - s_t))
         svd = TruncatedSVD(n_components=400, n_iter=7, random_state=42)
-        word_vectors = adj_g + sp.identity(adj_g.shape[0])
-        word_vectors = svd.fit_transform(word_vectors)
+        # word_vectors = adj_g + sp.identity(adj_g.shape[0])
+        word_vectors = svd.fit_transform(adj_g)
         print('end svd ', int(time.time() - s_t))
 
     if param['save_graph']:
