@@ -404,9 +404,9 @@ def main():
 
     adj_g = normalize_adj(adj_g)
     adj_g = torch.FloatTensor(adj_g.todense())
-    i = torch.LongTensor((adj_g.row, adj_g.col))
-    v = torch.FloatTensor(adj_g.data)
-    adj_g = torch.sparse.FloatTensor(i, v, torch.Size(adj_g.shape))
+    # i = torch.LongTensor((adj_g.row, adj_g.col))
+    # v = torch.FloatTensor(adj_g.data)
+    # adj_g = torch.sparse.FloatTensor(i, v, torch.Size(adj_g.shape))
 
     acc_detais = []
     k_start = 0
