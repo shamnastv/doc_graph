@@ -130,14 +130,14 @@ def build_graph(config='param'):
     print(label_list)
 
     # Creating word embeddding
-    word_to_id = {}
-    doc_word_set = set()
+    global_word_to_id = {}
+    global_word_set = set()
     idf = {}
     for doc_words in shuffle_doc_words_list:
         tmp_word_set = set()
         words = doc_words.split()
         for word in words:
-            doc_word_set.add(word)
+            global_word_set.add(word)
             if word not in tmp_word_set:
                 if word in idf:
                     idf[word] += 1
@@ -149,19 +149,19 @@ def build_graph(config='param'):
         # idf[word] = log(total_size / idf[word])
         idf[word] = log(total_size / (1 + idf[word])) + 1
 
-    doc_vocab = list(doc_word_set)
-    doc_vocab_size = len(doc_vocab)
+    global_vocab = list(global_word_set)
+    global_vocab_size = len(global_vocab)
 
     if param['embed_type'] == 'identity':
-        word_vectors = doc_vocab_size
+        word_vectors = global_vocab_size
 
     elif param['embed_type'] == 'bert':
         # bert_embedding = BertEmbedding(model='bert_24_1024_16')
         print('start bert ', int(time.time() - s_t))
         bert_embedding = BertEmbedding()
-        result_tmp = bert_embedding(doc_vocab)
+        result_tmp = bert_embedding(global_vocab)
         word_vectors = []
-        for i in range(doc_vocab_size):
+        for i in range(global_vocab_size):
             word_vectors.append(result_tmp[i][1][0])
         word_vectors = np.array(word_vectors)
         print('end bert ', int(time.time() - s_t))
@@ -171,8 +171,8 @@ def build_graph(config='param'):
         # model = fasttext.train_unsupervised('data/corpus/' + dataset + '.clean.txt', dim=400)
         model = fasttext.load_model('model')
         word_vectors = []
-        for i in range(doc_vocab_size):
-            word_vectors.append(model.get_word_vector(doc_vocab[i]))
+        for i in range(global_vocab_size):
+            word_vectors.append(model.get_word_vector(global_vocab[i]))
         model = None
         word_vectors = np.array(word_vectors)
         print('end fast ', int(time.time() - s_t))
@@ -184,8 +184,8 @@ def build_graph(config='param'):
         print('Invalid word embd type')
         sys.exit()
 
-    for i in range(doc_vocab_size):
-        word_to_id[doc_vocab[i]] = i
+    for i in range(global_vocab_size):
+        global_word_to_id[global_vocab[i]] = i
 
     print('start adj creation ', int(time.time() - s_t))
     feature_list = []
@@ -220,7 +220,7 @@ def build_graph(config='param'):
         features = []
         wf = []
         for i in range(vocab_size):
-            features.append(word_to_id[vocab[i]])
+            features.append(global_word_to_id[vocab[i]])
             wf.append(word_freq[vocab[i]] * idf[word])
 
         features = np.array(features)
@@ -388,9 +388,9 @@ def build_graph(config='param'):
         for i in range(1, len(window)):
             for j in range(0, i):
                 word_i = window[i]
-                word_i_id = word_to_id[word_i]
+                word_i_id = global_word_to_id[word_i]
                 word_j = window[j]
-                word_j_id = word_to_id[word_j]
+                word_j_id = global_word_to_id[word_j]
                 if word_i_id == word_j_id:
                     continue
                 word_pair_str = str(word_i_id) + ',' + str(word_j_id)
@@ -417,8 +417,8 @@ def build_graph(config='param'):
         i = int(temp[0])
         j = int(temp[1])
         count = word_pair_count[key]
-        word_freq_i = word_window_freq[doc_vocab[i]]
-        word_freq_j = word_window_freq[doc_vocab[j]]
+        word_freq_i = word_window_freq[global_vocab[i]]
+        word_freq_j = word_window_freq[global_vocab[j]]
         pmi = log((1.0 * count / num_window) /
                   (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
         if pmi <= 0:
@@ -428,7 +428,7 @@ def build_graph(config='param'):
         weight.append(pmi)
 
     adj_g = sp.csr_matrix(
-        (weight, (row, col)), shape=(doc_vocab_size, doc_vocab_size))
+        (weight, (row, col)), shape=(global_vocab_size, global_vocab_size))
     print('end global adj creation ', int(time.time() - s_t))
 
     print('total docs : ', len(ls_adj))

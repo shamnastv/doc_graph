@@ -282,7 +282,7 @@ def pass_data_iteratively(args, model_e, graphs, minibatch_size, device, word_ve
 
 def test(args, model_e, device, graphs, train_size, epoch, word_vectors, adj_g):
     # model_c.eval()
-    # model_e.eval()
+    model_e.eval()
 
     val_size = train_size // args.k_fold
     train_size = train_size - val_size
