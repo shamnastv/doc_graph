@@ -211,8 +211,8 @@ class GNN(nn.Module):
         pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](h)
-        h = F.relu(h)
-        # h = F.leaky_relu(h)
+        # h = F.relu(h)
+        h = F.leaky_relu(h)
         h = F.dropout(h, self.final_dropout, training=self.training)
         return h
 
@@ -283,7 +283,7 @@ class GNN(nn.Module):
         # h = torch.stack([h_t[i] for i in node_ids], 0).to(self.device)
         # hidden_rep.append(h)
 
-        for layer in range(0, self.num_layers - 1):
+        for layer in range(self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
                 h = self.next_layer_eps(h, layer, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and self.learn_eps:
