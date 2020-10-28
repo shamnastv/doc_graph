@@ -332,6 +332,7 @@ def test(args, model_e, device, graphs, train_size, epoch, word_vectors, adj_g):
 
 
 def main():
+    print('date and time : ', time.ctime())
     global max_acc_epoch, max_val_accuracy, test_accuracy
     acc_test = 0
     parser = argparse.ArgumentParser(
