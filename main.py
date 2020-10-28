@@ -252,7 +252,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
     #         for layer in range(args.num_layers):
     #             ge_new[layer][selected_idx] = pooled_h[layer]
 
-    print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', abs(time.time() - start_time))
+    print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', int(time.time() - start_time))
     return loss_accum
 
 
@@ -402,8 +402,8 @@ def main():
     d = device
     all_graphs, num_classes, train_size, word_vectors, adj_g = create_gaph(args)
 
-    adj_g = normalize_adj(adj_g)
-    adj_g = torch.FloatTensor(adj_g.todense())
+    # adj_g = normalize_adj(adj_g)
+    # adj_g = torch.FloatTensor(adj_g.todense())
     # i = torch.LongTensor((adj_g.row, adj_g.col))
     # v = torch.FloatTensor(adj_g.data)
     # adj_g = torch.sparse.FloatTensor(i, v, torch.Size(adj_g.shape))
@@ -445,7 +445,7 @@ def main():
                     and epoch > args.early_stop:
                 break
 
-        print('Embedding Initialized', flush=True)
+        # print('Embedding Initialized', flush=True)
 
         # for i in range(len(ge)):
         #     ge[i] = row_norm(ge_new[i])

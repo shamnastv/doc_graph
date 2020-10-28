@@ -317,7 +317,7 @@ class GNN(nn.Module):
             # if self.do_once:
             #     print(g_p)
             graph_pool = graph_pool * g_p.transpose(0, 1)
-            graph_pool = graph_pool / (torch.mm(graph_pool, torch.ones((graph_pool.shape[1], 1)).to(self.device)) + e)
+            graph_pool = graph_pool / (torch.mm(graph_pool, torch.ones((graph_pool.shape[1], 1)).to(self.device)))
 
             # if self.do_once:
             #     print(graph_pool)
