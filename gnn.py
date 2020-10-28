@@ -224,8 +224,8 @@ class GNN(nn.Module):
         pooled = pooled + (1 + self.eps[0]) * h
         h = self.mlp_es[0](pooled)
         h = self.batch_norms[0](h)
-        h = F.relu(h)
-        # h = F.leaky_relu(h)
+        # h = F.relu(h)
+        h = F.leaky_relu(h)
         h = F.dropout(h, self.final_dropout, training=self.training)
         return h
 
@@ -273,17 +273,17 @@ class GNN(nn.Module):
         h = word_vectors[node_ids].to(self.device)
         hidden_rep = [h]
 
-        # unique_ids = list(set(node_ids))
-        # h_t = [0] * len(word_vectors)
-        # h = self.first_layer_eps(word_vectors[unique_ids].to(self.device),
-        #                                        adj_g[np.ix_(unique_ids, unique_ids)].to(self.device))
-        # for i in range(len(unique_ids)):
-        #     h_t[unique_ids[i]] = h[i]
-        #
-        # h = torch.stack([h_t[i] for i in node_ids], 0).to(self.device)
-        # hidden_rep.append(h)
+        unique_ids = list(set(node_ids))
+        h_t = [0] * len(word_vectors)
+        h = self.first_layer_eps(word_vectors[unique_ids].to(self.device),
+                                               adj_g[np.ix_(unique_ids, unique_ids)].to(self.device))
+        for i in range(len(unique_ids)):
+            h_t[unique_ids[i]] = h[i]
 
-        for layer in range(self.num_layers - 1):
+        h = torch.stack([h_t[i] for i in node_ids], 0).to(self.device)
+        hidden_rep.append(h)
+
+        for layer in range(1, self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
                 h = self.next_layer_eps(h, layer, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and self.learn_eps:
