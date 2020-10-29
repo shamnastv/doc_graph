@@ -4,4 +4,4 @@ window_size: 10
 save_graph: False
 retrieve_graph: False
 embed_type: global_pmi
-pmi_c: 1.1
+pmi_c: 1

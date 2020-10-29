@@ -190,7 +190,8 @@ def build_graph(config='param'):
     word_freq_list = []
     ls_adj = []
     window_size = param['window_size']
-    pmi_c = param['pmi_c'] * 1.0
+    # pmi_c = param['pmi_c'] * 1.0
+    pmi_c = (window_size - 1) * 1.0
     index = 0
 
     n_dropped_edges = 0
@@ -352,6 +353,7 @@ def build_graph(config='param'):
         # Create global adj matrix
         windows_g = []
         window_size_g = param['window_size_g']
+        pmi_c_g = (window_size_g - 1) * 1.0
 
         for doc_words in shuffle_doc_words_list:
             words = doc_words.split()
@@ -418,7 +420,7 @@ def build_graph(config='param'):
             count = word_pair_count[key]
             word_freq_i = word_window_freq[global_vocab[i]]
             word_freq_j = word_window_freq[global_vocab[j]]
-            pmi = log((1.0 * count / num_window) /
+            pmi = log((pmi_c_g * count / num_window) /
                       (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
             if pmi <= 0:
                 continue
