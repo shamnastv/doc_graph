@@ -67,7 +67,7 @@ def print_distr(y, train_size):
 
 
 def create_gaph(args):
-    ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, adj_g = build_graph.build_graph(
+    ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors = build_graph.build_graph(
         config=args.configfile)
     word_vectors = torch.FloatTensor(word_vectors)
 
@@ -111,7 +111,7 @@ def create_gaph(args):
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
         g.edges_weights = torch.FloatTensor(edges_w)
     print('total zero edge graphs : ', zero_edges)
-    return g_list, len(set(y)), train_size, word_vectors, adj_g
+    return g_list, len(set(y)), train_size, word_vectors
 
 
 def my_loss_1(centres, embeddings, cl):
@@ -144,7 +144,7 @@ def print_cluster(cl):
     print('')
 
 
-def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vectors, adj_g):
+def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vectors):
     total_size = len(graphs)
 
     val_size = train_size // args.k_fold
@@ -221,7 +221,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
         batch_graph = [graphs[idx] for idx in selected_idx]
         if len(selected_idx) == 0:
             continue
-        output = model_e(batch_graph, word_vectors, adj_g)
+        output = model_e(batch_graph, word_vectors)
 
         labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
 
@@ -257,7 +257,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
 
 
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
-def pass_data_iteratively(args, model_e, graphs, minibatch_size, device, word_vectors, adj_g):
+def pass_data_iteratively(args, model_e, graphs, minibatch_size, device, word_vectors):
     outputs = []
     ge_new = []
     # for layer in range(args.num_layers):
@@ -272,7 +272,7 @@ def pass_data_iteratively(args, model_e, graphs, minibatch_size, device, word_ve
         if len(sampled_idx) == 0:
             continue
         with torch.no_grad():
-            output = model_e([graphs[j] for j in sampled_idx], word_vectors, adj_g)
+            output = model_e([graphs[j] for j in sampled_idx], word_vectors)
         outputs.append(output)
         # for layer in range(args.num_layers):
         #     ge_new[layer][sampled_idx] = pooled_h[layer]
@@ -280,7 +280,7 @@ def pass_data_iteratively(args, model_e, graphs, minibatch_size, device, word_ve
     return torch.cat(outputs, 0)
 
 
-def test(args, model_e, device, graphs, train_size, epoch, word_vectors, adj_g):
+def test(args, model_e, device, graphs, train_size, epoch, word_vectors):
     # model_c.eval()
     model_e.eval()
 
@@ -289,7 +289,7 @@ def test(args, model_e, device, graphs, train_size, epoch, word_vectors, adj_g):
 
     # cl = model_c(ge)
 
-    output = pass_data_iteratively(args, model_e, graphs, 100, device, word_vectors, adj_g)
+    output = pass_data_iteratively(args, model_e, graphs, 100, device, word_vectors)
 
     output_train, output_val, output_test = output[:train_size], output[train_size:train_size + val_size]\
         , output[train_size + val_size:]
@@ -400,13 +400,7 @@ def main():
 
     global d
     d = device
-    all_graphs, num_classes, train_size, word_vectors, adj_g = create_gaph(args)
-
-    adj_g = normalize_adj(adj_g)
-    adj_g = torch.FloatTensor(adj_g.todense())
-    # i = torch.LongTensor((adj_g.row, adj_g.col))
-    # v = torch.FloatTensor(adj_g.data)
-    # adj_g = torch.sparse.FloatTensor(i, v, torch.Size(adj_g.shape))
+    all_graphs, num_classes, train_size, word_vectors = create_gaph(args)
 
     acc_detais = []
     k_start = 0
@@ -437,8 +431,8 @@ def main():
 
         print(time.time() - start_time, 's Training starts', flush=True)
         for epoch in range(args.epochs + 1):
-            avg_loss = train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vectors, adj_g)
-            acc_train, acc_test = test(args, model_e, device, graphs, train_size, epoch, word_vectors, adj_g)
+            avg_loss = train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vectors)
+            acc_train, acc_test = test(args, model_e, device, graphs, train_size, epoch, word_vectors)
             print("")
 
             if epoch > max_acc_epoch + args.early_stop \
