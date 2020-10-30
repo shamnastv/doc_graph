@@ -259,7 +259,7 @@ def build_graph(config='param'):
         if length <= 1:
             windows.append(words)
         else:
-            for j in range(2 - window_size, length - 1):
+            for j in range(1 - window_size, length):
                 start = j
                 end = j + window_size
                 if start < 0:
@@ -311,7 +311,7 @@ def build_graph(config='param'):
         row = []
         col = []
         weight = []
-        num_window = len(windows)
+        num_window = len(windows) + 2
 
         for key in word_pair_count:
             temp = key.split(',')
@@ -364,7 +364,7 @@ def build_graph(config='param'):
             #     continue
             #     # windows_g.append(words)
             if length > 1:
-                for j in range(2 - window_size_g, length - 1):
+                for j in range(1 - window_size_g, length):
                     start = j
                     end = j + window_size_g
                     if start < 0:
@@ -413,7 +413,7 @@ def build_graph(config='param'):
         weight = []
 
         # pmi as weights
-        num_window = len(windows_g)
+        num_window = len(windows_g) + 2
 
         for key in word_pair_count:
             temp = key.split(',')
