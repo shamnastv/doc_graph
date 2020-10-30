@@ -191,7 +191,8 @@ def build_graph(config='param'):
     ls_adj = []
     window_size = param['window_size']
     # pmi_c = param['pmi_c'] * 1.0
-    pmi_c = (window_size - 1) * 1.0
+    # pmi_c = (window_size - 1) * 1.0
+    pmi_c = 1.0
     index = 0
 
     n_dropped_edges = 0
@@ -353,7 +354,8 @@ def build_graph(config='param'):
         # Create global adj matrix
         windows_g = []
         window_size_g = param['window_size_g']
-        pmi_c_g = (window_size_g - 1) * 1.0
+        # pmi_c_g = (window_size_g - 1) * 1.0
+        pmi_c_g = 1.0
 
         for doc_words in shuffle_doc_words_list:
             words = doc_words.split()
