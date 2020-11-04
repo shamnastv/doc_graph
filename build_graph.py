@@ -221,7 +221,7 @@ def build_graph(config='param'):
         wf = []
         for i in range(vocab_size):
             features.append(global_word_to_id[vocab[i]])
-            wf.append(word_freq[vocab[i]] * idf[word])
+            wf.append(word_freq[vocab[i]] * idf[vocab[i]])
 
         features = np.array(features)
         feature_list.append(features)
