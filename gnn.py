@@ -258,7 +258,7 @@ class GNN(nn.Module):
 
         # X_concat = torch.cat([word_vectors[nf] for nf in node_features], 0).to(self.device)
         h = word_vectors[node_ids].to(self.device)
-        hidden_rep = [h]
+        hidden_rep = [F.dropout(h, p=.5, training=self.training)]
 
         for layer in range(self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
