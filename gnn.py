@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+from SpecialSP import SpecialSpmm
 from attention import Attention
 from mlp import MLP
 from util import row_norm
@@ -84,6 +85,8 @@ class GNN(nn.Module):
 
         self.att1 = Attention(input_dim, output_dim=100)
         self.att2 = Attention(input_dim, output_dim=100)
+
+        self.special_spmm = SpecialSpmm()
 
         # self.cluster_cat = torch.nn.ModuleList()
         for layer in range(num_layers):
@@ -165,7 +168,7 @@ class GNN(nn.Module):
         #     Adj_block_elem = torch.cat([Adj_block_elem, elem], 0)
 
         # Adj_block = torch.sparse.FloatTensor(Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]]))
-        Adj_block = torch.sparse_coo_tensor(Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]]))
+        Adj_block = Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]])
         return Adj_block
 
     def __preprocess_graphpool_n(self, batch_graph):
@@ -233,7 +236,7 @@ class GNN(nn.Module):
         else:
             # If sum or average pooling
             # pooled = torch.spmm(Adj_block, h)
-            pooled = torch.matmul(Adj_block, h)
+            pooled = self.special_spmm(Adj_block[0], Adj_block[1], Adj_block[2], h)
             if self.neighbor_pooling_type == "average":
                 # If average pooling
                 degree = torch.spmm(Adj_block, torch.ones((Adj_block.shape[0], 1)).to(self.device))
