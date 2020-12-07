@@ -291,8 +291,8 @@ class GNN(nn.Module):
         # X_concat = torch.cat([word_vectors[nf] for nf in node_features], 0).to(self.device)
         h = word_vectors[node_ids].to(self.device)
 
-        h = h + positional_encoding
-        hidden_rep = [F.dropout(h, p=.5, training=self.training)]
+        # h = h + positional_encoding
+        hidden_rep = [F.dropout(h + positional_encoding, p=.5, training=self.training)]
 
         if self.neighbor_pooling_type == "max":
             padded_neighbor_list = self.__preprocess_neighbors_maxpool(batch_graph)
@@ -309,7 +309,7 @@ class GNN(nn.Module):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
                 h = self.next_layer_eps(h, layer, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and self.learn_eps:
-                h = self.next_layer_eps(h, layer, Adj_block=Adj_block)
+                h = self.next_layer_eps(h + positional_encoding, layer, Adj_block=Adj_block)
             elif self.neighbor_pooling_type == "max" and not self.learn_eps:
                 h = self.next_layer(h, layer, padded_neighbor_list=padded_neighbor_list)
             elif not self.neighbor_pooling_type == "max" and not self.learn_eps:
