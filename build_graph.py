@@ -40,10 +40,10 @@ def retrieve_graph(config):
     # y_hot = read_data(config, 'y_hot')
     # train_size = read_data(config, 'train_size')
     # word_vectors = read_data(config, 'word_vectors')
-    ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors,positions_list = read_data(config, 'all')
+    ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, positions_list = read_data(config, 'all')
     if isinstance(word_vectors, int):
         word_vectors = np.identity(word_vectors)
-    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors
+    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, positions_list
 
 
 def build_graph(config='param'):
