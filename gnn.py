@@ -171,7 +171,7 @@ class GNN(nn.Module):
         idx, elem, shape = Adj_block
         features = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
         features = torch.cat(features, dim=1)
-        elem = torch.sigmoid(self.edge_wt[layer](features)).squeeze(1)
+        elem = torch.exp(-F.leaky_relu(self.edge_wt[layer](features)).squeeze(1))
         return idx, elem, shape
 
     def __preprocess_graphpool_n(self, batch_graph):
@@ -233,18 +233,24 @@ class GNN(nn.Module):
     def next_layer_eps(self, h, layer, padded_neighbor_list=None, Adj_block=None):
         # pooling neighboring nodes and center nodes separately by epsilon reweighting.
 
-        if self.neighbor_pooling_type == "max":
-            # If max pooling
-            pooled = self.maxpool(h, padded_neighbor_list)
-        else:
-            # If sum or average pooling
-            # pooled = torch.spmm(Adj_block, h)
-            Adj_block = self.get_adj(layer, Adj_block, h)
-            pooled = self.special_spmm(Adj_block[0], Adj_block[1], Adj_block[2], h)
-            if self.neighbor_pooling_type == "average":
-                # If average pooling
-                degree = torch.spmm(Adj_block, torch.ones((Adj_block.shape[0], 1)).to(self.device))
-                pooled = pooled / degree
+        # if self.neighbor_pooling_type == "max":
+        #     # If max pooling
+        #     pooled = self.maxpool(h, padded_neighbor_list)
+        # else:
+        #     # If sum or average pooling
+        #     # pooled = torch.spmm(Adj_block, h)
+        #     Adj_block = self.get_adj(layer, Adj_block, h)
+        #     pooled = self.special_spmm(Adj_block[0], Adj_block[1], Adj_block[2], h)
+        #     if self.neighbor_pooling_type == "average":
+        #         # If average pooling
+        #         degree = torch.spmm(Adj_block, torch.ones((Adj_block.shape[0], 1)).to(self.device))
+        #         pooled = pooled / degree
+
+        idx, elem, shape = self.get_adj(layer, Adj_block, h)
+        pooled = self.special_spmm(idx, elem, shape, h)
+        row_sum = self.special_spmm(idx, elem, shape, torch.ones(size=(h.shape[0], 1), device=self.device))
+        pooled = pooled.div(row_sum)
+
         pooled = pooled + (1 + self.eps[layer]) * h
         h = self.mlp_es[layer](pooled)
         h = self.batch_norms[layer](h)
