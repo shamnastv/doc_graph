@@ -74,6 +74,7 @@ def create_gaph(args):
 
     print_distr(y, train_size)
     g_list = []
+    max_words = 0
     for i, adj in enumerate(ls_adj):
         adj = normalize_adj(adj)
         g = nx.from_scipy_sparse_matrix(adj)
@@ -88,6 +89,10 @@ def create_gaph(args):
         # s = 1
         wf = [el / s for el in word_freq_list[i]]
         g_list.append(S2VGraph(g, lb, node_features=feat, word_freq=wf, positions=positions_list[i]))
+        for ar in positions_list[i]:
+            max_words = max(max_words, max(ar))
+
+    max_words += 1
 
     zero_edges = 0
     for g in g_list:
@@ -112,7 +117,7 @@ def create_gaph(args):
         g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
         g.edges_weights = torch.FloatTensor(edges_w)
     print('total zero edge graphs : ', zero_edges)
-    return g_list, len(set(y)), train_size, word_vectors
+    return g_list, len(set(y)), train_size, word_vectors, max_words
 
 
 def my_loss_1(centres, embeddings, cl):
@@ -401,7 +406,7 @@ def main():
 
     global d
     d = device
-    all_graphs, num_classes, train_size, word_vectors = create_gaph(args)
+    all_graphs, num_classes, train_size, word_vectors, max_words = create_gaph(args)
 
     acc_detais = []
     k_start = 0
@@ -421,7 +426,7 @@ def main():
         model_e = GNN(args.num_layers, args.num_mlp_layers, word_vectors.shape[1], args.hidden_dim,
                       num_classes,
                       args.final_dropout,
-                      args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device).to(device)
+                      args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, max_words).to(device)
 
         optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
         # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)

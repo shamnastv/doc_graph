@@ -12,7 +12,7 @@ from util import row_norm
 
 class GNN(nn.Module):
     def __init__(self, num_layers, num_mlp_layers, input_dim, hidden_dim, output_dim, final_dropout, learn_eps,
-                 graph_pooling_type, neighbor_pooling_type, device):
+                 graph_pooling_type, neighbor_pooling_type, device, max_words):
         '''
             num_layers: number of layers in the neural networks (INCLUDING the input layer)
             num_mlp_layers: number of layers in mlps (EXCLUDING the input layer)
@@ -41,10 +41,9 @@ class GNN(nn.Module):
         # self.beta = beta
         self.do_once = True
 
-        max_sentence_length = 10000
-        self.positional_embeddings = np.zeros((max_sentence_length, input_dim))
+        self.positional_embeddings = np.zeros((max_words, input_dim))
 
-        for position in range(max_sentence_length):
+        for position in range(max_words):
             for i in range(0, input_dim, 2):
                 self.positional_embeddings[position, i] = (
                     np.sin(position / (10000 ** ((2 * i) / input_dim)))
@@ -82,6 +81,10 @@ class GNN(nn.Module):
         self.linears_prediction = torch.nn.ModuleList()
         self.graph_pool_layer = torch.nn.ModuleList()
         self.edge_wt = Attention(input_dim * 2 + 1)
+
+        self.att1 = Attention(input_dim, output_dim=100)
+        self.att2 = Attention(input_dim, output_dim=100)
+
         # self.cluster_cat = torch.nn.ModuleList()
         for layer in range(num_layers):
             if layer == 0:
@@ -147,9 +150,9 @@ class GNN(nn.Module):
         Adj_block_idx = torch.cat(edge_mat_list, 1).to(self.device)
         Adj_block_elem = torch.cat(edge_weight_list).to(self.device)
 
-        features = [features[Adj_block_idx[0]], features[Adj_block_idx[1]], Adj_block_elem.unsqueeze(1)]
-        features = torch.cat(features, dim=1)
-        Adj_block_elem = self.edge_wt(features).squeeze(1)
+        # features = [features[Adj_block_idx[0]], features[Adj_block_idx[1]], Adj_block_elem.unsqueeze(1)]
+        # features = torch.cat(features, dim=1)
+        # Adj_block_elem = self.edge_wt(features).squeeze(1)
         # Adj_block_elem = torch.ones(Adj_block_idx.shape[1])
 
         # Add self-loops in the adjacency matrix if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
@@ -161,9 +164,9 @@ class GNN(nn.Module):
         #     Adj_block_idx = torch.cat([Adj_block_idx, self_loop_edge], 1)
         #     Adj_block_elem = torch.cat([Adj_block_elem, elem], 0)
 
-        Adj_block = torch.sparse.FloatTensor(Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]]))
-
-        return Adj_block.to_dense()
+        # Adj_block = torch.sparse.FloatTensor(Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]]))
+        Adj_block = torch.sparse_coo_tensor(Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]]))
+        return Adj_block
 
     def __preprocess_graphpool_n(self, batch_graph):
         # create sum or average pooling sparse matrix over entire nodes in each graph (num graphs x num nodes)
@@ -229,8 +232,7 @@ class GNN(nn.Module):
             pooled = self.maxpool(h, padded_neighbor_list)
         else:
             # If sum or average pooling
-            # pooled = torch.spmm(Adj_block, h)
-            pooled = torch.mm(Adj_block, h)
+            pooled = torch.spmm(Adj_block, h)
             if self.neighbor_pooling_type == "average":
                 # If average pooling
                 degree = torch.spmm(Adj_block, torch.ones((Adj_block.shape[0], 1)).to(self.device))
@@ -293,6 +295,12 @@ class GNN(nn.Module):
         else:
             Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph, h)
 
+        # q = self.att1(h)
+        # k = self.att2(h)
+        # q_k = torch.mm(q, k.transpose(0, 1))
+        #
+        # Adj_block = Adj_block * q_k
+
         for layer in range(self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
                 h = self.next_layer_eps(h, layer, padded_neighbor_list=padded_neighbor_list)
@@ -322,7 +330,7 @@ class GNN(nn.Module):
             #
             g_p = torch.sigmoid(self.graph_pool_layer[layer](torch.cat((h, node_weights), dim=1)))
             # g_p = F.dropout(g_p, p=.2, training=self.training)
-            e = 0
+            # e = 0
 
             # if self.do_once:
             #     print(g_p)
