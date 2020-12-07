@@ -16,14 +16,15 @@ def dump_data(config, data_name, data):
         pickle.dump(data, f)
 
 
-def save_graph(config, ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors):
-    dump_data(config, 'ls_adj', ls_adj)
-    dump_data(config, 'feature_list', feature_list)
-    dump_data(config, 'word_freq_list', word_freq_list)
-    dump_data(config, 'y', y)
-    dump_data(config, 'y_hot', y_hot)
-    dump_data(config, 'train_size', train_size)
-    dump_data(config, 'word_vectors', word_vectors)
+def save_graph(config, ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, positions_list):
+    # dump_data(config, 'ls_adj', ls_adj)
+    # dump_data(config, 'feature_list', feature_list)
+    # dump_data(config, 'word_freq_list', word_freq_list)
+    # dump_data(config, 'y', y)
+    # dump_data(config, 'y_hot', y_hot)
+    # dump_data(config, 'train_size', train_size)
+    # dump_data(config, 'word_vectors', word_vectors)
+    dump_data(config, 'all', (ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, positions_list))
 
 
 def read_data(config, dataname):
@@ -32,13 +33,14 @@ def read_data(config, dataname):
 
 
 def retrieve_graph(config):
-    ls_adj = read_data(config, 'ls_adj')
-    feature_list = read_data(config, 'feature_list')
-    word_freq_list = read_data(config, 'word_freq_list')
-    y = read_data(config, 'y')
-    y_hot = read_data(config, 'y_hot')
-    train_size = read_data(config, 'train_size')
-    word_vectors = read_data(config, 'word_vectors')
+    # ls_adj = read_data(config, 'ls_adj')
+    # feature_list = read_data(config, 'feature_list')
+    # word_freq_list = read_data(config, 'word_freq_list')
+    # y = read_data(config, 'y')
+    # y_hot = read_data(config, 'y_hot')
+    # train_size = read_data(config, 'train_size')
+    # word_vectors = read_data(config, 'word_vectors')
+    ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors,positions_list = read_data(config, 'all')
     if isinstance(word_vectors, int):
         word_vectors = np.identity(word_vectors)
     return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors
@@ -190,6 +192,7 @@ def build_graph(config='param'):
     word_freq_list = []
     ls_adj = []
     window_size = param['window_size']
+    positions_list = []
     # pmi_c = param['pmi_c'] * 1.0
     # pmi_c = (window_size - 1) * 1.0
     pmi_c = 1.0
@@ -206,12 +209,17 @@ def build_graph(config='param'):
         # Find Word list and frequency
         word_freq = {}
         word_set = set()
-        for word in words:
+        word_to_pos = {}
+        for i, word in enumerate(words):
             word_set.add(word)
             if word in word_freq:
                 word_freq[word] += 1
             else:
                 word_freq[word] = 1
+            if word in word_to_pos:
+                word_to_pos[word].append(i)
+            else:
+                word_to_pos[word] = [i]
 
         vocab = list(word_set)
         vocab_size = len(vocab)
@@ -219,13 +227,16 @@ def build_graph(config='param'):
         total_possible_edges += vocab_size * (vocab_size - 1)
         features = []
         wf = []
+        positions = []
         for i in range(vocab_size):
             features.append(global_word_to_id[vocab[i]])
             wf.append(word_freq[vocab[i]] * idf[vocab[i]])
+            positions.append(word_to_pos[vocab[i]])
 
         features = np.array(features)
         feature_list.append(features)
         word_freq_list.append(wf)
+        positions_list.append(positions)
 
         # Create map of word to id
         word_id_map = {}
@@ -446,12 +457,12 @@ def build_graph(config='param'):
 
     if param['save_graph']:
         save_graph('saved_graphs/data_' + config, ls_adj, feature_list, word_freq_list, y,
-                   y_hot, train_size, word_vectors)
+                   y_hot, train_size, word_vectors, positions_list)
 
     if isinstance(word_vectors, int):
         word_vectors = np.identity(word_vectors)
 
-    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors
+    return ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, positions_list
 
 
 def main():

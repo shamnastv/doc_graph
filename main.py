@@ -26,7 +26,7 @@ start_time = time.time()
 
 
 class S2VGraph(object):
-    def __init__(self, g, label, node_tags=None, node_features=None):
+    def __init__(self, g, label, word_freq=None, node_features=None, positions=None):
         '''
             g: a networkx graph
             label: an integer graph label
@@ -37,9 +37,10 @@ class S2VGraph(object):
         '''
         self.label = label
         self.g = g
-        self.node_tags = node_tags
+        self.word_freq = word_freq
         # self.neighbors = []
         self.node_features = node_features
+        self.positions = positions
         # self.node_features = row_norm(self.node_features)
         self.edge_mat = 0
         self.edges_weights = []
@@ -67,9 +68,9 @@ def print_distr(y, train_size):
 
 
 def create_gaph(args):
-    ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors = build_graph.build_graph(
+    ls_adj, feature_list, word_freq_list, y, y_hot, train_size, word_vectors, positions_list = build_graph.build_graph(
         config=args.configfile)
-    word_vectors = torch.FloatTensor(word_vectors)
+    word_vectors = torch.from_numpy(word_vectors).float()
 
     print_distr(y, train_size)
     g_list = []
@@ -86,7 +87,7 @@ def create_gaph(args):
         s = sum(word_freq_list[i])
         # s = 1
         wf = [el / s for el in word_freq_list[i]]
-        g_list.append(S2VGraph(g, lb, node_features=feat, node_tags=wf))
+        g_list.append(S2VGraph(g, lb, node_features=feat, word_freq=wf, positions=positions_list[i]))
 
     zero_edges = 0
     for g in g_list:

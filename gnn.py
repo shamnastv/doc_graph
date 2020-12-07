@@ -28,6 +28,7 @@ class GNN(nn.Module):
 
         super(GNN, self).__init__()
 
+        self.input_dim = input_dim
         self.final_dropout = final_dropout
         self.device = device
         self.num_layers = num_layers
@@ -39,6 +40,18 @@ class GNN(nn.Module):
         # self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
         # self.beta = beta
         self.do_once = True
+
+        max_sentence_length = 10000
+        self.positional_embeddings = np.zeros((max_sentence_length, input_dim))
+
+        for position in range(max_sentence_length):
+            for i in range(0, input_dim, 2):
+                self.positional_embeddings[position, i] = (
+                    np.sin(position / (10000 ** ((2 * i) / input_dim)))
+                )
+                self.positional_embeddings[position, i + 1] = (
+                    np.cos(position / (10000 ** ((2 * (i + 1)) / input_dim)))
+                )
 
         # for layer in self.layers:
         #     if layer == 0:
@@ -84,6 +97,13 @@ class GNN(nn.Module):
         nn.init.uniform_(self.eps)
         nn.init.uniform_(self.w1)
         nn.init.uniform_(self.eps)
+
+    def get_pos_enc(self, positions):
+        pos_enc = np.zeros((len(positions), self.input_dim))
+        for i in range(len(positions)):
+            for j in positions[i]:
+                pos_enc[i] += self.positional_embeddings[j]
+        return torch.from_numpy(pos_enc).float()
 
     def __preprocess_neighbors_maxpool(self, batch_graph):
         # create padded_neighbor_list in concatenated graph
@@ -175,7 +195,7 @@ class GNN(nn.Module):
             # average pooling
             if self.graph_pooling_type == "average":
                 # elem.extend([1. / len(graph.g)] * len(graph.g))
-                elem.extend(graph.node_tags)
+                elem.extend(graph.word_freq)
             else:
                 # sum pooling
                 elem.extend([1] * len(graph.g))
@@ -253,11 +273,17 @@ class GNN(nn.Module):
 
         # list of hidden representation at each layer (including input)
         node_ids = []
+        positional_encoding = []
         for graph in batch_graph:
             node_ids.extend(graph.node_features)
+            positional_encoding.append(self.get_pos_enc(graph.positions))
+
+        positional_encoding = torch.cat(positional_encoding, dim=0).to(self.device)
 
         # X_concat = torch.cat([word_vectors[nf] for nf in node_features], 0).to(self.device)
         h = word_vectors[node_ids].to(self.device)
+
+        h = h + positional_encoding
         hidden_rep = [F.dropout(h, p=.5, training=self.training)]
 
         for layer in range(self.num_layers - 1):
