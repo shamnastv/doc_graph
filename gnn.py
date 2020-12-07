@@ -81,6 +81,7 @@ class GNN(nn.Module):
         # Linear function that maps the hidden representation at dofferemt layers into a prediction score
         self.linears_prediction = torch.nn.ModuleList()
         self.graph_pool_layer = torch.nn.ModuleList()
+        self.edge_wt = Attention(input_dim * 2 + 1)
         # self.cluster_cat = torch.nn.ModuleList()
         for layer in range(num_layers):
             if layer == 0:
@@ -132,7 +133,7 @@ class GNN(nn.Module):
 
         return torch.LongTensor(padded_neighbor_list)
 
-    def __preprocess_neighbors_sumavepool(self, batch_graph):
+    def __preprocess_neighbors_sumavepool(self, batch_graph, features):
         # create block diagonal sparse matrix
 
         edge_mat_list = []
@@ -142,8 +143,13 @@ class GNN(nn.Module):
             start_idx.append(start_idx[i] + len(graph.g))
             edge_mat_list.append(graph.edge_mat + start_idx[i])
             edge_weight_list.append(graph.edges_weights)
+
         Adj_block_idx = torch.cat(edge_mat_list, 1)
         Adj_block_elem = torch.cat(edge_weight_list)
+
+        features = [features[Adj_block_idx[0]], features[Adj_block_idx[1]], Adj_block_elem.unsqueeze(1)]
+        features = torch.cat(features, dim=1)
+        Adj_block_elem = self.edge_wt(features).squeeze(1)
         # Adj_block_elem = torch.ones(Adj_block_idx.shape[1])
 
         # Add self-loops in the adjacency matrix if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
@@ -266,11 +272,6 @@ class GNN(nn.Module):
         graph_pool, node_weights = self.__preprocess_graphpool(batch_graph)
         # graph_pool_n = self.__preprocess_graphpool_n(batch_graph)
 
-        if self.neighbor_pooling_type == "max":
-            padded_neighbor_list = self.__preprocess_neighbors_maxpool(batch_graph)
-        else:
-            Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
-
         # list of hidden representation at each layer (including input)
         node_ids = []
         positional_encoding = []
@@ -285,6 +286,11 @@ class GNN(nn.Module):
 
         h = h + positional_encoding
         hidden_rep = [F.dropout(h, p=.5, training=self.training)]
+
+        if self.neighbor_pooling_type == "max":
+            padded_neighbor_list = self.__preprocess_neighbors_maxpool(batch_graph)
+        else:
+            Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
 
         for layer in range(self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
