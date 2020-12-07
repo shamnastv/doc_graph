@@ -147,9 +147,9 @@ class GNN(nn.Module):
         Adj_block_idx = torch.cat(edge_mat_list, 1).to(self.device)
         Adj_block_elem = torch.cat(edge_weight_list).to(self.device)
 
-        # features = [features[Adj_block_idx[0]], features[Adj_block_idx[1]], Adj_block_elem.unsqueeze(1)]
-        # features = torch.cat(features, dim=1)
-        # Adj_block_elem = self.edge_wt(features).squeeze(1)
+        features = [features[Adj_block_idx[0]], features[Adj_block_idx[1]], Adj_block_elem.unsqueeze(1)]
+        features = torch.cat(features, dim=1)
+        Adj_block_elem = self.edge_wt(features).squeeze(1)
         # Adj_block_elem = torch.ones(Adj_block_idx.shape[1])
 
         # Add self-loops in the adjacency matrix if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
@@ -163,7 +163,7 @@ class GNN(nn.Module):
 
         Adj_block = torch.sparse.FloatTensor(Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]]))
 
-        return Adj_block
+        return Adj_block.to_dense()
 
     def __preprocess_graphpool_n(self, batch_graph):
         # create sum or average pooling sparse matrix over entire nodes in each graph (num graphs x num nodes)
@@ -229,7 +229,8 @@ class GNN(nn.Module):
             pooled = self.maxpool(h, padded_neighbor_list)
         else:
             # If sum or average pooling
-            pooled = torch.spmm(Adj_block, h)
+            # pooled = torch.spmm(Adj_block, h)
+            pooled = torch.mm(Adj_block, h)
             if self.neighbor_pooling_type == "average":
                 # If average pooling
                 degree = torch.spmm(Adj_block, torch.ones((Adj_block.shape[0], 1)).to(self.device))
