@@ -290,7 +290,7 @@ class GNN(nn.Module):
         if self.neighbor_pooling_type == "max":
             padded_neighbor_list = self.__preprocess_neighbors_maxpool(batch_graph)
         else:
-            Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
+            Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph, h)
 
         for layer in range(self.num_layers - 1):
             if self.neighbor_pooling_type == "max" and self.learn_eps:
