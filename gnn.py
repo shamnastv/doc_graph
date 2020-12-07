@@ -232,7 +232,8 @@ class GNN(nn.Module):
             pooled = self.maxpool(h, padded_neighbor_list)
         else:
             # If sum or average pooling
-            pooled = torch.spmm(Adj_block, h)
+            # pooled = torch.spmm(Adj_block, h)
+            pooled = torch.matmul(Adj_block, h)
             if self.neighbor_pooling_type == "average":
                 # If average pooling
                 degree = torch.spmm(Adj_block, torch.ones((Adj_block.shape[0], 1)).to(self.device))
