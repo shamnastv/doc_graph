@@ -81,10 +81,7 @@ class GNN(nn.Module):
         # Linear function that maps the hidden representation at dofferemt layers into a prediction score
         self.linears_prediction = torch.nn.ModuleList()
         self.graph_pool_layer = torch.nn.ModuleList()
-        self.edge_wt = Attention(input_dim * 2 + 1)
-
-        self.att1 = Attention(input_dim, output_dim=100)
-        self.att2 = Attention(input_dim, output_dim=100)
+        self.edge_wt = torch.nn.ModuleList()
 
         self.special_spmm = SpecialSpmm()
 
@@ -93,10 +90,12 @@ class GNN(nn.Module):
             if layer == 0:
                 self.linears_prediction.append(nn.Linear(input_dim, output_dim))
                 self.graph_pool_layer.append(Attention(input_dim + 1))
+                self.edge_wt.append(Attention(input_dim * 2 + 1))
                 # self.cluster_cat.append(nn.Linear(input_dim * 2, 1))
             else:
                 self.linears_prediction.append(nn.Linear(hidden_dim, output_dim))
                 self.graph_pool_layer.append(Attention(hidden_dim + 1))
+                self.edge_wt.append(Attention(input_dim * 2 + 1))
                 # self.cluster_cat.append(nn.Linear(hidden_dim * 2, 1))
         self.reset_parameters()
 
@@ -139,7 +138,7 @@ class GNN(nn.Module):
 
         return torch.LongTensor(padded_neighbor_list)
 
-    def __preprocess_neighbors_sumavepool(self, batch_graph, features):
+    def __preprocess_neighbors_sumavepool(self, batch_graph):
         # create block diagonal sparse matrix
 
         edge_mat_list = []
@@ -153,9 +152,6 @@ class GNN(nn.Module):
         Adj_block_idx = torch.cat(edge_mat_list, 1).to(self.device)
         Adj_block_elem = torch.cat(edge_weight_list).to(self.device)
 
-        features = [features[Adj_block_idx[0]], features[Adj_block_idx[1]], Adj_block_elem.unsqueeze(1)]
-        features = torch.cat(features, dim=1)
-        Adj_block_elem = torch.sigmoid(self.edge_wt(features)).squeeze(1)
         # Adj_block_elem = torch.ones(Adj_block_idx.shape[1])
 
         # Add self-loops in the adjacency matrix if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
@@ -170,6 +166,13 @@ class GNN(nn.Module):
         # Adj_block = torch.sparse.FloatTensor(Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]]))
         Adj_block = Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]])
         return Adj_block
+
+    def get_adj(self, layer, Adj_block, features):
+        idx, elem, shape = Adj_block
+        features = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
+        features = torch.cat(features, dim=1)
+        elem = torch.sigmoid(self.edge_wt[layer](features)).squeeze(1)
+        return idx, elem, shape
 
     def __preprocess_graphpool_n(self, batch_graph):
         # create sum or average pooling sparse matrix over entire nodes in each graph (num graphs x num nodes)
@@ -236,6 +239,7 @@ class GNN(nn.Module):
         else:
             # If sum or average pooling
             # pooled = torch.spmm(Adj_block, h)
+            Adj_block = self.get_adj(layer, Adj_block, h)
             pooled = self.special_spmm(Adj_block[0], Adj_block[1], Adj_block[2], h)
             if self.neighbor_pooling_type == "average":
                 # If average pooling
@@ -294,10 +298,12 @@ class GNN(nn.Module):
         # h = h + positional_encoding
         hidden_rep = [F.dropout(h + positional_encoding, p=.5, training=self.training)]
 
-        if self.neighbor_pooling_type == "max":
-            padded_neighbor_list = self.__preprocess_neighbors_maxpool(batch_graph)
-        else:
-            Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph, h + positional_encoding)
+        # if self.neighbor_pooling_type == "max":
+        #     padded_neighbor_list = self.__preprocess_neighbors_maxpool(batch_graph)
+        # else:
+        #     Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph, h + positional_encoding)
+
+        Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
 
         # q = self.att1(h)
         # k = self.att2(h)
@@ -306,14 +312,15 @@ class GNN(nn.Module):
         # Adj_block = Adj_block * q_k
 
         for layer in range(self.num_layers - 1):
-            if self.neighbor_pooling_type == "max" and self.learn_eps:
-                h = self.next_layer_eps(h, layer, padded_neighbor_list=padded_neighbor_list)
-            elif not self.neighbor_pooling_type == "max" and self.learn_eps:
-                h = self.next_layer_eps(h + positional_encoding, layer, Adj_block=Adj_block)
-            elif self.neighbor_pooling_type == "max" and not self.learn_eps:
-                h = self.next_layer(h, layer, padded_neighbor_list=padded_neighbor_list)
-            elif not self.neighbor_pooling_type == "max" and not self.learn_eps:
-                h = self.next_layer(h, layer, Adj_block=Adj_block)
+            h = self.next_layer_eps(h + positional_encoding, layer, Adj_block=Adj_block)
+            # if self.neighbor_pooling_type == "max" and self.learn_eps:
+            #     h = self.next_layer_eps(h, layer, padded_neighbor_list=padded_neighbor_list)
+            # elif not self.neighbor_pooling_type == "max" and self.learn_eps:
+            #     h = self.next_layer_eps(h + positional_encoding, layer, Adj_block=Adj_block)
+            # elif self.neighbor_pooling_type == "max" and not self.learn_eps:
+            #     h = self.next_layer(h, layer, padded_neighbor_list=padded_neighbor_list)
+            # elif not self.neighbor_pooling_type == "max" and not self.learn_eps:
+            #     h = self.next_layer(h, layer, Adj_block=Adj_block)
 
             hidden_rep.append(h)
 
@@ -334,7 +341,6 @@ class GNN(nn.Module):
             #
             g_p = torch.sigmoid(self.graph_pool_layer[layer](torch.cat((h, node_weights), dim=1)))
             # g_p = F.dropout(g_p, p=.2, training=self.training)
-            # e = 0
 
             # if self.do_once:
             #     print(g_p)
