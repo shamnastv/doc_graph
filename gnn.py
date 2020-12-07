@@ -297,7 +297,7 @@ class GNN(nn.Module):
         if self.neighbor_pooling_type == "max":
             padded_neighbor_list = self.__preprocess_neighbors_maxpool(batch_graph)
         else:
-            Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph, h)
+            Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph, h + positional_encoding)
 
         # q = self.att1(h)
         # k = self.att2(h)
