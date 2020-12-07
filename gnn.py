@@ -342,7 +342,7 @@ class GNN(nn.Module):
             #     print(graph_pool)
             #     self.do_once = False
 
-            pooled_h = torch.spmm(graph_pool, h)
+            pooled_h = torch.mm(graph_pool, h)
             score_over_layer += self.linears_prediction[layer](pooled_h)
 
         return score_over_layer
