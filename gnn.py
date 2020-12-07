@@ -155,7 +155,7 @@ class GNN(nn.Module):
 
         features = [features[Adj_block_idx[0]], features[Adj_block_idx[1]], Adj_block_elem.unsqueeze(1)]
         features = torch.cat(features, dim=1)
-        Adj_block_elem = self.edge_wt(features).squeeze(1)
+        Adj_block_elem = torch.sigmoid(self.edge_wt(features)).squeeze(1)
         # Adj_block_elem = torch.ones(Adj_block_idx.shape[1])
 
         # Add self-loops in the adjacency matrix if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
