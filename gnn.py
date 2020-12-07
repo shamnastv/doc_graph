@@ -144,8 +144,8 @@ class GNN(nn.Module):
             edge_mat_list.append(graph.edge_mat + start_idx[i])
             edge_weight_list.append(graph.edges_weights)
 
-        Adj_block_idx = torch.cat(edge_mat_list, 1)
-        Adj_block_elem = torch.cat(edge_weight_list)
+        Adj_block_idx = torch.cat(edge_mat_list, 1).to(self.device)
+        Adj_block_elem = torch.cat(edge_weight_list).to(self.device)
 
         features = [features[Adj_block_idx[0]], features[Adj_block_idx[1]], Adj_block_elem.unsqueeze(1)]
         features = torch.cat(features, dim=1)
@@ -163,7 +163,7 @@ class GNN(nn.Module):
 
         Adj_block = torch.sparse.FloatTensor(Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]]))
 
-        return Adj_block.to(self.device)
+        return Adj_block
 
     def __preprocess_graphpool_n(self, batch_graph):
         # create sum or average pooling sparse matrix over entire nodes in each graph (num graphs x num nodes)
