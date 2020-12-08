@@ -1,20 +1,14 @@
-import math
-
 import networkx as nx
 import numpy as np
-import random
 import argparse
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 import time
-from sklearn.preprocessing import normalize
 
 import build_graph
-from cluster import ClusterNN
 from gnn import GNN
-from util import normalize_adj, row_norm
+from util import normalize_adj
 
 criterion = nn.CrossEntropyLoss()
 d = torch.device("cpu")
@@ -120,36 +114,6 @@ def create_gaph(args):
     return g_list, len(set(y)), train_size, word_vectors, max_words
 
 
-def my_loss_1(centres, embeddings, cl):
-    # dm = len(cl[0])
-    loss1 = 0
-    for i, emb in enumerate(embeddings):
-        tmp = torch.sum(torch.sub(centres, emb) ** 2, dim=1, keepdim=True)
-        # tmp = torch.sub(centroids, emb)
-        # loss += torch.mm(cl[i].reshape(1, -1), torch.norm(tmp, dim=1, keepdim=True))
-        loss1 += torch.mm(cl[i].reshape(1, -1), tmp)
-    # tmp = torch.mm(cl.transpose(0, 1), cl)
-    # loss2 = alpha * torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
-    return loss1
-
-
-def my_loss_2(cl, device):
-    dm = len(cl[0])
-    tmp = torch.mm(cl.transpose(0, 1), cl)
-    loss2 = torch.norm(tmp / torch.norm(tmp) - torch.eye(dm).to(device) / (dm ** .5))
-    return loss2
-
-
-def print_cluster(cl):
-    # print(cl[30:40])
-    freq = [0 for i in range(cl.shape[1])]
-    indices = cl.max(1)[1]
-    for i in indices:
-        freq[i] += 1
-    print(freq)
-    print('')
-
-
 def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vectors):
     total_size = len(graphs)
 
@@ -158,67 +122,6 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
     test_size = total_size - train_size
 
     model_e.train()
-    # model_c.train()
-
-    # total_itr_c = args.iters_per_epoch
-    # cl_batch_size = args.batch_size_cl
-
-    # ge_new = []
-    # for layer in range(args.num_layers):
-    #     if layer == 0:
-    #         ge_new.append(torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device))
-    #     else:
-    #         ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
-
-    # if not initial:
-    #     if epoch % total_itr_c == 1:
-    #         divisor = math.log(args.alpha, total_itr_c)
-    #         alpha = args.alpha
-    #         for itr in range(total_itr_c):
-    #             if itr % 3 == 1:
-    #                 alpha = alpha / divisor
-    #             loss_c_accum = 0
-    #             loss1_accum = 0
-    #             loss2_accum = 0
-    #             full_idx = np.random.permutation(total_size)
-    #             for i in range(0, total_size, cl_batch_size):
-    #                 selected_idx = full_idx[i:i + cl_batch_size]
-    #                 ge_tmp = [ge_t[selected_idx] for ge_t in ge]
-    #                 cl_new = model_c(ge_tmp)
-    #                 loss1_c = 0
-    #
-    #                 score_of_layers = F.softmax(model_c.score_of_layers, dim=-1)
-    #                 for layer in range(0, args.num_layers):
-    #                     loss1_c += score_of_layers[layer] * my_loss_1(model_c.centres[layer], ge_tmp[layer], cl_new)
-    #                 loss2_c = alpha * my_loss_2(cl_new, device)
-    #
-    #                 loss_c = loss1_c + loss2_c
-    #                 if optimizer_c is not None:
-    #                     optimizer_c.zero_grad()
-    #                     loss_c.backward()
-    #                     optimizer_c.step()
-    #                 loss_c_accum += loss_c.detach().cpu().item()
-    #                 loss1_accum += loss1_c.detach().cpu().item()
-    #                 loss2_accum += loss2_c.detach().cpu().item()
-    #                 cl_new = cl_new.detach()
-    #
-    #             print('epoch : ', epoch, 'itr', itr, 'cluster loss : ', loss_c_accum, 'loss1 : ',
-    #                   loss1_accum, 'loss2 : ', loss2_accum)
-    #             with torch.no_grad():
-    #                 cl = model_c(ge)
-    #             print_cluster(cl)
-    #         model_c.eval()
-    #         with torch.no_grad():
-    #             cl = model_c(ge)
-    #         print_cluster(cl)
-    #         print(F.softmax(model_c.score_of_layers, dim=-1))
-    #         print('', flush=True)
-    #     # else:
-    #     #     with torch.no_grad():
-    #     #         cl = model_c(ge)
-    #
-    # else:
-    #     cl = None
 
     idx_train = np.random.permutation(train_size)
     loss_accum = 0
@@ -242,21 +145,6 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
 
         loss = loss.detach().cpu().numpy()
         loss_accum += loss
-        # for layer in range(args.num_layers):
-        #     ge_new[layer][selected_idx] = pooled_h[layer].detach()
-
-    # with torch.no_grad():
-    #     # model_e.eval()
-    #     idx_test = np.arange(train_size, total_size)
-    #     for i in range(0, test_size, args.batch_size):
-    #         selected_idx = idx_test[i:i + args.batch_size]
-    #         batch_graph = [graphs[idx] for idx in selected_idx]
-    #         if len(selected_idx) == 0:
-    #             continue
-    #         output, pooled_h = model_e(batch_graph, cl, ge, selected_idx)
-    #
-    #         for layer in range(args.num_layers):
-    #             ge_new[layer][selected_idx] = pooled_h[layer]
 
     print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', int(time.time() - start_time))
     return loss_accum
@@ -265,13 +153,6 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
 # pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
 def pass_data_iteratively(args, model_e, graphs, minibatch_size, device, word_vectors):
     outputs = []
-    ge_new = []
-    # for layer in range(args.num_layers):
-    #     if layer == 0:
-    #         ge_new.append(torch.zeros(len(graphs), graphs[0].node_features.shape[1]).to(device))
-    #     else:
-    #         ge_new.append(torch.zeros(len(graphs), args.hidden_dim).to(device))
-
     full_idx = np.arange(len(graphs))
     for i in range(0, len(graphs), minibatch_size):
         sampled_idx = full_idx[i:i + minibatch_size]
@@ -280,20 +161,15 @@ def pass_data_iteratively(args, model_e, graphs, minibatch_size, device, word_ve
         with torch.no_grad():
             output = model_e([graphs[j] for j in sampled_idx], word_vectors)
         outputs.append(output)
-        # for layer in range(args.num_layers):
-        #     ge_new[layer][sampled_idx] = pooled_h[layer]
 
     return torch.cat(outputs, 0)
 
 
 def test(args, model_e, device, graphs, train_size, epoch, word_vectors):
-    # model_c.eval()
     model_e.eval()
 
     val_size = train_size // args.k_fold
     train_size = train_size - val_size
-
-    # cl = model_c(ge)
 
     output = pass_data_iteratively(args, model_e, graphs, 100, device, word_vectors)
 
@@ -347,25 +223,16 @@ def main():
                         help='which gpu to use if any (default: 0)')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='input batch size for training (default: 64)')
-    # parser.add_argument('--batch_size_cl', type=int, default=512,
-    #                     help='input batch size for clustering (default: 512)')
-    # parser.add_argument('--iters_per_epoch', type=int, default=50,
-    #                     help='number of iterations per each epoch (default: 50)')
     parser.add_argument('--epochs', type=int, default=350,
                         help='number of epochs to train (default: 350)')
     parser.add_argument('--lr', type=float, default=0.01,
                         help='learning rate (default: 0.01)')
-    # parser.add_argument('--lr_c', type=float, default=0.01,
-    #                     help='learning rate for clustering (default: 0.01)')
     parser.add_argument('--seed', type=int, default=0,
                         help='random seed for splitting the dataset into 10 (default: 0)')
     parser.add_argument('--num_layers', type=int, default=5,
                         help='number of layers INCLUDING the input one (default: 5)')
     parser.add_argument('--num_mlp_layers', type=int, default=2,
                         help='number of layers for MLP EXCLUDING the input one (default: 2). 1 means linear model.')
-    # parser.add_argument('--num_mlp_layers_c', type=int, default=2,
-    #                     help='number of layers for MLP clustering EXCLUDING the input one (default: 2). 1 means '
-    #                          'linear model.')
     parser.add_argument('--hidden_dim', type=int, default=64,
                         help='number of hidden units (default: 64)')
     parser.add_argument('--final_dropout', type=float, default=0.5,
@@ -381,10 +248,6 @@ def main():
                         help='configuration file')
     parser.add_argument('--filename', type=str, default="",
                         help='output file')
-    # parser.add_argument('--alpha', type=float, default=10000,
-    #                     help='alpha')
-    # parser.add_argument('--beta', type=float, default=1,
-    #                     help='beta')
     parser.add_argument('--k_fold', type=int, default=5,
                         help='k_fold')
     parser.add_argument('--early_stop', type=int, default=30,
@@ -444,57 +307,6 @@ def main():
             if epoch > max_acc_epoch + args.early_stop \
                     and epoch > args.early_stop:
                 break
-
-        # print('Embedding Initialized', flush=True)
-
-        # for i in range(len(ge)):
-        #     ge[i] = row_norm(ge_new[i])
-        # ge = ge_new
-        #
-        # idx = np.random.permutation(len(ge[0]))[:num_classes]
-        # ge_tmp = [ge_t[idx] for ge_t in ge]
-        # model_c.init_centres(ge_tmp)
-        #
-        # model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
-        #               num_classes,
-        #               args.final_dropout,
-        #               args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, args.beta).to(device)
-        #
-        # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-        # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.5)
-        #
-        # for epoch in range(1, args.epochs + 1):
-        #     avg_loss, ge_new, cl = train(args, model_e, model_c, device, graphs, optimizer,
-        #                                  optimizer_c, epoch, train_size, ge, cl)
-        #     acc_train, acc_test, ge_new = test(args, model_e, model_c, device, graphs, train_size, epoch, ge, cl)
-        #     scheduler.step()
-        #
-        #     if epoch % args.iters_per_epoch == 0 or True:
-        #         # for i in range(len(ge)):
-        #         #     ge[i] = row_norm(ge_new[i])
-        #         ge = ge_new
-        #
-        #         # model_c = ClusterNN(num_classes, graphs[0].node_features.shape[1], args.hidden_dim, args.num_layers,
-        #         #                     args.num_mlp_layers_c).to(device)
-        #         # model_e = GNN(args.num_layers, args.num_mlp_layers, graphs[0].node_features.shape[1], args.hidden_dim,
-        #         #               num_classes, args.final_dropout, args.learn_eps, args.graph_pooling_type,
-        #         #               args.neighbor_pooling_type, device, args.beta).to(device)
-        #         #
-        #         # optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
-        #         # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
-        #         # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
-        #         # print(time.time() - start_time, 'embeddings updated.', flush=True)
-        #
-        #     if not args.filename == "":
-        #         with open(args.filename, 'w') as f:
-        #             f.write("%f %f %f" % (avg_loss, acc_train, acc_test))
-        #             f.write("\n")
-        #     print("")
-        #     if epoch > max_acc_epoch + args.early_stop \
-        #             and epoch > args.early_stop \
-        #             and (epoch % args.iters_per_epoch > args.early_stop // 2
-        #                  or epoch % args.iters_per_epoch > args.iters_per_epoch // 2):
-        #         break
 
         print('=' * 200)
         print('K : ', k, 'Time : ', abs(time.time() - start_time))
