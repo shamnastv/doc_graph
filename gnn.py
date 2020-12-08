@@ -67,10 +67,11 @@ class GNN(nn.Module):
         for layer in range(self.num_layers - 1):
             if layer == 0:
                 # self.mlp_es.append(MLP(num_mlp_layers, input_dim, hidden_dim, hidden_dim))
-                self.gnn_layers.append(GNNLayer(num_mlp_layers, input_dim, hidden_dim, hidden_dim, num_heads))
+                self.gnn_layers.append(GNNLayer(num_mlp_layers, input_dim, hidden_dim, hidden_dim, num_heads, device))
             else:
                 # self.mlp_es.append(MLP(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim))
-                self.gnn_layers.append(GNNLayer(num_mlp_layers, self.real_hidden_dim, hidden_dim, hidden_dim, num_heads))
+                self.gnn_layers.append(GNNLayer(num_mlp_layers, self.real_hidden_dim,
+                                                hidden_dim, hidden_dim, num_heads, device))
 
             self.batch_norms.append(nn.BatchNorm1d(self.real_hidden_dim))
 

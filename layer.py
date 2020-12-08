@@ -9,12 +9,13 @@ from mlp import MLP
 
 
 class GNNLayer(nn.Module):
-    def __init__(self, num_mlp_layers, input_dim, hidden_dim, output_dim, num_heads):
+    def __init__(self, num_mlp_layers, input_dim, hidden_dim, output_dim, num_heads, device):
         super(GNNLayer, self).__init__()
         self.num_heads = num_heads
         self.special_spmm = SpecialSpmm()
         self.mlp_es = torch.nn.ModuleList()
         self.edge_wt = torch.nn.ModuleList()
+        self.device = device
 
         for heads in range(num_heads):
             self.mlp_es.append(MLP(num_mlp_layers, input_dim, hidden_dim, output_dim))
