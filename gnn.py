@@ -40,15 +40,15 @@ class GNN(nn.Module):
         # self.beta = beta
         self.do_once = True
 
-        self.positional_embeddings = np.zeros((max_words, input_dim))
+        self.positional_embeddings = np.zeros((max_words, hidden_dim))
 
         for position in range(max_words):
-            for i in range(0, input_dim, 2):
+            for i in range(0, hidden_dim, 2):
                 self.positional_embeddings[position, i] = (
-                    np.sin(position / (10000 ** ((2 * i) / input_dim)))
+                    np.sin(position / (10000 ** ((2 * i) / hidden_dim)))
                 )
                 self.positional_embeddings[position, i + 1] = (
-                    np.cos(position / (10000 ** ((2 * (i + 1)) / input_dim)))
+                    np.cos(position / (10000 ** ((2 * (i + 1)) / hidden_dim)))
                 )
 
         ###List of MLPs
@@ -100,6 +100,7 @@ class GNN(nn.Module):
         for i in range(len(positions)):
             for j in positions[i]:
                 pos_enc[i] += self.positional_embeddings[j]
+            pos_enc[i] = pos_enc[i] / len(positions[i])
         return torch.from_numpy(pos_enc).float()
 
     def __preprocess_neighbors_sumavepool(self, batch_graph):
