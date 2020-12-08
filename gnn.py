@@ -319,7 +319,7 @@ class GNN(nn.Module):
         # Adj_block = Adj_block * q_k
 
         for layer in range(self.num_layers - 1):
-            h = self.next_layer_eps(h + self.pos * positional_encoding, layer, Adj_block=Adj_block)
+            h = self.next_layer_eps(h + self.pos[layer] * positional_encoding, layer, Adj_block=Adj_block)
             # if self.neighbor_pooling_type == "max" and self.learn_eps:
             #     h = self.next_layer_eps(h, layer, padded_neighbor_list=padded_neighbor_list)
             # elif not self.neighbor_pooling_type == "max" and self.learn_eps:
