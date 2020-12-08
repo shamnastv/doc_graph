@@ -24,6 +24,8 @@ class GNNLayer(nn.Module):
         idx, elem, shape = Adj_block
         h = []
         num_r = x.shape[0]
+        print(shape)
+        print(x.shape)
         for heads in range(self.num_heads):
             features = self.mlp_es[heads](x)
             features = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
