@@ -27,11 +27,11 @@ class GNNLayer(nn.Module):
         print(shape)
         for heads in range(self.num_heads):
             features = self.mlp_es[heads](x)
-            features = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
-            features = torch.cat(features, dim=1)
-            elem_new = torch.exp(-F.leaky_relu(self.edge_wt[heads](features) / 20).squeeze(1))
+            x_cat = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
+            x_cat = torch.cat(x_cat, dim=1)
+            elem_new = torch.exp(-F.leaky_relu(self.edge_wt[heads](x_cat) / 20).squeeze(1))
             assert not torch.isnan(elem_new).any()
-            print(features.shape)
+
             pooled = self.special_spmm(idx, elem_new, shape, features)
             row_sum = self.special_spmm(idx, elem_new, shape, torch.ones(size=(num_r, 1), device=self.device))
             pooled = pooled.div(row_sum)
