@@ -25,8 +25,8 @@ class GNNLayer(nn.Module):
         h = []
         num_r = x.shape[0]
         for heads in range(self.num_heads):
-            self.mlp_es[heads](x)
-            features = [x[idx[0]], x[idx[1]], elem.unsqueeze(1)]
+            features = self.mlp_es[heads](x)
+            features = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
             features = torch.cat(features, dim=1)
             elem_new = torch.exp(-F.leaky_relu(self.edge_wt[heads](features) / 20).squeeze(1))
             assert not torch.isnan(elem_new).any()
