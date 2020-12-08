@@ -38,6 +38,7 @@ class GNN(nn.Module):
         self.learn_eps = learn_eps
         self.eps = nn.Parameter(torch.zeros(self.num_layers - 1))
         self.w1 = nn.Parameter(torch.zeros(self.num_layers))
+        self.pos = nn.Parameter(torch.zeros(self.num_layers))
         # self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
         # self.beta = beta
         self.do_once = True
@@ -102,7 +103,7 @@ class GNN(nn.Module):
     def reset_parameters(self) -> None:
         nn.init.uniform_(self.eps)
         nn.init.uniform_(self.w1)
-        nn.init.uniform_(self.eps)
+        nn.init.uniform_(self.pos)
 
     def get_pos_enc(self, positions):
         pos_enc = np.zeros((len(positions), self.input_dim))
@@ -318,7 +319,7 @@ class GNN(nn.Module):
         # Adj_block = Adj_block * q_k
 
         for layer in range(self.num_layers - 1):
-            h = self.next_layer_eps(h + positional_encoding, layer, Adj_block=Adj_block)
+            h = self.next_layer_eps(h + self.pos * positional_encoding, layer, Adj_block=Adj_block)
             # if self.neighbor_pooling_type == "max" and self.learn_eps:
             #     h = self.next_layer_eps(h, layer, padded_neighbor_list=padded_neighbor_list)
             # elif not self.neighbor_pooling_type == "max" and self.learn_eps:

@@ -18,7 +18,7 @@ class Attention(nn.Module):
         self.num_layers = num_layers
         self.activation = activation
         self.linears = torch.nn.ModuleList()
-        self.batch_norms = torch.nn.ModuleList()
+        # self.batch_norms = torch.nn.ModuleList()
 
         if hidden_dim is None:
             hidden_dim = input_dim
@@ -34,14 +34,14 @@ class Attention(nn.Module):
                 self.linears.append(nn.Linear(hidden_dim, hidden_dim))
             self.linears.append(nn.Linear(hidden_dim, output_dim))
 
-            for layer in range(num_layers - 1):
-                self.batch_norms.append(nn.BatchNorm1d(hidden_dim))
+            # for layer in range(num_layers - 1):
+            #     self.batch_norms.append(nn.BatchNorm1d(hidden_dim))
 
     def forward(self, x):
         h = x
         for layer in range(self.num_layers - 1):
             h = self.linears[layer](h)
-            h = self.batch_norms[layer](h)
+            # h = self.batch_norms[layer](h)
             h = self.activation(h)
 
         return self.linears[self.num_layers - 1](h)
