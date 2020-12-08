@@ -254,6 +254,8 @@ def main():
                         help='early_stop')
     parser.add_argument('--debug', action="store_true",
                         help='run in debug mode')
+    parser.add_argument('--num_heads', type=int, default=4,
+                        help='number of hidden units (default: 64)')
 
     args = parser.parse_args()
 
@@ -288,8 +290,8 @@ def main():
         #                     args.num_mlp_layers_c).to(device)
         model_e = GNN(args.num_layers, args.num_mlp_layers, word_vectors.shape[1], args.hidden_dim,
                       num_classes,
-                      args.final_dropout,
-                      args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type, device, max_words).to(device)
+                      args.final_dropout, args.learn_eps,
+                      args.graph_pooling_type, args.neighbor_pooling_type, device, max_words, args.num_heads).to(device)
 
         optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
         # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)

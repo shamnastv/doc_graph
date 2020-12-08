@@ -5,12 +5,13 @@ import numpy as np
 
 from SpecialSP import SpecialSpmm
 from attention import Attention
+from layer import GNNLayer
 from mlp import MLP
 
 
 class GNN(nn.Module):
     def __init__(self, num_layers, num_mlp_layers, input_dim, hidden_dim, output_dim, final_dropout, learn_eps,
-                 graph_pooling_type, neighbor_pooling_type, device, max_words):
+                 graph_pooling_type, neighbor_pooling_type, device, max_words, num_heads):
         '''
             num_layers: number of layers in the neural networks (INCLUDING the input layer)
             num_mlp_layers: number of layers in mlps (EXCLUDING the input layer)
@@ -39,13 +40,14 @@ class GNN(nn.Module):
         # self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
         # self.beta = beta
         self.do_once = True
+        self.num_heads = num_heads
 
-        self.positional_embeddings = np.zeros((max_words, hidden_dim))
+        self.positional_embeddings = np.zeros((max_words, num_heads * hidden_dim))
 
         for position in range(max_words):
-            for i in range(0, hidden_dim, 2):
+            for i in range(0, num_heads * hidden_dim, 2):
                 self.positional_embeddings[position, i] = (
-                    np.sin(position / (10000 ** ((2 * i) / hidden_dim)))
+                    np.sin(position / (10000 ** ((2 * i) / num_heads * hidden_dim)))
                 )
                 self.positional_embeddings[position, i + 1] = (
                     np.cos(position / (10000 ** ((2 * (i + 1)) / hidden_dim)))
@@ -53,6 +55,7 @@ class GNN(nn.Module):
 
         ###List of MLPs
         self.mlp_es = torch.nn.ModuleList()
+        self.gnn_layers = torch.nn.ModuleList()
 
         ###List of batchnorms applied to the output of MLP (input of the final prediction linear layer)
         self.batch_norms = torch.nn.ModuleList()
@@ -61,11 +64,11 @@ class GNN(nn.Module):
 
         for layer in range(self.num_layers - 1):
             if layer == 0:
-                self.mlp_es.append(MLP(num_mlp_layers, input_dim, hidden_dim, hidden_dim))
-                # self.norm_g_embd.append(nn.BatchNorm1d(input_dim))
+                # self.mlp_es.append(MLP(num_mlp_layers, input_dim, hidden_dim, hidden_dim))
+                self.gnn_layers.append(GNNLayer(num_mlp_layers, input_dim, hidden_dim, hidden_dim, num_heads))
             else:
-                self.mlp_es.append(MLP(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim))
-                # self.norm_g_embd.append(nn.BatchNorm1d(hidden_dim))
+                # self.mlp_es.append(MLP(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim))
+                self.gnn_layers.append(GNNLayer(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim, num_heads))
 
             self.batch_norms.append(nn.BatchNorm1d(hidden_dim))
 
@@ -171,13 +174,14 @@ class GNN(nn.Module):
 
     def next_layer_eps(self, h, layer, Adj_block=None):
 
-        idx, elem, shape = self.get_adj(layer, Adj_block, h)
-        pooled = self.special_spmm(idx, elem, shape, h)
-        row_sum = self.special_spmm(idx, elem, shape, torch.ones(size=(h.shape[0], 1), device=self.device))
-        pooled = pooled.div(row_sum)
-
-        pooled = pooled + (1 + self.eps[layer]) * h
-        h = self.mlp_es[layer](pooled)
+        # idx, elem, shape = self.get_adj(layer, Adj_block, h)
+        # pooled = self.special_spmm(idx, elem, shape, h)
+        # row_sum = self.special_spmm(idx, elem, shape, torch.ones(size=(h.shape[0], 1), device=self.device))
+        # pooled = pooled.div(row_sum)
+        h = self.gnn_layers[layer](h, Adj_block)
+        # pooled = pooled + (1 + self.eps[layer]) * h
+        # h = self.mlp_es[layer](pooled)
+        # h = self.mlp_es[layer](h, Adj_block)
         h = self.batch_norms[layer](h)
         # h = F.relu(h)
         h = F.leaky_relu(h)
