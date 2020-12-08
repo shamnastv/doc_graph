@@ -1,5 +1,3 @@
-import random
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,7 +6,6 @@ import numpy as np
 from SpecialSP import SpecialSpmm
 from attention import Attention
 from mlp import MLP
-from util import row_norm
 
 
 class GNN(nn.Module):
@@ -36,9 +33,9 @@ class GNN(nn.Module):
         self.graph_pooling_type = graph_pooling_type
         self.neighbor_pooling_type = neighbor_pooling_type
         self.learn_eps = learn_eps
-        self.eps = nn.Parameter(torch.zeros(self.num_layers - 1))
-        self.w1 = nn.Parameter(torch.zeros(self.num_layers))
-        self.pos = nn.Parameter(torch.zeros(self.num_layers))
+        self.eps = nn.Parameter(torch.zeros(self.num_layers - 1), requires_grad=True)
+        self.w1 = nn.Parameter(torch.zeros(self.num_layers), requires_grad=True)
+        self.pos = nn.Parameter(torch.zeros(self.num_layers), requires_grad=True)
         # self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
         # self.beta = beta
         self.do_once = True
@@ -112,32 +109,32 @@ class GNN(nn.Module):
                 pos_enc[i] += self.positional_embeddings[j]
         return torch.from_numpy(pos_enc).float()
 
-    def __preprocess_neighbors_maxpool(self, batch_graph):
-        # create padded_neighbor_list in concatenated graph
-
-        # compute the maximum number of neighbors within the graphs in the current minibatch
-        max_deg = max([graph.max_neighbor for graph in batch_graph])
-
-        padded_neighbor_list = []
-        start_idx = [0]
-
-        for i, graph in enumerate(batch_graph):
-            start_idx.append(start_idx[i] + len(graph.g))
-            padded_neighbors = []
-            for j in range(len(graph.neighbors)):
-                # add off-set values to the neighbor indices
-                pad = [n + start_idx[i] for n in graph.neighbors[j]]
-                # padding, dummy data is assumed to be stored in -1
-                pad.extend([-1] * (max_deg - len(pad)))
-
-                # Add center nodes in the maxpooling if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
-                if not self.learn_eps:
-                    pad.append(j + start_idx[i])
-
-                padded_neighbors.append(pad)
-            padded_neighbor_list.extend(padded_neighbors)
-
-        return torch.LongTensor(padded_neighbor_list)
+    # def __preprocess_neighbors_maxpool(self, batch_graph):
+    #     # create padded_neighbor_list in concatenated graph
+    #
+    #     # compute the maximum number of neighbors within the graphs in the current minibatch
+    #     max_deg = max([graph.max_neighbor for graph in batch_graph])
+    #
+    #     padded_neighbor_list = []
+    #     start_idx = [0]
+    #
+    #     for i, graph in enumerate(batch_graph):
+    #         start_idx.append(start_idx[i] + len(graph.g))
+    #         padded_neighbors = []
+    #         for j in range(len(graph.neighbors)):
+    #             # add off-set values to the neighbor indices
+    #             pad = [n + start_idx[i] for n in graph.neighbors[j]]
+    #             # padding, dummy data is assumed to be stored in -1
+    #             pad.extend([-1] * (max_deg - len(pad)))
+    #
+    #             # Add center nodes in the maxpooling if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
+    #             if not self.learn_eps:
+    #                 pad.append(j + start_idx[i])
+    #
+    #             padded_neighbors.append(pad)
+    #         padded_neighbor_list.extend(padded_neighbors)
+    #
+    #     return torch.LongTensor(padded_neighbor_list)
 
     def __preprocess_neighbors_sumavepool(self, batch_graph):
         # create block diagonal sparse matrix
@@ -175,26 +172,26 @@ class GNN(nn.Module):
         elem = torch.exp(-F.leaky_relu(self.edge_wt[layer](features)).squeeze(1))
         return idx, elem, shape
 
-    def __preprocess_graphpool_n(self, batch_graph):
-        # create sum or average pooling sparse matrix over entire nodes in each graph (num graphs x num nodes)
-
-        start_idx = [0]
-
-        # compute the padded neighbor list
-        for i, graph in enumerate(batch_graph):
-            start_idx.append(start_idx[i] + len(graph.g))
-
-        idx = []
-        elem = []
-        for i, graph in enumerate(batch_graph):
-            elem.extend([1] * len(graph.g))
-            idx.extend([[i, j] for j in range(start_idx[i], start_idx[i + 1], 1)])
-
-        elem = torch.FloatTensor(elem)
-        idx = torch.LongTensor(idx).transpose(0, 1)
-        graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([len(batch_graph), start_idx[-1]]))
-
-        return graph_pool.to(self.device).transpose(0, 1)
+    # def __preprocess_graphpool_n(self, batch_graph):
+    #     # create sum or average pooling sparse matrix over entire nodes in each graph (num graphs x num nodes)
+    #
+    #     start_idx = [0]
+    #
+    #     # compute the padded neighbor list
+    #     for i, graph in enumerate(batch_graph):
+    #         start_idx.append(start_idx[i] + len(graph.g))
+    #
+    #     idx = []
+    #     elem = []
+    #     for i, graph in enumerate(batch_graph):
+    #         elem.extend([1] * len(graph.g))
+    #         idx.extend([[i, j] for j in range(start_idx[i], start_idx[i + 1], 1)])
+    #
+    #     elem = torch.FloatTensor(elem)
+    #     idx = torch.LongTensor(idx).transpose(0, 1)
+    #     graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([len(batch_graph), start_idx[-1]]))
+    #
+    #     return graph_pool.to(self.device).transpose(0, 1)
 
     def __preprocess_graphpool(self, batch_graph):
         # create sum or average pooling sparse matrix over entire nodes in each graph (num graphs x num nodes)
@@ -217,11 +214,13 @@ class GNN(nn.Module):
                 elem.extend([1] * len(graph.g))
 
             idx.extend([[i, j] for j in range(start_idx[i], start_idx[i + 1], 1)])
-        elem = torch.FloatTensor(elem)
-        idx = torch.LongTensor(idx).transpose(0, 1)
-        graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([len(batch_graph), start_idx[-1]]))
+        elem = torch.tensor(elem).float().to(self.device)
+        idx = torch.tensor(idx).long().transpose(0, 1).to(self.device)
+        # graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([len(batch_graph), start_idx[-1]]))
+        graph_pool = (idx, elem, torch.Size([len(batch_graph), start_idx[-1]]))
 
-        return graph_pool.to(self.device), elem.reshape(-1, 1).to(self.device)
+        # return graph_pool.to(self.device), elem.reshape(-1, 1).to(self.device)
+        return graph_pool
 
     def maxpool(self, h, padded_neighbor_list):
         # Element-wise minimum will never affect max-pooling
@@ -260,34 +259,9 @@ class GNN(nn.Module):
         h = F.dropout(h, self.final_dropout, training=self.training)
         return h
 
-    def next_layer(self, h, layer, padded_neighbor_list=None, Adj_block=None):
-        # pooling neighboring nodes and center nodes  altogether
-
-        if self.neighbor_pooling_type == "max":
-            # If max pooling
-            pooled = self.maxpool(h, padded_neighbor_list)
-        else:
-            # If sum or average pooling
-            pooled = torch.spmm(Adj_block, h)
-            if self.neighbor_pooling_type == "average":
-                # If average pooling
-                degree = torch.spmm(Adj_block, torch.ones((Adj_block.shape[0], 1)).to(self.device))
-                pooled = pooled / degree
-
-        # representation of neighboring and center nodes
-        # if Cl is not None:
-        #     tmp = torch.mm(Cl[idx], Cl.transpose(0, 1))
-        #     tmp = torch.spmm(tmp, ge)
-        #     pooled = pooled + torch.spmm(graph_pool_n, tmp)
-        pooled_rep = self.mlp_es[layer](pooled)
-        h = self.batch_norms[layer](pooled_rep)
-
-        # non-linearity
-        h = F.relu(h)
-        return h
-
     def forward(self, batch_graph, word_vectors):
-        graph_pool, node_weights = self.__preprocess_graphpool(batch_graph)
+        # graph_pool, node_weights = self.__preprocess_graphpool(batch_graph)
+        idx_gp, elem_gp, shape_gp = self.__preprocess_graphpool(batch_graph)
         # graph_pool_n = self.__preprocess_graphpool_n(batch_graph)
 
         # list of hidden representation at each layer (including input)
@@ -331,7 +305,7 @@ class GNN(nn.Module):
 
             hidden_rep.append(h)
 
-        graph_pool = graph_pool.to_dense()
+        # graph_pool = graph_pool.to_dense()
         score_over_layer = 0
         # pooled_h_ls = []
 
@@ -346,19 +320,26 @@ class GNN(nn.Module):
             # if self.do_once:
             #     print(graph_pool)
             #
-            g_p = torch.sigmoid(self.graph_pool_layer[layer](torch.cat((h, node_weights), dim=1)))
-            # g_p = F.dropout(g_p, p=.2, training=self.training)
+            tmp = torch.cat((h, elem_gp.unsqueeze(1)), dim=1)
+            elem_gp = torch.exp(-F.leaky_relu(self.graph_pool_layer[layer](tmp))).squeeze(1)
+            assert not torch.isnan(elem_gp).any()
 
-            # if self.do_once:
-            #     print(g_p)
-            graph_pool = graph_pool * g_p.transpose(0, 1)
-            graph_pool = graph_pool / (torch.mm(graph_pool, torch.ones((graph_pool.shape[1], 1)).to(self.device)))
+            row_sum = self.special_spmm(idx_gp, elem_gp, shape_gp, torch.ones(size=(h.shape[0], 1), device=self.device))
+
+            pooled_h = self.special_spmm(idx_gp, elem_gp, shape_gp, h)
+            assert not torch.isnan(pooled_h).any()
+
+            pooled_h = pooled_h.div(row_sum)
+            assert not torch.isnan(pooled_h).any()
+
+            # graph_pool = graph_pool * g_p.transpose(0, 1)
+            # graph_pool = graph_pool / (torch.mm(graph_pool, torch.ones((graph_pool.shape[1], 1)).to(self.device)))
 
             # if self.do_once:
             #     print(graph_pool)
             #     self.do_once = False
 
-            pooled_h = torch.mm(graph_pool, h)
+            # pooled_h = torch.mm(graph_pool, h)
             score_over_layer += self.linears_prediction[layer](pooled_h)
 
         return score_over_layer
