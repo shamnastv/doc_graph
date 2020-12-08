@@ -136,6 +136,7 @@ class GNN(nn.Module):
         features = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
         features = torch.cat(features, dim=1)
         elem = torch.exp(-F.leaky_relu(self.edge_wt[layer](features) / 20).squeeze(1))
+        assert not torch.isnan(elem).any()
         return idx, elem, shape
 
     def __preprocess_graphpool(self, batch_graph):
