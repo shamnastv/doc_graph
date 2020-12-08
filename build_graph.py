@@ -169,7 +169,7 @@ def build_graph(config='param'):
     elif param['embed_type'] == 'fast':
         print('start fast ', int(time.time() - s_t))
         # model = fasttext.train_unsupervised('data/corpus/' + dataset + '.clean.txt', dim=400)
-        model = fasttext.load_model('model')
+        model = fasttext.load_model('../pretrained_models/model_300')
         word_vectors = []
         for i in range(global_vocab_size):
             word_vectors.append(model.get_word_vector(global_vocab[i]))
