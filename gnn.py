@@ -42,15 +42,17 @@ class GNN(nn.Module):
         self.do_once = True
         self.num_heads = num_heads
 
+        self.real_hidden_dim = num_heads * hidden_dim
+
         self.positional_embeddings = np.zeros((max_words, num_heads * hidden_dim))
 
         for position in range(max_words):
             for i in range(0, num_heads * hidden_dim, 2):
                 self.positional_embeddings[position, i] = (
-                    np.sin(position / (10000 ** ((2 * i) / num_heads * hidden_dim)))
+                    np.sin(position / (10000 ** ((2 * i) / self.real_hidden_dim)))
                 )
                 self.positional_embeddings[position, i + 1] = (
-                    np.cos(position / (10000 ** ((2 * (i + 1)) / hidden_dim)))
+                    np.cos(position / (10000 ** ((2 * (i + 1)) / self.real_hidden_dim)))
                 )
 
         ###List of MLPs
@@ -68,14 +70,14 @@ class GNN(nn.Module):
                 self.gnn_layers.append(GNNLayer(num_mlp_layers, input_dim, hidden_dim, hidden_dim, num_heads))
             else:
                 # self.mlp_es.append(MLP(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim))
-                self.gnn_layers.append(GNNLayer(num_mlp_layers, hidden_dim, hidden_dim, hidden_dim, num_heads))
+                self.gnn_layers.append(GNNLayer(num_mlp_layers, self.real_hidden_dim, hidden_dim, hidden_dim, num_heads))
 
-            self.batch_norms.append(nn.BatchNorm1d(hidden_dim))
+            self.batch_norms.append(nn.BatchNorm1d(self.real_hidden_dim))
 
         # Linear function that maps the hidden representation at dofferemt layers into a prediction score
         self.linears_prediction = torch.nn.ModuleList()
         self.graph_pool_layer = torch.nn.ModuleList()
-        self.edge_wt = torch.nn.ModuleList()
+        # self.edge_wt = torch.nn.ModuleList()
 
         self.special_spmm = SpecialSpmm()
 
@@ -84,12 +86,12 @@ class GNN(nn.Module):
             if layer == 0:
                 self.linears_prediction.append(nn.Linear(input_dim, output_dim))
                 self.graph_pool_layer.append(Attention(input_dim + 1))
-                self.edge_wt.append(Attention(input_dim * 2 + 1))
+                # self.edge_wt.append(Attention(input_dim * 2 + 1))
                 # self.cluster_cat.append(nn.Linear(input_dim * 2, 1))
             else:
-                self.linears_prediction.append(nn.Linear(hidden_dim, output_dim))
-                self.graph_pool_layer.append(Attention(hidden_dim + 1))
-                self.edge_wt.append(Attention(input_dim * 2 + 1))
+                self.linears_prediction.append(nn.Linear(self.real_hidden_dim, output_dim))
+                self.graph_pool_layer.append(Attention(self.real_hidden_dim + 1))
+                # self.edge_wt.append(Attention(input_dim * 2 + 1))
                 # self.cluster_cat.append(nn.Linear(hidden_dim * 2, 1))
         self.reset_parameters()
 
