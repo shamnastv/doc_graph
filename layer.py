@@ -25,6 +25,7 @@ class GNNLayer(nn.Module):
         idx, elem, shape = adj_block
         h = []
         num_r = x.shape[0]
+        ones = torch.ones(size=(num_r, 1), device=self.device)
         for head in range(self.num_heads):
             features = self.mlp_es[head](x)
             x_cat = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
@@ -39,8 +40,9 @@ class GNNLayer(nn.Module):
             except AssertionError:
                 print(elem_new1)
             pooled = self.special_sp_mm(idx, elem_new, shape, features)
-            row_sum = self.special_sp_mm(idx, elem_new, shape, torch.ones(size=(num_r, 1), device=self.device))
+            row_sum = self.special_sp_mm(idx, elem_new, shape, ones)
             pooled = pooled.div(row_sum)
             h.append(pooled)
         h = torch.cat(h, dim=1)
+        assert not torch.isnan(h).any()
         return h
