@@ -44,5 +44,5 @@ class GNNLayer(nn.Module):
             pooled = pooled.div(row_sum)
             h.append(pooled)
         h = torch.cat(h, dim=1)
-        # assert not torch.isnan(h).any()
+        assert not torch.isnan(h).any()
         return h
