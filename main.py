@@ -250,7 +250,7 @@ def main():
                         help='early_stop')
     parser.add_argument('--debug', action="store_true",
                         help='run in debug mode')
-    parser.add_argument('--num_heads', type=int, default=4,
+    parser.add_argument('--num_heads', type=int, default=3,
                         help='number of hidden units (default: 64)')
 
     args = parser.parse_args()
