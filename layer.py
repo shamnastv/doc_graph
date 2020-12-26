@@ -31,11 +31,11 @@ class GNNLayer(nn.Module):
             x_cat = torch.cat(x_cat, dim=1)
             elem_new = self.edge_wt[head](x_cat).squeeze(1)
             # elem_new = -F.relu(self.edge_wt[head](x_cat) / 20)
-            elem_new = elem_new - torch.max(elem_new)
+            elem_new1 = elem_new - torch.max(elem_new)
 
-            elem_new = torch.exp(elem_new)
+            elem_new = torch.exp(elem_new1)
             try:
-                assert not torch.isnan(elem_new).any()
+                assert not torch.isnan(elem_new1).any()
             except AssertionError:
                 print(elem_new)
             pooled = self.special_sp_mm(idx, elem_new, shape, features)
