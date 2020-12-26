@@ -6,24 +6,24 @@ import numpy as np
 from SpecialSP import SpecialSpmm
 from attention import Attention
 from layer import GNNLayer
-from mlp import MLP
 
 
 class GNN(nn.Module):
     def __init__(self, num_layers, num_mlp_layers, input_dim, hidden_dim, output_dim, final_dropout, learn_eps,
-                 graph_pooling_type, neighbor_pooling_type, device, max_words, num_heads):
-        '''
+                 graph_pooling_type, neighbor_pooling_type, device, max_words, num_heads, word_embeddings):
+        """
             num_layers: number of layers in the neural networks (INCLUDING the input layer)
             num_mlp_layers: number of layers in mlps (EXCLUDING the input layer)
             input_dim: dimensionality of input features
             hidden_dim: dimensionality of hidden units at ALL layers
             output_dim: number of classes for prediction
             final_dropout: dropout ratio on the final linear layer
-            learn_eps: If True, learn epsilon to distinguish center nodes from neighboring nodes. If False, aggregate neighbors and center nodes altogether.
+            learn_eps: If True, learn epsilon to distinguish center nodes from neighboring nodes.
+                        If False, aggregate neighbors and center nodes altogether.
             neighbor_pooling_type: how to aggregate neighbors (mean, average, or max)
             graph_pooling_type: how to aggregate entire nodes in a graph (mean, average)
             device: which device to use
-        '''
+        """
 
         super(GNN, self).__init__()
 
@@ -55,11 +55,11 @@ class GNN(nn.Module):
                     np.cos(position / (10000 ** ((2 * (i + 1)) / self.real_hidden_dim)))
                 )
 
-        ###List of MLPs
+        # List of MLPs
         self.mlp_es = torch.nn.ModuleList()
         self.gnn_layers = torch.nn.ModuleList()
 
-        ###List of batchnorms applied to the output of MLP (input of the final prediction linear layer)
+        # List of batchnorms applied to the output of MLP (input of the final prediction linear layer)
         self.batch_norms = torch.nn.ModuleList()
 
         # self.norm_g_embd = torch.nn.ModuleList()
@@ -94,6 +94,11 @@ class GNN(nn.Module):
                 self.graph_pool_layer.append(Attention(self.real_hidden_dim + 1))
                 # self.edge_wt.append(Attention(input_dim * 2 + 1))
                 # self.cluster_cat.append(nn.Linear(hidden_dim * 2, 1))
+
+        self.word_embeddings = nn.Embedding(word_embeddings.shape[0], word_embeddings.shape[1])
+        self.word_embeddings.weight.data.copy_(word_embeddings)
+        self.word_embeddings.weight.requires_grad = False
+
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
@@ -120,26 +125,28 @@ class GNN(nn.Module):
             edge_mat_list.append(graph.edge_mat + start_idx[i])
             edge_weight_list.append(graph.edges_weights)
 
-        Adj_block_idx = torch.cat(edge_mat_list, 1).to(self.device)
-        Adj_block_elem = torch.cat(edge_weight_list).to(self.device)
+        adj_block_idx = torch.cat(edge_mat_list, 1).to(self.device)
+        adj_block_elem = torch.cat(edge_weight_list).to(self.device)
 
-        # Adj_block_elem = torch.ones(Adj_block_idx.shape[1])
+        # adj_block_elem = torch.ones(adj_block_idx.shape[1])
 
-        # Add self-loops in the adjacency matrix if learn_eps is False, i.e., aggregate center nodes and neighbor nodes altogether.
+        # Add self-loops in the adjacency matrix if learn_eps is False,
+        # i.e., aggregate center nodes and neighbor nodes altogether.
 
         # if not self.learn_eps:
         #     num_node = start_idx[-1]
         #     self_loop_edge = torch.LongTensor([range(num_node), range(num_node)])
         #     elem = torch.ones(num_node)
-        #     Adj_block_idx = torch.cat([Adj_block_idx, self_loop_edge], 1)
-        #     Adj_block_elem = torch.cat([Adj_block_elem, elem], 0)
+        #     adj_block_idx = torch.cat([adj_block_idx, self_loop_edge], 1)
+        #     adj_block_elem = torch.cat([adj_block_elem, elem], 0)
 
-        # Adj_block = torch.sparse.FloatTensor(Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]]))
-        Adj_block = Adj_block_idx, Adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]])
-        return Adj_block
+        # adj_block = torch.sparse.FloatTensor(adj_block_idx, adj_block_elem,
+        # torch.Size([start_idx[-1], start_idx[-1]]))
+        adj_block = adj_block_idx, adj_block_elem, torch.Size([start_idx[-1], start_idx[-1]])
+        return adj_block
 
-    def get_adj(self, layer, Adj_block, features):
-        idx, elem, shape = Adj_block
+    def get_adj(self, layer, adj_block, features):
+        idx, elem, shape = adj_block
         features = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
         features = torch.cat(features, dim=1)
         elem = torch.exp(-F.leaky_relu(self.edge_wt[layer](features) / 20).squeeze(1))
@@ -175,13 +182,13 @@ class GNN(nn.Module):
         # return graph_pool.to(self.device), elem.reshape(-1, 1).to(self.device)
         return graph_pool
 
-    def next_layer_eps(self, h, layer, Adj_block=None):
+    def next_layer_eps(self, h, layer, adj_block=None):
 
         # idx, elem, shape = self.get_adj(layer, Adj_block, h)
         # pooled = self.special_spmm(idx, elem, shape, h)
         # row_sum = self.special_spmm(idx, elem, shape, torch.ones(size=(h.shape[0], 1), device=self.device))
         # pooled = pooled.div(row_sum)
-        h = self.gnn_layers[layer](h, Adj_block)
+        h = self.gnn_layers[layer](h, adj_block)
         # pooled = pooled + (1 + self.eps[layer]) * h
         # h = self.mlp_es[layer](pooled)
         # h = self.mlp_es[layer](h, Adj_block)
@@ -206,14 +213,15 @@ class GNN(nn.Module):
         positional_encoding = torch.cat(positional_encoding, dim=0).to(self.device)
 
         # X_concat = torch.cat([word_vectors[nf] for nf in node_features], 0).to(self.device)
-        h = word_vectors[node_ids].to(self.device)
+        # h = word_vectors[node_ids].to(self.device)
+        h = self.word_embeddings[node_ids]
 
         hidden_rep = [F.dropout(h + positional_encoding, p=.5, training=self.training)]
 
-        Adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
+        adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
 
         for layer in range(self.num_layers - 1):
-            h = self.next_layer_eps(h + self.pos[layer] * positional_encoding, layer, Adj_block=Adj_block)
+            h = self.next_layer_eps(h + self.pos[layer] * positional_encoding, layer, adj_block=adj_block)
             hidden_rep.append(h)
 
         # graph_pool = graph_pool.to_dense()

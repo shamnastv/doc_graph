@@ -11,7 +11,7 @@ from gnn import GNN
 from util import normalize_adj
 
 criterion = nn.CrossEntropyLoss()
-d = torch.device("cpu")
+d = torch.device('cpu')
 frequency_as_feature = False
 max_val_accuracy = 0
 test_accuracy = 0
@@ -32,14 +32,11 @@ class S2VGraph(object):
         self.label = label
         self.g = g
         self.word_freq = word_freq
-        # self.neighbors = []
         self.node_features = node_features
         self.positions = positions
         # self.node_features = row_norm(self.node_features)
         self.edge_mat = 0
         self.edges_weights = []
-
-        # self.max_neighbor = 0
 
 
 def print_distr(y, train_size):
@@ -90,38 +87,38 @@ def create_gaph(args):
 
     zero_edges = 0
     for g in g_list:
-        # g.neighbors = [[] for i in range(len(g.g))]
-        # for i, j in g.g.edges():
-        #     g.neighbors[i].append(j)
-        #     g.neighbors[j].append(i)
-        # degree_list = []
-        # for i in range(len(g.g)):
-        #     g.neighbors[i] = g.neighbors[i]
-        #     degree_list.append(len(g.neighbors[i]))
-        # g.max_neighbor = max(degree_list)
-        edges = [list(pair) for pair in g.g.edges()]
-        edges_w = [w['weight'] for i, j, w in g.g.edges(data=True)]
-        edges.extend([[i, j] for j, i in edges])
-        edges_w.extend([w for w in edges_w])
+        # edges = [list(pair) for pair in g.g.edges()]
+        # edges_w = [w['weight'] for i, j, w in g.g.edges(data=True)]
+        # edges.extend([[i, j] for j, i in edges])
+        # edges_w.extend([w for w in edges_w])
+        edges = []
+        edges_w = []
+        for i, j, wt in g.g.edges(data=True):
+            w = wt['weight']
+            edges.append([i, j])
+            edges_w.append(w)
+            if i != j:
+                edges.append([j, i])
+                edges_w.append(w)
+
         if len(edges) == 0:
             # print('zero edge : ', len(g.g))
             zero_edges += 1
             edges = [[0, 0]]
             edges_w = [0]
-        g.edge_mat = torch.LongTensor(edges).transpose(0, 1)
-        g.edges_weights = torch.FloatTensor(edges_w)
+        g.edge_mat = torch.tensor(edges).long().transpose(0, 1)
+        g.edges_weights = torch.tensor(edges_w).float()
     print('total zero edge graphs : ', zero_edges)
     return g_list, len(set(y)), train_size, word_vectors, max_words
 
 
 def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vectors):
+    model_e.train()
     total_size = len(graphs)
 
     val_size = train_size // args.k_fold
     train_size = train_size - val_size
     test_size = total_size - train_size
-
-    model_e.train()
 
     idx_train = np.random.permutation(train_size)
     loss_accum = 0
@@ -132,7 +129,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
             continue
         output = model_e(batch_graph, word_vectors)
 
-        labels = torch.LongTensor([graph.label for graph in batch_graph]).to(device)
+        labels = torch.tensor([graph.label for graph in batch_graph]).long().to(device)
 
         # compute loss
         loss = criterion(output, labels)
@@ -173,23 +170,22 @@ def test(args, model_e, device, graphs, train_size, epoch, word_vectors):
 
     output = pass_data_iteratively(args, model_e, graphs, 100, device, word_vectors)
 
-    output_train, output_val, output_test = output[:train_size], output[train_size:train_size + val_size]\
-        , output[train_size + val_size:]
-    train_graphs, val_graph, test_graphs = graphs[:train_size], graphs[train_size:train_size + val_size]\
-        , graphs[train_size + val_size:]
+    output_train, train_graphs = output[:train_size], graphs[:train_size]
+    output_val, val_graph = output[train_size:train_size + val_size], graphs[train_size:train_size + val_size]
+    output_test, test_graphs = output[train_size + val_size:], graphs[train_size + val_size:]
 
     pred_train = output_train.max(1, keepdim=True)[1]
-    labels_train = torch.LongTensor([graph.label for graph in train_graphs]).to(device)
+    labels_train = torch.tensor([graph.label for graph in train_graphs]).long().to(device)
     correct = pred_train.eq(labels_train.view_as(pred_train)).sum().cpu().item()
     acc_train = correct / float(len(train_graphs))
 
     pred_val = output_val.max(1, keepdim=True)[1]
-    labels_val = torch.LongTensor([graph.label for graph in val_graph]).to(device)
+    labels_val = torch.tensor([graph.label for graph in val_graph]).long().to(device)
     correct = pred_val.eq(labels_val.view_as(pred_val)).sum().cpu().item()
     acc_val = correct / float(len(val_graph))
 
     pred_test = output_test.max(1, keepdim=True)[1]
-    labels_test = torch.LongTensor([graph.label for graph in test_graphs]).to(device)
+    labels_test = torch.tensor([graph.label for graph in test_graphs]).long().to(device)
     correct = pred_test.eq(labels_test.view_as(pred_test)).sum().cpu().item()
     acc_test = correct / float(len(test_graphs))
 
@@ -223,9 +219,9 @@ def main():
                         help='which gpu to use if any (default: 0)')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='input batch size for training (default: 64)')
-    parser.add_argument('--epochs', type=int, default=350,
+    parser.add_argument('--epochs', type=int, default=400,
                         help='number of epochs to train (default: 350)')
-    parser.add_argument('--lr', type=float, default=0.01,
+    parser.add_argument('--lr', type=float, default=0.001,
                         help='learning rate (default: 0.01)')
     parser.add_argument('--seed', type=int, default=0,
                         help='random seed for splitting the dataset into 10 (default: 0)')
@@ -290,8 +286,8 @@ def main():
         #                     args.num_mlp_layers_c).to(device)
         model_e = GNN(args.num_layers, args.num_mlp_layers, word_vectors.shape[1], args.hidden_dim,
                       num_classes,
-                      args.final_dropout, args.learn_eps,
-                      args.graph_pooling_type, args.neighbor_pooling_type, device, max_words, args.num_heads).to(device)
+                      args.final_dropout, args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type,
+                      device, max_words, args.num_heads, word_vectors).to(device)
 
         optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
         # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
