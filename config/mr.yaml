@@ -3,5 +3,5 @@ window_size_g: 20
 window_size: 20
 save_graph: False
 retrieve_graph: True
-embed_type: global_pmi
+embed_type: fast
 pmi_c: 1

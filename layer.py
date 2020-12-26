@@ -27,8 +27,6 @@ class GNNLayer(nn.Module):
         num_r = x.shape[0]
         ones = torch.ones(size=(num_r, 1), device=self.device)
         for head in range(self.num_heads):
-            if torch.isnan(x).any():
-                print(x)
             features = self.mlp_es[head](x)
             x_cat = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
             x_cat = torch.cat(x_cat, dim=1)
@@ -47,5 +45,4 @@ class GNNLayer(nn.Module):
             pooled = pooled.div(row_sum)
             h.append(pooled)
         h = torch.cat(h, dim=1)
-        assert not torch.isnan(h).any()
         return h
