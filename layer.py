@@ -30,6 +30,8 @@ class GNNLayer(nn.Module):
             features = self.mlp_es[head](x)
             x_cat = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
             x_cat = torch.cat(x_cat, dim=1)
+            if torch.isnan(x_cat).any():
+                print(x_cat)
             elem_new1 = self.edge_wt[head](x_cat).squeeze(1)
             # elem_new = -F.relu(self.edge_wt[head](x_cat) / 20)
             elem_new = elem_new1 - torch.max(elem_new1)
