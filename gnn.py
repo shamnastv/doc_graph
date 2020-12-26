@@ -214,7 +214,7 @@ class GNN(nn.Module):
 
         # X_concat = torch.cat([word_vectors[nf] for nf in node_features], 0).to(self.device)
         # h = word_vectors[node_ids].to(self.device)
-        h = self.word_embeddings[node_ids]
+        h = self.word_embeddings(node_ids)
 
         hidden_rep = [F.dropout(h + positional_encoding, p=.5, training=self.training)]
 
