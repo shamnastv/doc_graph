@@ -97,7 +97,7 @@ class GNN(nn.Module):
 
         self.word_embeddings = nn.Embedding(word_embeddings.shape[0], word_embeddings.shape[1])
         self.word_embeddings.weight.data.copy_(word_embeddings)
-        self.word_embeddings.weight.requires_grad = True
+        self.word_embeddings.weight.requires_grad = False
 
         self.reset_parameters()
 
