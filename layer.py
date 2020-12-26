@@ -29,11 +29,12 @@ class GNNLayer(nn.Module):
             features = self.mlp_es[head](x)
             x_cat = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
             x_cat = torch.cat(x_cat, dim=1)
-            elem_new = -F.relu(self.edge_wt[head](x_cat) / 20)
-            # elem_new = elem_new - max(elem_new)
-            elem_new = torch.exp(elem_new).squeeze(1)
-            assert not torch.isnan(elem_new).any()
+            elem_new = self.edge_wt[head](x_cat).squeeze(1)
+            # elem_new = -F.relu(self.edge_wt[head](x_cat) / 20)
+            elem_new = elem_new - torch.max(elem_new, 1, keepdim=True)[0]
 
+            elem_new = torch.exp(elem_new)
+            assert not torch.isnan(elem_new).any()
             pooled = self.special_sp_mm(idx, elem_new, shape, features)
             row_sum = self.special_sp_mm(idx, elem_new, shape, torch.ones(size=(num_r, 1), device=self.device))
             pooled = pooled.div(row_sum)

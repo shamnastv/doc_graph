@@ -231,9 +231,9 @@ class GNN(nn.Module):
             #     print(graph_pool)
             #
             tmp = torch.cat((h, elem_gp.unsqueeze(1)), dim=1)
-            elem_gp = self.graph_pool_layer[layer](tmp) / 20
-            elem_gp = elem_gp - max(elem_gp)
-            elem_gp = torch.exp(elem_gp).squeeze(1)
+            elem_gp = self.graph_pool_layer[layer](tmp).squeeze(1)
+            elem_gp = elem_gp - torch.max(elem_gp, 1, keepdim=True)[0]
+            elem_gp = torch.exp(elem_gp)
             assert not torch.isnan(elem_gp).any()
 
             row_sum = self.special_spmm(idx_gp, elem_gp, shape_gp, torch.ones(size=(h.shape[0], 1), device=self.device))
