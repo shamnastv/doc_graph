@@ -29,11 +29,11 @@ class GNNLayer(nn.Module):
             features = self.mlp_es[head](x)
             x_cat = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
             x_cat = torch.cat(x_cat, dim=1)
-            elem_new = self.edge_wt[head](x_cat).squeeze(1)
+            elem_new1 = self.edge_wt[head](x_cat).squeeze(1)
             # elem_new = -F.relu(self.edge_wt[head](x_cat) / 20)
-            elem_new1 = elem_new - torch.max(elem_new)
+            elem_new = elem_new1 - torch.max(elem_new1)
 
-            elem_new = torch.exp(elem_new1)
+            elem_new = torch.exp(elem_new)
             try:
                 assert not torch.isnan(elem_new).any()
             except AssertionError:
