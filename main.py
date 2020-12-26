@@ -144,6 +144,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
         loss_accum += loss
 
     print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', int(time.time() - start_time))
+    print(model_e.pos)
     return loss_accum
 
 
