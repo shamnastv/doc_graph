@@ -35,9 +35,9 @@ class GNNLayer(nn.Module):
 
             elem_new = torch.exp(elem_new1)
             try:
-                assert not torch.isnan(elem_new1).any()
+                assert not torch.isnan(elem_new).any()
             except AssertionError:
-                print(elem_new)
+                print(elem_new1)
             pooled = self.special_sp_mm(idx, elem_new, shape, features)
             row_sum = self.special_sp_mm(idx, elem_new, shape, torch.ones(size=(num_r, 1), device=self.device))
             pooled = pooled.div(row_sum)
