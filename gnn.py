@@ -37,8 +37,6 @@ class GNN(nn.Module):
         self.eps = nn.Parameter(torch.zeros(self.num_layers - 1), requires_grad=True)
         self.w1 = nn.Parameter(torch.zeros(self.num_layers), requires_grad=True)
         self.pos = nn.Parameter(torch.zeros(self.num_layers), requires_grad=True)
-        # self.w2 = nn.Parameter(torch.zeros(self.num_layers - 1))
-        # self.beta = beta
         self.do_once = True
         self.num_heads = num_heads
 
@@ -97,7 +95,7 @@ class GNN(nn.Module):
 
         self.word_embeddings = nn.Embedding(word_embeddings.shape[0], word_embeddings.shape[1])
         self.word_embeddings.weight.data.copy_(word_embeddings)
-        self.word_embeddings.weight.requires_grad = False
+        self.word_embeddings.weight.requires_grad = True
 
         self.reset_parameters()
 
