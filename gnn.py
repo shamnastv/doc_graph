@@ -40,6 +40,8 @@ class GNN(nn.Module):
         self.do_once = True
         self.num_heads = num_heads
 
+        self.dropout = nn.Dropout(final_dropout)
+
         self.real_hidden_dim = num_heads * hidden_dim
 
         self.positional_embeddings = np.zeros((max_words, num_heads * hidden_dim))
@@ -193,13 +195,12 @@ class GNN(nn.Module):
         h = self.batch_norms[layer](h)
         # h = F.relu(h)
         h = F.leaky_relu(h)
-        h = F.dropout(h, self.final_dropout, training=self.training)
+        h = self.dropout(h)
         return h
 
     def forward(self, batch_graph, word_vectors):
         # graph_pool, node_weights = self.__preprocess_graphpool(batch_graph)
         idx_gp, elem_gp, shape_gp = self.__preprocess_graphpool(batch_graph)
-        # graph_pool_n = self.__preprocess_graphpool_n(batch_graph)
 
         # list of hidden representation at each layer (including input)
         node_ids = []
@@ -210,17 +211,16 @@ class GNN(nn.Module):
 
         positional_encoding = torch.cat(positional_encoding, dim=0).to(self.device)
 
-        # X_concat = torch.cat([word_vectors[nf] for nf in node_features], 0).to(self.device)
         # h = word_vectors[node_ids].to(self.device)
         h = self.word_embeddings(torch.tensor(node_ids, device=self.device, dtype=torch.long))
 
-        hidden_rep = [F.dropout(h + positional_encoding, p=.5, training=self.training)]
+        hidden_rep = [h + self.pos[0] * positional_encoding]
 
         adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
 
         for layer in range(self.num_layers - 1):
-            h = self.next_layer_eps(h + self.pos[layer] * positional_encoding, layer, adj_block=adj_block)
-            hidden_rep.append(h)
+            h = self.next_layer_eps(hidden_rep[layer], layer, adj_block=adj_block)
+            hidden_rep.append(h + self.pos[layer + 1] * positional_encoding)
 
         # graph_pool = graph_pool.to_dense()
         score_over_layer = 0

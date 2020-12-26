@@ -125,8 +125,8 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
     for i in range(0, train_size, args.batch_size):
         selected_idx = idx_train[i:i + args.batch_size]
         batch_graph = [graphs[idx] for idx in selected_idx]
-        if len(selected_idx) == 0:
-            continue
+        # if len(selected_idx) == 0:
+        #     continue
         output = model_e(batch_graph, word_vectors)
 
         labels = torch.tensor([graph.label for graph in batch_graph]).long().to(device)
