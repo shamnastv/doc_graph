@@ -213,12 +213,12 @@ class GNN(nn.Module):
         h = self.word_embeddings(torch.tensor(node_ids, device=self.device, dtype=torch.long))
 
         # hidden_rep = [h + self.pos[0] * positional_encoding]
-        hidden_rep = [h]
+        hidden_rep = [self.dropout(h)]
 
         adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
 
         for layer in range(self.num_layers - 1):
-            h = self.next_layer_eps(hidden_rep[layer], layer, adj_block=adj_block)
+            h = self.next_layer_eps(h, layer, adj_block=adj_block)
             hidden_rep.append(h)
 
         # graph_pool = graph_pool.to_dense()

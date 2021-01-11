@@ -19,7 +19,7 @@ class GNNLayer(nn.Module):
 
         for heads in range(num_heads):
             self.mlp_es.append(MLP(num_mlp_layers, input_dim, hidden_dim, output_dim))
-            self.edge_wt.append(Attention(output_dim * 2 + 1, num_layers=1))
+            self.edge_wt.append(Attention(output_dim * 2 + 1, num_layers=2))
 
     def forward(self, x, adj_block):
         idx, elem, shape = adj_block
