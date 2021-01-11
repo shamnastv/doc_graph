@@ -226,7 +226,7 @@ def main():
                         help='learning rate (default: 0.01)')
     parser.add_argument('--seed', type=int, default=0,
                         help='random seed for splitting the dataset into 10 (default: 0)')
-    parser.add_argument('--num_layers', type=int, default=5,
+    parser.add_argument('--num_layers', type=int, default=3,
                         help='number of layers INCLUDING the input one (default: 5)')
     parser.add_argument('--num_mlp_layers', type=int, default=2,
                         help='number of layers for MLP EXCLUDING the input one (default: 2). 1 means linear model.')
