@@ -6,6 +6,7 @@ import numpy as np
 from SpecialSP import SpecialSpmm
 from attention import Attention
 from layer import GNNLayer
+from torch_sparse import spmm
 
 
 class GNN(nn.Module):
@@ -239,9 +240,11 @@ class GNN(nn.Module):
 
             elem_gp = torch.sigmoid(self.graph_pool_layer[layer](tmp).squeeze(1))
 
-            row_sum = self.special_spmm(idx_gp, elem_gp, shape_gp, torch.ones(size=(h.shape[0], 1), device=self.device))
+            # row_sum = self.special_spmm(idx_gp, elem_gp, shape_gp, torch.ones(size=(h.shape[0], 1), device=self.device))
+            row_sum = spmm(idx_gp, elem_gp, shape_gp, torch.ones(size=(h.shape[0], 1), device=self.device))
 
-            pooled_h = self.special_spmm(idx_gp, elem_gp, shape_gp, h)
+            # pooled_h = self.special_spmm(idx_gp, elem_gp, shape_gp, h)
+            pooled_h = spmm(idx_gp, elem_gp, shape_gp, h)
             assert not torch.isnan(pooled_h).any()
 
             pooled_h = pooled_h.div(row_sum + .0000001)

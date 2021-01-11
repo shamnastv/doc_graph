@@ -8,6 +8,6 @@
 
 python3 main.py --epochs 400 --lr .0001 --num_layers 3 --num_mlp_layers 1 --hidden_dim 400 --final_dropout .5 --configfile R8_save
 python3 main.py --epochs 400 --lr .00008 --num_layers 3 --num_mlp_layers 1 --hidden_dim 400 --final_dropout .5 --configfile R8_save
-python3 main.py --epochs 400 --lr .00005--num_layers 3 --num_mlp_layers 1 --hidden_dim 400 --final_dropout .5 --configfile R8_save
+python3 main.py --epochs 400 --lr .00005 --num_layers 3 --num_mlp_layers 1 --hidden_dim 400 --final_dropout .5 --configfile R8_save
 python3 main.py --epochs 400 --lr .00002 --num_layers 3 --num_mlp_layers 1 --hidden_dim 400 --final_dropout .5 --configfile R8_save
 python3 main.py --epochs 400 --lr .00001 --num_layers 3 --num_mlp_layers 1 --hidden_dim 400 --final_dropout .5 --configfile R8_save
