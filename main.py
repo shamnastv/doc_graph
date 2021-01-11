@@ -148,7 +148,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
     return loss_accum
 
 
-# pass data to model with minibatch during testing to avoid memory overflow (does not perform backpropagation)
+# pass data to model with mini batch during testing to avoid memory overflow (does not perform backpropagation)
 def pass_data_iteratively(args, model_e, graphs, minibatch_size, device, word_vectors):
     outputs = []
     full_idx = np.arange(len(graphs))
@@ -251,7 +251,7 @@ def main():
                         help='early_stop')
     parser.add_argument('--debug', action="store_true",
                         help='run in debug mode')
-    parser.add_argument('--num_heads', type=int, default=3,
+    parser.add_argument('--num_heads', type=int, default=1,
                         help='number of hidden units (default: 64)')
 
     args = parser.parse_args()
