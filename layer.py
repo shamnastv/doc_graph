@@ -28,21 +28,22 @@ class GNNLayer(nn.Module):
         ones = torch.ones(size=(num_r, 1), device=self.device)
         for head in range(self.num_heads):
             features = self.mlp_es[head](x)
-            x_cat = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
-            x_cat = torch.cat(x_cat, dim=1)
-
-            elem_new1 = F.leaky_relu(self.edge_wt[head](x_cat).squeeze(1))
-            # elem_new1 = -F.relu(self.edge_wt[head](x_cat) / 20)
-            elem_new = elem_new1 - torch.max(elem_new1)
-
-            elem_new = torch.exp(elem_new)
-            try:
-                assert not torch.isnan(elem_new).any()
-            except AssertionError:
-                print(elem_new1)
-            pooled = self.special_sp_mm(idx, elem_new, shape, features)
-            row_sum = self.special_sp_mm(idx, elem_new, shape, ones) + 0.0000001
-            pooled = pooled.div(row_sum)
+            # x_cat = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
+            # x_cat = torch.cat(x_cat, dim=1)
+            #
+            # elem_new1 = F.leaky_relu(self.edge_wt[head](x_cat).squeeze(1))
+            # # elem_new1 = -F.relu(self.edge_wt[head](x_cat) / 20)
+            # elem_new = elem_new1 - torch.max(elem_new1)
+            #
+            # elem_new = torch.exp(elem_new)
+            # try:
+            #     assert not torch.isnan(elem_new).any()
+            # except AssertionError:
+            #     print(elem_new1)
+            # pooled = self.special_sp_mm(idx, elem_new, shape, features)
+            # row_sum = self.special_sp_mm(idx, elem_new, shape, ones) + 0.0000001
+            # pooled = pooled.div(row_sum)
+            pooled = self.special_sp_mm(idx, elem, shape, features)
             h.append(pooled)
         h = torch.cat(h, dim=1)
         return h
