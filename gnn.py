@@ -44,16 +44,16 @@ class GNN(nn.Module):
 
         self.real_hidden_dim = num_heads * hidden_dim
 
-        self.positional_embeddings = np.zeros((max_words, num_heads * hidden_dim))
-
-        for position in range(max_words):
-            for i in range(0, num_heads * hidden_dim, 2):
-                self.positional_embeddings[position, i] = (
-                    np.sin(position / (10000 ** ((2 * i) / self.real_hidden_dim)))
-                )
-                self.positional_embeddings[position, i + 1] = (
-                    np.cos(position / (10000 ** ((2 * (i + 1)) / self.real_hidden_dim)))
-                )
+        # self.positional_embeddings = np.zeros((max_words, num_heads * hidden_dim))
+        #
+        # for position in range(max_words):
+        #     for i in range(0, num_heads * hidden_dim, 2):
+        #         self.positional_embeddings[position, i] = (
+        #             np.sin(position / (10000 ** ((2 * i) / self.real_hidden_dim)))
+        #         )
+        #         self.positional_embeddings[position, i + 1] = (
+        #             np.cos(position / (10000 ** ((2 * (i + 1)) / self.real_hidden_dim)))
+        #         )
 
         # List of MLPs
         self.mlp_es = torch.nn.ModuleList()
@@ -211,8 +211,8 @@ class GNN(nn.Module):
 
         # positional_encoding = torch.cat(positional_encoding, dim=0).to(self.device)
 
-        # h = word_vectors[node_ids].to(self.device)
-        h = self.word_embeddings(torch.tensor(node_ids, device=self.device, dtype=torch.long))
+        h = word_vectors[node_ids].to(self.device)
+        # h = self.word_embeddings(torch.tensor(node_ids, device=self.device, dtype=torch.long))
 
         # hidden_rep = [h + self.pos[0] * positional_encoding]
         hidden_rep = [h]
