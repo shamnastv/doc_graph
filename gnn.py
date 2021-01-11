@@ -237,7 +237,7 @@ class GNN(nn.Module):
             # elem_gp = torch.exp(elem_gp)
             # assert not torch.isnan(elem_gp).any()
 
-            elem_gp = torch.sigmoid(self.graph_pool_layer[layer](tmp).squeeze(1))
+            elem_gp = torch.sigmoid(self.graph_pool_layer[layer](tmp).squeeze(1)) * elem_gp
 
             row_sum = self.special_spmm(idx_gp, elem_gp, shape_gp, torch.ones(size=(h.shape[0], 1), device=self.device))
 
