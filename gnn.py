@@ -193,10 +193,10 @@ class GNN(nn.Module):
         # pooled = pooled + (1 + self.eps[layer]) * h
         # h = self.mlp_es[layer](pooled)
         # h = self.mlp_es[layer](h, Adj_block)
-        h = self.batch_norms[layer](h)
         # h = F.relu(h)
         h = F.leaky_relu(h)
         h = self.dropout(h)
+        h = self.batch_norms[layer](h)
         return h
 
     def forward(self, batch_graph, word_vectors):

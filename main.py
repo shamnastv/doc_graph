@@ -102,7 +102,7 @@ def create_gaph(args):
                 edges_w.append(w)
 
         if len(edges) == 0:
-            # print('zero edge : ', len(g.g))
+            print('zero edge : ', len(g.g))
             zero_edges += 1
             edges = [[0, 0]]
             edges_w = [0]
