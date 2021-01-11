@@ -322,13 +322,21 @@ def main():
     print(args)
     print('total size : ', len(all_graphs), '\n')
     print('=' * 71 + 'Summary' + '=' * 71)
+    avg = [0] * 3
     for k in range(len(acc_detais)):
+        avg[0] += acc_detais[k][0]
+        avg[1] += acc_detais[k][1]
+        avg[2] += acc_detais[k][3]
         print('k : ', k,
               '\tval_accuracy : ', acc_detais[k][0] * 100,
               '\ttest_accuracy : ', acc_detais[k][1] * 100,
               '\tmax_acc epoch : ', acc_detais[k][2],
               '\tlatest_test_accuracy : ', acc_detais[k][3] * 100)
 
+    print('\navg : ',
+          '\tval_accuracy : ', avg[0] / len(acc_detais) * 100,
+          '\ttest_accuracy : ', avg[1] / len(acc_detais) * 100,
+          '\tlatest_test_accuracy : ', avg[2] / len(acc_detais) * 100
 
 if __name__ == '__main__':
     main()
