@@ -6,5 +6,5 @@
 #SBATCH --gres=gpu:1
 #SBATCH --partition=cl1_48h-1G
 
-python3 main.py --epochs 400 --lr .0002 --num_layers 2 --num_mlp_layers 1 --hidden_dim 400 --final_dropout .5 --configfile R8_save
-python3 main.py --epochs 400 --lr .0003 --num_layers 2 --num_mlp_layers 1 --hidden_dim 400 --final_dropout .5 --configfile R8_save
+python3 main.py --epochs 400 --lr .0002 --num_layers 3 --num_mlp_layers 1 --hidden_dim 400 --final_dropout .5 --configfile R8_save
+python3 main.py --epochs 400 --lr .0003 --num_layers 3 --num_mlp_layers 1 --hidden_dim 400 --final_dropout .5 --configfile R8_save
