@@ -34,8 +34,8 @@ class GNN(nn.Module):
         self.graph_pooling_type = graph_pooling_type
         self.neighbor_pooling_type = neighbor_pooling_type
         self.learn_eps = learn_eps
-        self.eps = nn.Parameter(torch.zeros(self.num_layers - 1), requires_grad=True)
-        self.w1 = nn.Parameter(torch.zeros(self.num_layers), requires_grad=True)
+        # self.eps = nn.Parameter(torch.zeros(self.num_layers - 1), requires_grad=True)
+        # self.w1 = nn.Parameter(torch.zeros(self.num_layers), requires_grad=True)
         self.pos = nn.Parameter(torch.zeros(self.num_layers), requires_grad=True)
         self.do_once = True
         self.num_heads = num_heads
@@ -100,8 +100,8 @@ class GNN(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        nn.init.uniform_(self.eps)
-        nn.init.uniform_(self.w1)
+        # nn.init.uniform_(self.eps)
+        # nn.init.uniform_(self.w1)
         nn.init.uniform_(self.pos)
 
     def get_pos_enc(self, positions):

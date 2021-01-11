@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-###MLP with lienar output
 class MLP(nn.Module):
     def __init__(self, num_layers, input_dim, hidden_dim, output_dim):
         '''
@@ -46,7 +45,7 @@ class MLP(nn.Module):
             h = x
             for layer in range(self.num_layers - 1):
                 h = self.linears[layer](h)
-                h = self.batch_norms[layer](h)
                 h = F.relu(h)
+                h = self.batch_norms[layer](h)
                 # h = F.tanh(h)
             return self.linears[self.num_layers - 1](h)
