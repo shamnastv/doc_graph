@@ -298,7 +298,7 @@ def main():
         # cl = None
 
         print(time.time() - start_time, 's Training starts', flush=True)
-        for epoch in range(args.epochs + 1):
+        for epoch in range(1, args.epochs + 1):
             avg_loss = train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vectors)
             acc_train, acc_test = test(args, model_e, device, graphs, train_size, epoch, word_vectors)
             print("")
