@@ -40,8 +40,8 @@ class GNNLayer(nn.Module):
                 assert not torch.isnan(elem_new).any()
             except AssertionError:
                 print(elem_new1)
-            pooled = spmm(idx, elem_new, shape, features)
-            row_sum = spmm(idx, elem_new, shape, ones) + 0.0000001
+            pooled = spmm(idx, elem_new, shape[0], shape[1], features)
+            row_sum = spmm(idx, elem_new, shape[0], shape[1], ones) + 0.0000001
             pooled = pooled.div(row_sum)
             # pooled = spmm(idx, elem, shape[0], shape[1], features)
             # pooled = pooled + (1 + self.eps) * features
