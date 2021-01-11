@@ -31,7 +31,7 @@ class GNNLayer(nn.Module):
             x_cat = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
             x_cat = torch.cat(x_cat, dim=1)
 
-            elem_new1 = F.leaky_relu(self.edge_wt[head](x_cat).squeeze(1))
+            elem_new1 = F.leaky_relu(self.edge_wt[head](x_cat).squeeze(1), negative_slope=0.2)
             # elem_new1 = -F.relu(self.edge_wt[head](x_cat) / 20)
             elem_new = elem_new1 - torch.max(elem_new1)
 
@@ -41,7 +41,7 @@ class GNNLayer(nn.Module):
             except AssertionError:
                 print(elem_new1)
             pooled = spmm(idx, elem_new, shape[0], shape[1], features)
-            row_sum = spmm(idx, elem_new, shape[0], shape[1], ones) + 0.0000001
+            row_sum = spmm(idx, elem_new, shape[0], shape[1], ones) + 1e-10
             pooled = pooled.div(row_sum)
             # pooled = spmm(idx, elem, shape[0], shape[1], features)
             # pooled = pooled + (1 + self.eps) * features

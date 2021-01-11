@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class Attention(nn.Module):
-    def __init__(self, input_dim, hidden_dim=None, output_dim=1, num_layers=2, activation=F.leaky_relu, bias=True):
+    def __init__(self, input_dim, hidden_dim=None, output_dim=1, num_layers=2, activation=torch.tanh, bias=True):
         '''
             num_layers: number of layers in the neural networks (EXCLUDING the input layer). If num_layers=1, this reduces to linear model.
             input_dim: dimensionality of input features

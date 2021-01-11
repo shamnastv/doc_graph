@@ -246,7 +246,7 @@ class GNN(nn.Module):
             pooled_h = spmm(idx_gp, elem_gp, shape_gp[0], shape_gp[1], h)
             assert not torch.isnan(pooled_h).any()
 
-            pooled_h = pooled_h.div(row_sum + .0000001)
+            pooled_h = pooled_h.div(row_sum + 1e-10)
             assert not torch.isnan(pooled_h).any()
 
             # if self.do_once:
