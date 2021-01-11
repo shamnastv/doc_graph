@@ -245,7 +245,7 @@ def main():
                         help='configuration file')
     parser.add_argument('--filename', type=str, default="",
                         help='output file')
-    parser.add_argument('--k_fold', type=int, default=5,
+    parser.add_argument('--k_fold', type=int, default=0,
                         help='k_fold')
     parser.add_argument('--early_stop', type=int, default=30,
                         help='early_stop')
