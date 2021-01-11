@@ -433,9 +433,11 @@ def build_graph(config='param'):
             count = word_pair_count[key]
             word_freq_i = word_window_freq[global_vocab[i]]
             word_freq_j = word_window_freq[global_vocab[j]]
-            pmi = log((pmi_c_g * count / num_window) /
-                      (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
-            if pmi <= 0:
+            # pmi = log((pmi_c_g * count / num_window) /
+            #           (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
+            pmi = (pmi_c_g * count / num_window) / (1.0 * word_freq_i * word_freq_j / (num_window * num_window))
+
+            if pmi <= 2:
                 continue
             row.append(i)
             col.append(j)
