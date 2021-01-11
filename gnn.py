@@ -166,13 +166,13 @@ class GNN(nn.Module):
         elem = []
         for i, graph in enumerate(batch_graph):
             # average pooling
-            if self.graph_pooling_type == "average":
-                # elem.extend([1. / len(graph.g)] * len(graph.g))
-                elem.extend(graph.word_freq)
-            else:
-                # sum pooling
-                elem.extend([1] * len(graph.g))
-
+            # if self.graph_pooling_type == "average":
+            #     # elem.extend([1. / len(graph.g)] * len(graph.g))
+            #     elem.extend(graph.word_freq)
+            # else:
+            #     # sum pooling
+            #     elem.extend([1] * len(graph.g))
+            elem.extend(graph.word_freq)
             idx.extend([[i, j] for j in range(start_idx[i], start_idx[i + 1], 1)])
         elem = torch.tensor(elem).float().to(self.device)
         idx = torch.tensor(idx).long().transpose(0, 1).to(self.device)
