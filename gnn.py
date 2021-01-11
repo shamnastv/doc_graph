@@ -231,7 +231,11 @@ class GNN(nn.Module):
             #
             tmp = torch.cat((h, elem_gp.unsqueeze(1)), dim=1)
             elem_gp = self.graph_pool_layer[layer](tmp).squeeze(1)
-            elem_gp = elem_gp - torch.max(elem_gp)
+
+            with torch.no_grad():
+                maximum = torch.max(elem_gp)
+
+            elem_gp = elem_gp - maximum
             elem_gp = torch.exp(elem_gp)
             assert not torch.isnan(elem_gp).any()
 
