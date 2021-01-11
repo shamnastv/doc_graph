@@ -211,8 +211,8 @@ class GNN(nn.Module):
 
         # positional_encoding = torch.cat(positional_encoding, dim=0).to(self.device)
 
-        h = word_vectors[node_ids].to(self.device)
-        # h = self.word_embeddings(torch.tensor(node_ids, device=self.device, dtype=torch.long))
+        # h = word_vectors[node_ids].to(self.device)
+        h = self.word_embeddings(torch.tensor(node_ids, device=self.device, dtype=torch.long))
 
         # hidden_rep = [h + self.pos[0] * positional_encoding]
         hidden_rep = [h]
