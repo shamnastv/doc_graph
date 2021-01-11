@@ -17,6 +17,7 @@ class GNNLayer(nn.Module):
         self.mlp_es = torch.nn.ModuleList()
         self.edge_wt = torch.nn.ModuleList()
         self.device = device
+        self.eps = nn.Parameter(torch.rand(1), requires_grad=True)
 
         for heads in range(num_heads):
             self.mlp_es.append(MLP(num_mlp_layers, input_dim, hidden_dim, output_dim))
@@ -45,6 +46,7 @@ class GNNLayer(nn.Module):
             # row_sum = self.special_sp_mm(idx, elem_new, shape, ones) + 0.0000001
             # pooled = pooled.div(row_sum)
             pooled = spmm(idx, elem, shape[0], shape[1], features)
+            pooled = pooled + (1 + self.eps) * features
             h.append(pooled)
         h = torch.cat(h, dim=1)
         return h
