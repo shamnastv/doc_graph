@@ -336,7 +336,8 @@ def main():
     print('\navg : ',
           '\tval_accuracy : ', avg[0] / len(acc_detais) * 100,
           '\ttest_accuracy : ', avg[1] / len(acc_detais) * 100,
-          '\tlatest_test_accuracy : ', avg[2] / len(acc_detais) * 100
+          '\tlatest_test_accuracy : ', avg[2] / len(acc_detais) * 100)
+
 
 if __name__ == '__main__':
     main()
