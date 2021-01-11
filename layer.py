@@ -6,6 +6,7 @@ import numpy as np
 from SpecialSP import SpecialSpmm
 from attention import Attention
 from mlp import MLP
+from torch_sparse import spmm
 
 
 class GNNLayer(nn.Module):
@@ -43,7 +44,7 @@ class GNNLayer(nn.Module):
             # pooled = self.special_sp_mm(idx, elem_new, shape, features)
             # row_sum = self.special_sp_mm(idx, elem_new, shape, ones) + 0.0000001
             # pooled = pooled.div(row_sum)
-            pooled = self.special_sp_mm(idx, elem, shape, features)
+            pooled = spmm(idx, elem, shape[0], shape[1], features)
             h.append(pooled)
         h = torch.cat(h, dim=1)
         return h
