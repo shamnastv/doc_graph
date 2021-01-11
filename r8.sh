@@ -5,4 +5,8 @@
 #SBATCH --output=test_job%j%x.out # Standard output and error log
 #SBATCH --gres=gpu:1
 #SBATCH --partition=cl1_48h-1G
+python3 main.py --epochs 400 --lr .01 --num_layers 3 --num_mlp_layers 1 --hidden_dim 100 --final_dropout .5 --configfile R8
+python3 main.py --epochs 400 --lr .001 --num_layers 3 --num_mlp_layers 1 --hidden_dim 100 --final_dropout .5 --configfile R8
+python3 main.py --epochs 400 --lr .0005 --num_layers 3 --num_mlp_layers 1 --hidden_dim 100 --final_dropout .5 --configfile R8
 python3 main.py --epochs 400 --lr .0001 --num_layers 3 --num_mlp_layers 1 --hidden_dim 100 --final_dropout .5 --configfile R8
+

@@ -144,7 +144,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
         loss_accum += loss
 
     print('Epoch : ', epoch, 'loss training: ', loss_accum, 'Time : ', int(time.time() - start_time))
-    print(model_e.pos)
+    # print(model_e.pos)
     return loss_accum
 
 
@@ -333,10 +333,10 @@ def main():
               '\tmax_acc epoch : ', acc_detais[k][2],
               '\tlatest_test_accuracy : ', acc_detais[k][3] * 100)
 
-    print('\navg : ',
-          '\tval_accuracy : ', avg[0] / len(acc_detais) * 100,
-          '\ttest_accuracy : ', avg[1] / len(acc_detais) * 100,
-          '\tlatest_test_accuracy : ', avg[2] / len(acc_detais) * 100)
+    # print('\navg : ',
+    #       '\tval_accuracy : ', avg[0] / len(acc_detais) * 100,
+    #       '\ttest_accuracy : ', avg[1] / len(acc_detais) * 100,
+    #       '\tlatest_test_accuracy : ', avg[2] / len(acc_detais) * 100)
 
 
 if __name__ == '__main__':
