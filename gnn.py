@@ -240,11 +240,13 @@ class GNN(nn.Module):
 
             elem_gp = torch.sigmoid(self.graph_pool_layer[layer](tmp).squeeze(1))
 
-            # row_sum = self.special_spmm(idx_gp, elem_gp, shape_gp, torch.ones(size=(h.shape[0], 1), device=self.device))
-            row_sum = spmm(idx_gp, elem_gp, shape_gp, torch.ones(size=(h.shape[0], 1), device=self.device))
+            # row_sum = self.special_spmm(idx_gp, elem_gp, shape_gp,
+            #                             torch.ones(size=(h.shape[0], 1), device=self.device))
+            row_sum = spmm(idx_gp, elem_gp, shape_gp[0], shape_gp[1],
+                           torch.ones(size=(h.shape[0], 1), device=self.device))
 
             # pooled_h = self.special_spmm(idx_gp, elem_gp, shape_gp, h)
-            pooled_h = spmm(idx_gp, elem_gp, shape_gp, h)
+            pooled_h = spmm(idx_gp, elem_gp, shape_gp[0], shape_gp[1], h)
             assert not torch.isnan(pooled_h).any()
 
             pooled_h = pooled_h.div(row_sum + .0000001)
