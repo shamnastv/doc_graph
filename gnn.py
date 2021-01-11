@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from SpecialSP import SpecialSpmm
 from attention import Attention
 from layer import GNNLayer
 from torch_sparse import spmm
@@ -80,8 +79,6 @@ class GNN(nn.Module):
         self.linears_prediction = torch.nn.ModuleList()
         self.graph_pool_layer = torch.nn.ModuleList()
         # self.edge_wt = torch.nn.ModuleList()
-
-        self.special_spmm = SpecialSpmm()
 
         # self.cluster_cat = torch.nn.ModuleList()
         for layer in range(num_layers):
@@ -233,17 +230,17 @@ class GNN(nn.Module):
             #     print(graph_pool)
             #
             tmp = torch.cat((h, elem_gp.unsqueeze(1)), dim=1)
-            # elem_gp = self.graph_pool_layer[layer](tmp).squeeze(1)
-            # elem_gp = elem_gp - torch.max(elem_gp)
-            # elem_gp = torch.exp(elem_gp)
-            # assert not torch.isnan(elem_gp).any()
+            elem_gp = self.graph_pool_layer[layer](tmp).squeeze(1)
+            elem_gp = elem_gp - torch.max(elem_gp)
+            elem_gp = torch.exp(elem_gp)
+            assert not torch.isnan(elem_gp).any()
 
-            elem_gp = torch.sigmoid(self.graph_pool_layer[layer](tmp).squeeze(1)) * elem_gp
+            # elem_gp = torch.sigmoid(self.graph_pool_layer[layer](tmp).squeeze(1)) * elem_gp
 
-            # row_sum = self.special_spmm(idx_gp, elem_gp, shape_gp,
-            #                             torch.ones(size=(h.shape[0], 1), device=self.device))
-            row_sum = spmm(idx_gp, elem_gp, shape_gp[0], shape_gp[1],
-                           torch.ones(size=(h.shape[0], 1), device=self.device))
+            row_sum = spmm(idx_gp, elem_gp, shape_gp,
+                                        torch.ones(size=(h.shape[0], 1), device=self.device))
+            # row_sum = spmm(idx_gp, elem_gp, shape_gp[0], shape_gp[1],
+            #                torch.ones(size=(h.shape[0], 1), device=self.device))
 
             # pooled_h = self.special_spmm(idx_gp, elem_gp, shape_gp, h)
             pooled_h = spmm(idx_gp, elem_gp, shape_gp[0], shape_gp[1], h)

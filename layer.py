@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from SpecialSP import SpecialSpmm
 from attention import Attention
 from mlp import MLP
 from torch_sparse import spmm
@@ -13,7 +12,6 @@ class GNNLayer(nn.Module):
     def __init__(self, num_mlp_layers, input_dim, hidden_dim, output_dim, num_heads, device):
         super(GNNLayer, self).__init__()
         self.num_heads = num_heads
-        self.special_sp_mm = SpecialSpmm()
         self.mlp_es = torch.nn.ModuleList()
         self.edge_wt = torch.nn.ModuleList()
         self.device = device
@@ -30,23 +28,23 @@ class GNNLayer(nn.Module):
         ones = torch.ones(size=(num_r, 1), device=self.device)
         for head in range(self.num_heads):
             features = self.mlp_es[head](x)
-            # x_cat = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
-            # x_cat = torch.cat(x_cat, dim=1)
-            #
-            # elem_new1 = F.leaky_relu(self.edge_wt[head](x_cat).squeeze(1))
-            # # elem_new1 = -F.relu(self.edge_wt[head](x_cat) / 20)
-            # elem_new = elem_new1 - torch.max(elem_new1)
-            #
-            # elem_new = torch.exp(elem_new)
-            # try:
-            #     assert not torch.isnan(elem_new).any()
-            # except AssertionError:
-            #     print(elem_new1)
-            # pooled = self.special_sp_mm(idx, elem_new, shape, features)
-            # row_sum = self.special_sp_mm(idx, elem_new, shape, ones) + 0.0000001
-            # pooled = pooled.div(row_sum)
-            pooled = spmm(idx, elem, shape[0], shape[1], features)
-            pooled = pooled + (1 + self.eps) * features
+            x_cat = [features[idx[0]], features[idx[1]], elem.unsqueeze(1)]
+            x_cat = torch.cat(x_cat, dim=1)
+
+            elem_new1 = F.leaky_relu(self.edge_wt[head](x_cat).squeeze(1))
+            # elem_new1 = -F.relu(self.edge_wt[head](x_cat) / 20)
+            elem_new = elem_new1 - torch.max(elem_new1)
+
+            elem_new = torch.exp(elem_new)
+            try:
+                assert not torch.isnan(elem_new).any()
+            except AssertionError:
+                print(elem_new1)
+            pooled = spmm(idx, elem_new, shape, features)
+            row_sum = spmm(idx, elem_new, shape, ones) + 0.0000001
+            pooled = pooled.div(row_sum)
+            # pooled = spmm(idx, elem, shape[0], shape[1], features)
+            # pooled = pooled + (1 + self.eps) * features
             h.append(pooled)
         h = torch.cat(h, dim=1)
         return h
