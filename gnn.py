@@ -237,8 +237,8 @@ class GNN(nn.Module):
 
             # elem_gp = torch.sigmoid(self.graph_pool_layer[layer](tmp).squeeze(1)) * elem_gp
 
-            row_sum = spmm(idx_gp, elem_gp, shape_gp,
-                                        torch.ones(size=(h.shape[0], 1), device=self.device))
+            row_sum = spmm(idx_gp, elem_gp, shape_gp[0], shape_gp[1],
+                           torch.ones(size=(h.shape[0], 1), device=self.device))
             # row_sum = spmm(idx_gp, elem_gp, shape_gp[0], shape_gp[1],
             #                torch.ones(size=(h.shape[0], 1), device=self.device))
 
