@@ -175,8 +175,8 @@ class GNN(nn.Module):
             #     # sum pooling
             #     elem.extend([1] * len(graph.g))
             # elem.extend(graph.word_freq)
-            elem1.extend(graph.word_freq[0])
-            elem2.extend(graph.word_freq[0])
+            elem1.extend(graph.word_freq1)
+            elem2.extend(graph.word_freq2)
             idx.extend([[i, j] for j in range(start_idx[i], start_idx[i + 1], 1)])
         # elem = torch.tensor(elem).float().to(self.device)
 
