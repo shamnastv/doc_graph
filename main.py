@@ -283,8 +283,8 @@ def main():
     acc_detais = []
     k_start = 0
     if args.k_fold == 0:
-        k_start = 9
-        args.k_fold = 10
+        k_start = 4
+        args.k_fold = 5
     val_size = train_size // args.k_fold
     for k in range(k_start, args.k_fold):
         start = k * val_size
