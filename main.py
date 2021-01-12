@@ -31,7 +31,9 @@ class S2VGraph(object):
         '''
         self.label = label
         self.g = g
-        self.word_freq = word_freq
+        # self.word_freq = word_freq
+        self.word_freq1 = word_freq[0]
+        self.word_freq2 = word_freq[1]
         self.node_features = node_features
         self.positions = positions
         # self.node_features = row_norm(self.node_features)
@@ -76,9 +78,17 @@ def create_gaph(args):
         #     # feat = feat * word_freq_list[i].toarray()
         if i == 10:
             print(word_freq_list[i])
-        s = sum(word_freq_list[i])
+        # s = sum(word_freq_list[i])
+        # # s = 1
+        # wf = [el / s for el in word_freq_list[i]]
+        s = sum(word_freq_list[i][0])
         # s = 1
-        wf = [el / s for el in word_freq_list[i]]
+        wf1 = [el / s for el in word_freq_list[i][1]]
+        s = sum(word_freq_list[i][1])
+        # s = 1
+        wf2 = [el / s for el in word_freq_list[i][1]]
+        wf = (wf1, wf2)
+
         g_list.append(S2VGraph(g, lb, node_features=feat, word_freq=wf, positions=positions_list[i]))
         for ar in positions_list[i]:
             max_words = max(max_words, max(ar))

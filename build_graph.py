@@ -232,15 +232,15 @@ def build_graph(config='param'):
         positions = []
         for i in range(vocab_size):
             features.append(global_word_to_id[vocab[i]])
-            wf.append(word_freq[vocab[i]] * idf[vocab[i]])
-            # wf1.append(word_freq[vocab[i]])
-            # wf2.append(idf[vocab[i]])
+            # wf.append(word_freq[vocab[i]] * idf[vocab[i]])
+            wf1.append(word_freq[vocab[i]])
+            wf2.append(idf[vocab[i]])
             positions.append(word_to_pos[vocab[i]])
 
         features = np.array(features)
         feature_list.append(features)
-        word_freq_list.append(wf)
-        # word_freq_list.append((wf1, wf2))
+        # word_freq_list.append(wf)
+        word_freq_list.append((wf1, wf2))
         positions_list.append(positions)
 
         # Create map of word to id

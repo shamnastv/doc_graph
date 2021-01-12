@@ -84,12 +84,14 @@ class GNN(nn.Module):
         for layer in range(num_layers):
             if layer == 0:
                 self.linears_prediction.append(nn.Linear(input_dim, output_dim))
-                self.graph_pool_layer.append(Attention(input_dim + 1))
+                # self.graph_pool_layer.append(Attention(input_dim + 1))
+                self.graph_pool_layer.append(Attention(input_dim + 2))
                 # self.edge_wt.append(Attention(input_dim * 2 + 1))
                 # self.cluster_cat.append(nn.Linear(input_dim * 2, 1))
             else:
                 self.linears_prediction.append(nn.Linear(self.real_hidden_dim, output_dim))
-                self.graph_pool_layer.append(Attention(self.real_hidden_dim + 1))
+                # self.graph_pool_layer.append(Attention(self.real_hidden_dim + 1))
+                self.graph_pool_layer.append(Attention(self.real_hidden_dim + 2))
                 # self.edge_wt.append(Attention(input_dim * 2 + 1))
                 # self.cluster_cat.append(nn.Linear(hidden_dim * 2, 1))
 
@@ -162,6 +164,8 @@ class GNN(nn.Module):
 
         idx = []
         elem = []
+        elem1 = []
+        elem2 = []
         for i, graph in enumerate(batch_graph):
             # average pooling
             # if self.graph_pooling_type == "average":
@@ -170,12 +174,19 @@ class GNN(nn.Module):
             # else:
             #     # sum pooling
             #     elem.extend([1] * len(graph.g))
-            elem.extend(graph.word_freq)
+            # elem.extend(graph.word_freq)
+            elem1.extend(graph.word_freq[0])
+            elem2.extend(graph.word_freq[0])
             idx.extend([[i, j] for j in range(start_idx[i], start_idx[i + 1], 1)])
-        elem = torch.tensor(elem).float().to(self.device)
+        # elem = torch.tensor(elem).float().to(self.device)
+
+        elem1 = torch.tensor(elem1).float().to(self.device)
+        elem2 = torch.tensor(elem2).float().to(self.device)
+
         idx = torch.tensor(idx).long().transpose(0, 1).to(self.device)
         # graph_pool = torch.sparse.FloatTensor(idx, elem, torch.Size([len(batch_graph), start_idx[-1]]))
-        graph_pool = (idx, elem, torch.Size([len(batch_graph), start_idx[-1]]))
+        # graph_pool = (idx, elem, torch.Size([len(batch_graph), start_idx[-1]]))
+        graph_pool = (idx, elem1, elem2, torch.Size([len(batch_graph), start_idx[-1]]))
 
         # return graph_pool.to(self.device), elem.reshape(-1, 1).to(self.device)
         return graph_pool
@@ -198,7 +209,8 @@ class GNN(nn.Module):
 
     def forward(self, batch_graph, word_vectors):
         # graph_pool, node_weights = self.__preprocess_graphpool(batch_graph)
-        idx_gp, elem_gp, shape_gp = self.__preprocess_graphpool(batch_graph)
+        # idx_gp, elem_gp, shape_gp = self.__preprocess_graphpool(batch_graph)
+        idx_gp, elem_gp1, elem_gp2, shape_gp = self.__preprocess_graphpool(batch_graph)
 
         # list of hidden representation at each layer (including input)
         node_ids = []
@@ -229,7 +241,8 @@ class GNN(nn.Module):
             # if self.do_once:
             #     print(graph_pool)
             #
-            tmp = torch.cat((h, elem_gp.unsqueeze(1)), dim=1)
+            # tmp = torch.cat((h, elem_gp.unsqueeze(1)), dim=1)
+            tmp = torch.cat((h, elem_gp1.unsqueeze(1), elem_gp2.unsqueeze(1)), dim=1)
             elem_gp = self.graph_pool_layer[layer](tmp).squeeze(1)
 
             with torch.no_grad():
