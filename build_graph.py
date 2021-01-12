@@ -346,7 +346,7 @@ def build_graph(config='param'):
             #     continue
 
             pmi = (pmi_c * count / num_window) / (1.0 * word_freq_i * word_freq_j / (num_window * num_window))
-            if pmi <= 2:
+            if pmi <= .5:
                 # print('dropped edge : ', vocab[i], ' ', vocab[j], ' ', exp(pmi))
                 n_dropped_edges += 1
                 continue
