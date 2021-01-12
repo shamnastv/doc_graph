@@ -83,7 +83,7 @@ def create_gaph(args):
         # wf = [el / s for el in word_freq_list[i]]
         s = sum(word_freq_list[i][0])
         # s = 1
-        wf1 = [el / s for el in word_freq_list[i][1]]
+        wf1 = [el / s for el in word_freq_list[i][0]]
         s = sum(word_freq_list[i][1])
         # s = 1
         wf2 = [el / s for el in word_freq_list[i][1]]
