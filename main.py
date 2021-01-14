@@ -263,6 +263,7 @@ def main():
                         help='run in debug mode')
     parser.add_argument('--num_heads', type=int, default=1,
                         help='number of hidden units (default: 64)')
+    parser.add_argument('--weight_decay', type=float, default=1e-6, help='weight decay (default: 0.3)')
 
     args = parser.parse_args()
 
@@ -300,7 +301,7 @@ def main():
                       args.final_dropout, args.learn_eps, args.graph_pooling_type, args.neighbor_pooling_type,
                       device, max_words, args.num_heads, word_vectors).to(device)
 
-        optimizer = optim.Adam(model_e.parameters(), lr=args.lr)
+        optimizer = optim.Adam(model_e.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         # optimizer_c = optim.Adam(model_c.parameters(), lr=args.lr_c)
         # optimizer = optim.SGD(model_e.parameters(), lr=args.lr, momentum=0.9)
         # optimizer_c = optim.SGD(model_c.parameters(), lr=args.lr_c, momentum=0.9)
