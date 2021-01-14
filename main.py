@@ -278,7 +278,7 @@ def main():
                         help='tsne')
     parser.add_argument('--num_heads', type=int, default=1,
                         help='number of hidden units (default: 64)')
-    parser.add_argument('--weight_decay', type=float, default=1e-6, help='weight decay (default: 0.3)')
+    parser.add_argument('--weight_decay', type=float, default=1e-7, help='weight decay (default: 0.3)')
 
     args = parser.parse_args()
 
