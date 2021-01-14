@@ -224,7 +224,7 @@ class GNN(nn.Module):
         # h = word_vectors[node_ids].to(self.device)
         h = self.word_embeddings(torch.tensor(node_ids, device=self.device, dtype=torch.long))
 
-        hidden_rep = [self.dropout(h) + self.pos[0] * positional_encoding]
+        h = h + self.pos[0] * positional_encoding
         hidden_rep = [self.dropout(h)]
 
         adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
