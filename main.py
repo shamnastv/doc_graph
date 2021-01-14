@@ -175,10 +175,9 @@ def pass_data_iteratively(args, model_e, graphs, minibatch_size, device, word_ve
             continue
         with torch.no_grad():
             output, hidden_rep = model_e([graphs[j] for j in sampled_idx], word_vectors)
-        hidden_rep.detach().cpu()
         outputs.append(output)
-        hidden_rep_0.append(hidden_rep[0])
-        hidden_rep_1.append(hidden_rep[1])
+        hidden_rep_0.append(hidden_rep[0].detach().cpu())
+        hidden_rep_1.append(hidden_rep[1].detach().cpu())
 
     return torch.cat(outputs, 0), torch.cat(hidden_rep_0, 0).numpy(), torch.cat(hidden_rep_1, 0).numpy()
 
@@ -335,7 +334,7 @@ def main():
                 break
 
         if h0 is not None and args.tsne:
-            tsne = TSNE(n_components=2)
+            tsne = TSNE()
             h0_e = tsne.fit_transform(h0)
             h1_e = tsne.fit_transform(h1)
 
