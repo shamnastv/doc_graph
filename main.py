@@ -6,6 +6,9 @@ import torch.nn as nn
 import torch.optim as optim
 import time
 
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+
 import build_graph
 from gnn import GNN
 from util import normalize_adj
@@ -17,6 +20,8 @@ max_val_accuracy = 0
 test_accuracy = 0
 max_acc_epoch = 0
 start_time = time.time()
+
+h0, h1, labels = None, None, None
 
 
 class S2VGraph(object):
@@ -137,7 +142,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
         batch_graph = [graphs[idx] for idx in selected_idx]
         # if len(selected_idx) == 0:
         #     continue
-        output = model_e(batch_graph, word_vectors)
+        output, hidden_rep = model_e(batch_graph, word_vectors)
 
         labels = torch.tensor([graph.label for graph in batch_graph]).long().to(device)
 
@@ -161,16 +166,20 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
 # pass data to model with mini batch during testing to avoid memory overflow (does not perform backpropagation)
 def pass_data_iteratively(args, model_e, graphs, minibatch_size, device, word_vectors):
     outputs = []
+    hidden_rep_0 = []
+    hidden_rep_1 = []
     full_idx = np.arange(len(graphs))
     for i in range(0, len(graphs), minibatch_size):
         sampled_idx = full_idx[i:i + minibatch_size]
         if len(sampled_idx) == 0:
             continue
         with torch.no_grad():
-            output = model_e([graphs[j] for j in sampled_idx], word_vectors)
+            output, hidden_rep = model_e([graphs[j] for j in sampled_idx], word_vectors)
         outputs.append(output)
+        hidden_rep_0.append(hidden_rep[0])
+        hidden_rep_1.append(hidden_rep[1])
 
-    return torch.cat(outputs, 0)
+    return torch.cat(outputs, 0), torch.cat(hidden_rep_0, 0).detach().cpu().numpy(), torch.cat(hidden_rep_1, 0).detach().cpu().numpy()
 
 
 def test(args, model_e, device, graphs, train_size, epoch, word_vectors):
@@ -179,7 +188,7 @@ def test(args, model_e, device, graphs, train_size, epoch, word_vectors):
     val_size = train_size // args.k_fold
     train_size = train_size - val_size
 
-    output = pass_data_iteratively(args, model_e, graphs, 100, device, word_vectors)
+    output, hidden_rep_0, hidden_rep_1 = pass_data_iteratively(args, model_e, graphs, 100, device, word_vectors)
 
     output_train, train_graphs = output[:train_size], graphs[:train_size]
     output_val, val_graph = output[train_size:train_size + val_size], graphs[train_size:train_size + val_size]
@@ -208,6 +217,9 @@ def test(args, model_e, device, graphs, train_size, epoch, word_vectors):
         max_val_accuracy = acc_val
         max_acc_epoch = epoch
         test_accuracy = acc_test
+        global h0, h1, labels
+        h0, h1 = hidden_rep_0[train_size + val_size:], hidden_rep_1[train_size + val_size:]
+        labels = labels_test.detach().cpu().numpy()
 
     print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
     if args.debug:
@@ -261,6 +273,8 @@ def main():
                         help='early_stop')
     parser.add_argument('--debug', action="store_true",
                         help='run in debug mode')
+    parser.add_argument('--tsne', action="store_true",
+                        help='tsne')
     parser.add_argument('--num_heads', type=int, default=1,
                         help='number of hidden units (default: 64)')
     parser.add_argument('--weight_decay', type=float, default=1e-6, help='weight decay (default: 0.3)')
@@ -317,6 +331,19 @@ def main():
             if epoch > max_acc_epoch + args.early_stop \
                     and epoch > args.early_stop:
                 break
+
+        if h0 is not None and args.tsne:
+            tsne = TSNE(n_components=2)
+            h0_e = tsne.fit_transform(h0)
+            h1_e = tsne.fit_transform(h1)
+
+            plt.figure()
+            plt.scatter(h0_e[:, 0], h0_e[:, 1], c=labels)
+            plt.savefig(args.configfile + 'h0.png')
+
+            plt.figure()
+            plt.scatter(h1_e[:, 0], h1_e[:, 1], c=labels)
+            plt.savefig(args.configfile + 'h1.png')
 
         print('=' * 200)
         print('K : ', k, 'Time : ', abs(time.time() - start_time))

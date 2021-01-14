@@ -271,4 +271,4 @@ class GNN(nn.Module):
             #     self.do_once = False
             score_over_layer += self.linears_prediction[layer](pooled_h)
 
-        return score_over_layer
+        return score_over_layer, hidden_rep
