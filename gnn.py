@@ -236,6 +236,7 @@ class GNN(nn.Module):
         # graph_pool = graph_pool.to_dense()
         score_over_layer = 0
 
+        pooled_h_ls = []
         # perform pooling over all nodes in each graph in every layer
         for layer, h in enumerate(hidden_rep):
             # if self.do_once:
@@ -266,9 +267,10 @@ class GNN(nn.Module):
             pooled_h = pooled_h.div(row_sum + 1e-10)
             assert not torch.isnan(pooled_h).any()
 
+            pooled_h_ls.append(pooled_h)
             # if self.do_once:
             #     print(graph_pool)
             #     self.do_once = False
             score_over_layer += self.linears_prediction[layer](pooled_h)
 
-        return score_over_layer, hidden_rep
+        return score_over_layer, pooled_h_ls

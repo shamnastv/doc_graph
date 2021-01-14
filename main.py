@@ -142,7 +142,7 @@ def train(args, model_e, device, graphs, optimizer, epoch, train_size, word_vect
         batch_graph = [graphs[idx] for idx in selected_idx]
         # if len(selected_idx) == 0:
         #     continue
-        output, hidden_rep = model_e(batch_graph, word_vectors)
+        output, pooled_h_ls = model_e(batch_graph, word_vectors)
 
         labels = torch.tensor([graph.label for graph in batch_graph]).long().to(device)
 
@@ -174,10 +174,10 @@ def pass_data_iteratively(args, model_e, graphs, minibatch_size, device, word_ve
         if len(sampled_idx) == 0:
             continue
         with torch.no_grad():
-            output, hidden_rep = model_e([graphs[j] for j in sampled_idx], word_vectors)
+            output, pooled_h_ls = model_e([graphs[j] for j in sampled_idx], word_vectors)
         outputs.append(output)
-        hidden_rep_0.append(hidden_rep[0].detach().cpu())
-        hidden_rep_1.append(hidden_rep[1].detach().cpu())
+        hidden_rep_0.append(pooled_h_ls[0].detach().cpu())
+        hidden_rep_1.append(pooled_h_ls[1].detach().cpu())
 
     return torch.cat(outputs, 0), torch.cat(hidden_rep_0, 0).numpy(), torch.cat(hidden_rep_1, 0).numpy()
 
