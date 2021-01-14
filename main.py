@@ -217,9 +217,10 @@ def test(args, model_e, device, graphs, train_size, epoch, word_vectors):
         max_val_accuracy = acc_val
         max_acc_epoch = epoch
         test_accuracy = acc_test
-        global h0, h1, labels
-        h0, h1 = hidden_rep_0[train_size + val_size:], hidden_rep_1[train_size + val_size:]
-        labels = labels_test.detach().cpu().numpy()
+        if args.tsne:
+            global h0, h1, labels
+            h0, h1 = hidden_rep_0[train_size + val_size:], hidden_rep_1[train_size + val_size:]
+            labels = labels_test.detach().cpu().numpy()
 
     print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
     if args.debug:
