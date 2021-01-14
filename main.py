@@ -340,11 +340,11 @@ def main():
 
             plt.figure()
             plt.scatter(h0_e[:, 0], h0_e[:, 1], c=labels)
-            plt.savefig(args.configfile + 'h0.png')
+            plt.savefig(args.configfile + str(test_accuracy) + 'h0.png')
 
             plt.figure()
             plt.scatter(h1_e[:, 0], h1_e[:, 1], c=labels)
-            plt.savefig(args.configfile + 'h1.png')
+            plt.savefig(args.configfile + str(test_accuracy) + 'h1.png')
 
         print('=' * 200)
         print('K : ', k, 'Time : ', abs(time.time() - start_time))
