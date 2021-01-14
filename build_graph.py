@@ -337,8 +337,8 @@ def build_graph(config='param'):
             word_freq_i = word_window_freq[vocab[i]]
             word_freq_j = word_window_freq[vocab[j]]
 
-            pmi = log((pmi_c * count / num_window) /
-                      (1.0 * word_freq_i * word_freq_j / (num_window * num_window)))
+            pmi = log(.3 + ((pmi_c * count / num_window) /
+                      (1.0 * word_freq_i * word_freq_j / (num_window * num_window))))
             if pmi <= 0:
                 # print('dropped edge : ', vocab[i], ' ', vocab[j], ' ', exp(pmi))
                 n_dropped_edges += 1
