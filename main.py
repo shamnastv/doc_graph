@@ -21,7 +21,7 @@ test_accuracy = 0
 max_acc_epoch = 0
 start_time = time.time()
 
-h0, h1, labels = None, None, None
+h0, h1, h2, labels = None, None, None, None
 
 
 class S2VGraph(object):
@@ -218,8 +218,9 @@ def test(args, model_e, device, graphs, train_size, epoch, word_vectors):
         max_acc_epoch = epoch
         test_accuracy = acc_test
         if args.tsne:
-            global h0, h1, labels
+            global h0, h1, h2, labels
             h0, h1 = hidden_rep_0[train_size + val_size:], hidden_rep_1[train_size + val_size:]
+            h2 = output_test.detach().cpu().numpy()
             labels = labels_test.detach().cpu().numpy()
 
     print('max validation accuracy : ', max_val_accuracy, 'max acc epoch : ', max_acc_epoch, flush=True)
@@ -337,6 +338,7 @@ def main():
             tsne = TSNE()
             h0_e = tsne.fit_transform(h0)
             h1_e = tsne.fit_transform(h1)
+            h2_e = tsne.fit_transform(h2)
 
             plt.figure()
             plt.scatter(h0_e[:, 0], h0_e[:, 1], c=labels)
@@ -345,6 +347,10 @@ def main():
             plt.figure()
             plt.scatter(h1_e[:, 0], h1_e[:, 1], c=labels)
             plt.savefig(args.configfile + str(test_accuracy) + 'h1.png')
+
+            plt.figure()
+            plt.scatter(h2_e[:, 0], h2_e[:, 1], c=labels)
+            plt.savefig(args.configfile + str(test_accuracy) + 'h2.png')
 
         print('=' * 200)
         print('K : ', k, 'Time : ', abs(time.time() - start_time))
