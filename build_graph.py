@@ -180,6 +180,23 @@ def build_graph(config='param'):
     elif param['embed_type'] == 'global_pmi':
         word_vectors = None
 
+    elif param['embed_type'] == 'glove':
+        filename = '../glove.840B.300d.txt'
+        dim = 300
+        count = 0
+        word_vectors = np.random.uniform(-0.25, 0.25, (len(global_word_to_id), dim))
+        with open(filename, encoding='utf-8') as fp:
+            for line in fp:
+                elements = line.strip().split()
+                word = elements[0]
+                if word in global_word_to_id:
+                    try:
+                        word_vectors[global_word_to_id[word]] = [float(v) for v in elements[1:]]
+                        count += 1
+                    except ValueError:
+                        pass
+        print('got embeddings of :', count)
+
     else:
         print('Invalid word embd type')
         sys.exit()
