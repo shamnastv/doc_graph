@@ -152,6 +152,9 @@ def build_graph(config='param'):
     global_vocab = list(global_word_set)
     global_vocab_size = len(global_vocab)
 
+    for i in range(global_vocab_size):
+        global_word_to_id[global_vocab[i]] = i
+
     if param['embed_type'] == 'identity':
         word_vectors = global_vocab_size
 
@@ -200,9 +203,6 @@ def build_graph(config='param'):
     else:
         print('Invalid word embd type')
         sys.exit()
-
-    for i in range(global_vocab_size):
-        global_word_to_id[global_vocab[i]] = i
 
     print('start adj creation ', int(time.time() - s_t))
     feature_list = []
@@ -389,9 +389,9 @@ def build_graph(config='param'):
         #     print(adj)
         index += 1
     print('end adj creation ', int(time.time() - s_t))
-    print('start global adj creation ', int(time.time() - s_t))
 
     if param['embed_type'] == 'global_pmi':
+        print('start global adj creation ', int(time.time() - s_t))
         # Create global adj matrix
         windows_g = []
         window_size_g = param['window_size_g']
