@@ -214,17 +214,17 @@ class GNN(nn.Module):
 
         # list of hidden representation at each layer (including input)
         node_ids = []
-        # positional_encoding = []
+        positional_encoding = []
         for graph in batch_graph:
             node_ids.extend(graph.node_features)
-            # positional_encoding.append(self.get_pos_enc(graph.positions))
+            positional_encoding.append(self.get_pos_enc(graph.positions))
 
-        # positional_encoding = torch.cat(positional_encoding, dim=0).to(self.device)
+        positional_encoding = torch.cat(positional_encoding, dim=0).to(self.device)
 
         # h = word_vectors[node_ids].to(self.device)
         h = self.word_embeddings(torch.tensor(node_ids, device=self.device, dtype=torch.long))
 
-        # h = h + self.pos[0] * positional_encoding
+        h = h + self.pos[0] * positional_encoding
         hidden_rep = [self.dropout(h)]
 
         adj_block = self.__preprocess_neighbors_sumavepool(batch_graph)
