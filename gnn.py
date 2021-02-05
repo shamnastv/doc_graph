@@ -44,7 +44,7 @@ class GNN(nn.Module):
 
         self.real_hidden_dim = num_heads * hidden_dim
 
-        self.positional_embeddings = np.zeros((max_words, num_heads * hidden_dim))
+        self.positional_embeddings = np.zeros((max_words, self.input_dim))
 
         for position in range(max_words):
             for i in range(0, self.input_dim, 2):
